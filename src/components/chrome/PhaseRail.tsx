@@ -4,11 +4,11 @@ import { phases } from "@/content/strategy";
 import { useStore } from "@/lib/store";
 import { scrollToId, useLenis } from "./SmoothScroll";
 
-/** A slim fixed rail that appears while the phases play, so Spark → Flame → Fire is always one click away. */
+/** A slim fixed rail that appears while the phases play, so Spark → Flame → Light is always one click away. */
 export function PhaseRail() {
   const act = useStore((s) => s.act);
   const lenis = useLenis();
-  // acts: 5 = spark, 6 = flame, 7 = fire
+  // acts: 5 = spark, 6 = flame, 7 = light
   const visible = act >= 5 && act <= 7;
   const active = act - 5;
   return (

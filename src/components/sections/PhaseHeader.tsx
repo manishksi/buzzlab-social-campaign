@@ -2,7 +2,7 @@
 
 import { Reveal } from "@/components/ui/Reveal";
 
-/** Shared title card for Spark / Flame / Fire. `heat` sizes the flame glyph. */
+/** Shared title card for Spark / Flame. `heat` sizes the flame glyph. */
 export function PhaseHeader({ n, name, months, objective, heat }: { n: string; name: string; months: string; objective: string; heat: number }) {
   return (
     <header className="gutter mx-auto max-w-[1600px]">
@@ -29,7 +29,7 @@ export function PhaseHeader({ n, name, months, objective, heat }: { n: string; n
       </div>
       <div className="mt-8 grid gap-4 md:grid-cols-12">
         <p className="t-slate md:col-span-3">Objective</p>
-        <Reveal as="p" by="words" className="t-big md:col-span-9">
+        <Reveal as="p" by="words" className="t-big md:col-span-9 lg:col-span-5">
           {objective}
         </Reveal>
       </div>

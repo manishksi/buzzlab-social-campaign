@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
-import { meta, whereWeAre as W } from "@/content/strategy";
+import { whereWeAre as W } from "@/content/strategy";
 import { Reveal } from "@/components/ui/Reveal";
 import { Scramble } from "@/components/ui/Scramble";
 
@@ -59,15 +59,19 @@ export function WhereWeAre() {
         ease: "expo.out",
         scrollTrigger: { trigger: "[data-rows]", start: "top 82%", once: true },
       });
-      // the phone drifts against the scroll
-      gsap.fromTo("[data-phone]", { yPercent: 12, rotate: -4 }, { yPercent: -10, rotate: 3, ease: "none", scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true } });
-      gsap.from("[data-post]", {
-        autoAlpha: 0,
-        scale: 0.9,
-        stagger: { each: 0.06, from: "random" },
-        duration: 0.6,
-        scrollTrigger: { trigger: "[data-phone]", start: "top 80%", once: true },
-      });
+      // the real profile: starts small and far off in the dark, comes forward to be read, then drifts on
+      const wrap = el.querySelector("[data-profile-wrap]");
+      gsap
+        .timeline({ scrollTrigger: { trigger: wrap, start: "top bottom", end: "center 52%", scrub: 0.6 } })
+        .fromTo(
+          "[data-profile]",
+          { scale: 0.58, rotateX: 16, rotateY: -24, yPercent: 16, autoAlpha: 0.2, filter: "blur(4px) brightness(0.45)" },
+          { scale: 1, rotateX: 4, rotateY: -7, yPercent: 0, autoAlpha: 1, filter: "blur(0px) brightness(1)", ease: "power1.out" },
+        )
+        .fromTo("[data-profile-glow]", { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 1, scale: 1, ease: "none" }, 0);
+      gsap.fromTo("[data-profile]", { rotateY: -7, rotateX: 4, yPercent: 0 }, { rotateY: 3, rotateX: -2, yPercent: -7, ease: "none", immediateRender: false, scrollTrigger: { trigger: wrap, start: "center 52%", end: "bottom top", scrub: 0.6 } });
+      // soft light sliding across the glass
+      gsap.fromTo("[data-sheen]", { xPercent: -70 }, { xPercent: 70, ease: "none", scrollTrigger: { trigger: wrap, start: "top bottom", end: "bottom top", scrub: true } });
       // the strike through "notice board"
       gsap.fromTo("[data-strike]", { scaleX: 0 }, { scaleX: 1, ease: "none", scrollTrigger: { trigger: "[data-question]", start: "top 60%", end: "top 20%", scrub: true } });
       gsap.fromTo("[data-question] [data-word]", { autoAlpha: 0.15 }, { autoAlpha: 1, stagger: 0.05, ease: "none", scrollTrigger: { trigger: "[data-question]", start: "top 85%", end: "top 45%", scrub: true } });
@@ -102,44 +106,41 @@ export function WhereWeAre() {
           </dl>
         </div>
 
-        <div className="flex items-center justify-center lg:col-span-5">
-          <figure className="w-full max-w-[340px]">
-            <div data-phone className="relative rounded-[2.2rem] border border-bone/15 bg-char/90 p-3 shadow-[0_40px_120px_-20px_rgba(0,0,0,.8)]">
-              <div className="rounded-[1.6rem] bg-ink p-4">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full border border-bone/20 font-display text-lg font-extrabold">BL</div>
-                  <div className="min-w-0">
-                    <div className="truncate font-mono text-xs text-bone/80">{meta.handle.replace("@", "")}</div>
-                    <div className="mt-1 h-1.5 w-28 bg-bone/10" />
-                    <div className="mt-1 h-1.5 w-16 bg-bone/10" />
-                  </div>
+        <div className="flex items-center justify-center lg:col-span-5" style={{ perspective: "1600px" }}>
+          <figure data-profile-wrap className="relative w-full max-w-[300px] md:max-w-[340px]">
+            <div
+              aria-hidden
+              data-profile-glow
+              className="pointer-events-none absolute -inset-[35%] -z-10"
+              style={{ background: "radial-gradient(closest-side, rgba(239,232,222,.09), rgba(239,232,222,.03) 55%, transparent)" }}
+            />
+            <div
+              data-profile
+              className="relative overflow-hidden rounded-[2.1rem] border border-bone/12 bg-black p-[6px] shadow-[0_50px_140px_-30px_rgba(0,0,0,.95),0_0_0_1px_rgba(0,0,0,.6)] will-change-transform"
+            >
+              <div className="relative overflow-hidden rounded-[1.7rem]">
+                {/* the actual screenshot, shown as-is (static export, so a plain img) */}
+                <img
+                  src={W.profile.src}
+                  alt={W.profile.alt}
+                  width={W.profile.width}
+                  height={W.profile.height}
+                  draggable={false}
+                  decoding="async"
+                  className="block h-auto w-full select-none"
+                />
+                {/* soft light across the glass, a little falloff at the edges, a breath of grain */}
+                <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+                  <div data-sheen className="absolute inset-y-0 -left-1/2 w-[200%]" style={{ background: "linear-gradient(105deg, transparent 38%, rgba(255,236,214,.11) 48%, transparent 58%)" }} />
                 </div>
-                <div className="mb-3 flex justify-between font-mono text-[0.6rem] uppercase tracking-widest text-ash">
-                  <span>Posts</span>
-                  <span>Followers</span>
-                  <span>Following</span>
-                </div>
-                <div className="grid grid-cols-3 gap-[3px]">
-                  {W.gridPosts.map((p, i) => (
-                    <div
-                      data-post
-                      key={i}
-                      className={`relative flex aspect-square items-center justify-center overflow-hidden text-center ${
-                        p.kind === "empty" ? "border border-dashed border-bone/15" : "bg-[#1a1714]"
-                      }`}
-                    >
-                      {p.kind === "logo" && <span className="font-display text-xl font-extrabold text-bone/35">{p.text}</span>}
-                      {(p.kind === "notice" || p.kind === "event" || p.kind === "repost") && (
-                        <span className="px-1 font-mono text-[0.55rem] uppercase leading-tight tracking-wider text-bone/40">{p.text}</span>
-                      )}
-                      {p.kind === "quote" && <span className="px-1 font-serif text-[0.7rem] italic text-bone/40">{p.text}</span>}
-                      {p.age && <span className="absolute bottom-1 right-1 font-mono text-[0.5rem] text-bone/30">{p.age}</span>}
-                    </div>
-                  ))}
-                </div>
+                <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(130% 90% at 50% 38%, transparent 58%, rgba(0,0,0,.42))" }} />
+                <div aria-hidden className="profile-grain pointer-events-none absolute inset-0" />
               </div>
             </div>
-            <figcaption className="t-slate mt-5 text-center">{W.gridNote}</figcaption>
+            <figcaption className="mt-7 text-center">
+              <span className="t-slate block">{W.profile.slate}</span>
+              <span className="mt-2 block font-display text-[clamp(1.35rem,2vw,1.9rem)] font-bold uppercase leading-tight">{W.profile.caption}</span>
+            </figcaption>
           </figure>
         </div>
       </div>

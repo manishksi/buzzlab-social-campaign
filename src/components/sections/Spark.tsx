@@ -49,7 +49,7 @@ export function Spark() {
     <section ref={root} id="spark" className="relative z-10 pt-[20vh]">
       <PhaseHeader n={S.n} name={S.name} months={S.months} objective={S.objective} heat={0.35} />
       <div className="gutter mx-auto mt-10 max-w-[1600px]">
-        <p className="t-lede md:ml-[25%]">{S.line}</p>
+        <p className="t-lede md:ml-[25%] lg:max-w-[28em]">{S.line}</p>
       </div>
 
       <div data-strip className="relative mt-[12vh] flex min-h-[100svh] flex-col justify-center overflow-hidden py-16">

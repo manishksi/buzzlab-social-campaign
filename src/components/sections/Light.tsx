@@ -2,15 +2,16 @@
 
 import { useRef } from "react";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
-import { fire as F } from "@/content/strategy";
+import { light as F } from "@/content/strategy";
 import { filmKeys } from "@/lib/film-keys";
 import { playSwell } from "@/lib/audio";
 
 /**
- * PHASE 03 — the big reveal. Pinned for four screens: abstract fire, two questions, the turn,
- * then ORIGINAL BUZZLAB IP as the film collapses everything into a world of its own.
+ * PHASE 03 — Light. Pinned for four screens while the cigarette burns down in the film: two
+ * questions, the turn, then ORIGINAL BUZZLAB IP as he takes a long pull on it. The words keep to
+ * the left of the frame; he holds the right.
  */
-export function Fire() {
+export function Light() {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -41,20 +42,18 @@ export function Fire() {
         .fromTo("[data-reveal] [data-r1]", { autoAlpha: 0, yPercent: 60, letterSpacing: "0.4em" }, { autoAlpha: 1, yPercent: 0, letterSpacing: "0.02em", duration: 0.08 }, 0.63)
         .set("[data-reveal]", { autoAlpha: 1 }, 0.63)
         .fromTo("[data-reveal] [data-r2]", { autoAlpha: 0, scale: 0.6, filter: "blur(24px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: 0.1 }, 0.66)
-        .to("[data-reveal]", { yPercent: -120, scale: 0.55, duration: 0.08 }, 0.82);
-      orbit.forEach((o, i) => tl.fromTo(o, { autoAlpha: 0, scale: 0.6 }, { autoAlpha: 1, scale: 1, duration: 0.03 }, 0.84 + i * 0.012));
+        .to("[data-reveal]", { y: () => -window.innerHeight * 0.2, scale: 0.62, transformOrigin: () => (window.innerWidth >= 768 ? "0% 50%" : "50% 50%"), duration: 0.08 }, 0.82);
+      orbit.forEach((o, i) => tl.fromTo(o, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.03 }, 0.84 + i * 0.01));
       tl.fromTo("[data-notlocked]", { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.04 }, 0.95);
 
-      // keep the film in step with the beats: fire builds, then the world forms at the reveal
+      // keep the film in step with the beats: the long pull on the cigarette lands with the reveal
       const st = tl.scrollTrigger!;
-      const off = filmKeys.register("fire", () => {
+      const off = filmKeys.register("light", () => {
         const a = st.start;
         const span = st.end - st.start;
         return [
-          { y: a + span * 0.45, t: 0.86 },
-          { y: a + span * 0.62, t: 0.92 },
-          { y: a + span * 0.72, t: 0.965 },
-          { y: st.end, t: 0.995 },
+          { y: a + span * 0.62, t: 0.862 },
+          { y: st.end, t: 0.93 },
         ];
       });
       ScrollTrigger.refresh();
@@ -65,27 +64,21 @@ export function Fire() {
     { scope: root },
   );
 
-  // orbit positions around the world the film draws at (50%, 46%)
-  const ring = F.possibilities.map((p, i) => {
-    const a = (i / F.possibilities.length) * Math.PI * 2 - Math.PI / 2;
-    return { p, x: 50 + Math.cos(a) * 38, y: 46 + Math.sin(a) * 31 };
-  });
-
   return (
-    <section ref={root} id="fire" className="relative z-10">
+    <section ref={root} id="light" className="relative z-10">
       <div data-stage className="relative h-[100svh] overflow-hidden">
         <div data-intro className="gutter absolute inset-x-0 top-[calc(env(safe-area-inset-top,0px)+6rem)] flex justify-between">
           <span className="t-slate">Phase {F.n} — {F.name}</span>
           <span className="t-slate text-amber">{F.months}</span>
         </div>
 
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center md:justify-start">
           {F.beats.map((b, i) => (
             <p
               data-beat
               key={b}
-              className={`gutter absolute text-center balance ${i === 2 ? "t-mega ember-text" : "t-big max-w-[18ch]"}`}
-              style={i === 2 ? { textShadow: "0 0 80px rgba(239,106,42,.45)" } : undefined}
+              className={`gutter absolute text-center balance md:max-w-[56vw] md:text-left ${i === 2 ? "t-mega ember-text" : "t-big max-w-[18ch]"}`}
+              style={i === 2 ? { textShadow: "0 0 60px rgba(239,106,42,.3)" } : undefined}
             >
               {i === 1 ? (
                 <>
@@ -96,32 +89,23 @@ export function Fire() {
               )}
             </p>
           ))}
-          <h2 data-reveal className="gutter absolute text-center">
+          <h2 data-reveal className="gutter absolute text-center md:max-w-[60vw] md:text-left">
             <span data-r1 className="t-serif block text-[clamp(1.6rem,3vw,3rem)] leading-none text-amber">{F.reveal[0]}</span>
-            <span data-r2 className="t-mega mt-3 block" style={{ textShadow: "0 0 90px rgba(239,106,42,.55)" }}>
+            <span data-r2 className="t-mega mt-3 block md:text-[clamp(3rem,10vw,10.5rem)]" style={{ textShadow: "0 0 70px rgba(239,106,42,.4)" }}>
               {F.reveal[1]}
             </span>
           </h2>
         </div>
 
-        <ul className="gutter absolute inset-x-0 bottom-20 grid grid-cols-2 gap-x-4 gap-y-1.5 md:hidden">
+        {/* what the IP could be: a loose list, kept clear of him */}
+        <ul className="gutter absolute inset-x-0 bottom-20 grid grid-cols-2 gap-x-4 gap-y-1.5 md:bottom-[16%] md:max-w-[58vw] md:gap-x-10 md:gap-y-2.5">
           {F.possibilities.map((p) => (
-            <li data-orbit key={p} className="font-serif text-[0.95rem] italic leading-snug text-bone/85">
+            <li data-orbit key={p} className="font-serif text-[0.95rem] italic leading-snug text-bone/85 md:text-[clamp(1rem,1.35vw,1.3rem)]">
               {p}
             </li>
           ))}
         </ul>
-        {ring.map(({ p, x, y }) => (
-          <span
-            data-orbit
-            key={p}
-            className="absolute hidden -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-center font-serif text-[clamp(.85rem,1.3vw,1.25rem)] italic text-bone/85 md:block"
-            style={{ left: `${x}%`, top: `${y}%` }}
-          >
-            {p}
-          </span>
-        ))}
-        <p data-notlocked className="gutter absolute inset-x-0 bottom-10 text-center">
+        <p data-notlocked className="gutter absolute inset-x-0 bottom-10 text-center md:text-left">
           <span className="t-label text-amber">{F.notLocked}</span>
         </p>
       </div>

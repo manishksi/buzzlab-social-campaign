@@ -4,10 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { pipeline as P } from "@/content/strategy";
 import { Reveal } from "@/components/ui/Reveal";
+import { filmKeys } from "@/lib/film-keys";
 
 const N = P.stages.length;
 
-/** ACT 10 — the circular pipeline. Scrolling drives a playhead round the loop. */
+/**
+ * ACT 08 — the circular pipeline. Scrolling drives a playhead round the loop.
+ * It opens on a breath: he takes a pull, lets out a long cloud of smoke, and the pipeline
+ * comes up through it.
+ */
 export function Pipeline() {
   const root = useRef<HTMLElement>(null);
   const [active, setActive] = useState(0);
@@ -32,6 +37,23 @@ export function Pipeline() {
 
   useGSAP(
     () => {
+      const el = root.current!;
+      const stage = el.querySelector<HTMLElement>("[data-ring-stage]")!;
+      // the pipeline surfaces out of the smoke
+      gsap.fromTo(
+        "[data-surface]",
+        { autoAlpha: 0, y: 50, filter: "blur(14px)" },
+        { autoAlpha: 1, y: 0, filter: "blur(0px)", ease: "power1.out", scrollTrigger: { trigger: stage, start: "top 92%", end: "top 25%", scrub: 0.6 } },
+      );
+      const off = filmKeys.register("pipeline", () => {
+        const top = stage.getBoundingClientRect().top + window.scrollY;
+        const vh = window.innerHeight;
+        return [
+          { y: top - vh * 0.1, t: 1.02 },
+          // end of the pinned loop (desktop) or of the stage (no pin below 900px)
+          { y: window.matchMedia("(min-width: 900px)").matches ? top + vh * 1.6 : top + Math.max(vh * 0.6, stage.offsetHeight - vh * 0.5), t: 1.05 },
+        ];
+      });
       const mm = gsap.matchMedia();
       mm.add("(min-width: 900px)", () => {
         const head = root.current!.querySelector("[data-head]");
@@ -52,15 +74,20 @@ export function Pipeline() {
           },
         });
       });
-      return () => mm.revert();
+      return () => {
+        off();
+        mm.revert();
+      };
     },
     { scope: root },
   );
 
   return (
-    <section ref={root} id="pipeline" data-dim="0.55" className="relative z-10">
-      <div data-ring-stage className="flex min-h-[100svh] items-center py-[12vh]">
-        <div className="gutter mx-auto grid w-full max-w-[1600px] items-center gap-12 lg:grid-cols-12">
+    <section ref={root} id="pipeline" className="relative z-10">
+      {/* a breath between acts: nothing on screen but him and the smoke */}
+      <div aria-hidden className="h-[80svh]" />
+      <div data-ring-stage data-dim="0.38" className="flex min-h-[100svh] items-center py-[12vh]">
+        <div data-surface className="gutter mx-auto grid w-full max-w-[1600px] items-center gap-12 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <p className="t-slate mb-6">{P.eyebrow}</p>
             <Reveal as="h2" by="chars" className="t-big">

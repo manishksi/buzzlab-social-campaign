@@ -6,7 +6,7 @@ designed animated placeholder in its place.
 
 | Slot | Suggested file | Shape | What to shoot |
 |---|---|---|---|
-| `film` (background) | `film.mp4` | 16:9, 60–90 s | One continuous piece: dead feed → camera powers on → edit timeline → first spark → flame → everything on fire → a single glowing world. Dark and low-key; text sits on top. |
+| `film` (background) | `film.mp4` | 16:9, 60–90 s | One continuous piece: dead feed → camera powers on → edit timeline → then one man in profile, right of frame, low-key: a lighter sparked, it catches, he lights a cigarette, smokes it down, drops it and steps on it. Dark and minimal; text sits on top. |
 | `spark-01` | `spark-01-intro.mp4` | 9:16 loop | The BuzzLab Intro: cameras, editors, shoots, chaos, final output. |
 | `spark-02` | `spark-02-meet-the-people.mp4` | 9:16 loop | Team members framed as characters with title cards. |
 | `spark-03` | `spark-03-how-its-made.mp4` | 9:16 loop | One project: idea → shoot → edit → final. |

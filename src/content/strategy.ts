@@ -12,7 +12,7 @@ export const meta = {
   year: "2026",
 };
 
-/** Top-level acts. `id` is the DOM anchor; `film` is where the background film sits when this act reaches mid-screen. */
+/** Top-level acts. `id` is the DOM anchor; `film` is where the background film sits when the act's top reaches the top of the screen. */
 export const acts = [
   { id: "top", act: "00", label: "Cold open", film: 0 },
   { id: "problem", act: "01", label: "Where we are", film: 0.32 },
@@ -21,12 +21,9 @@ export const acts = [
   { id: "phases", act: "04", label: "The plan", film: 0.46 },
   { id: "spark", act: "05", label: "Phase 01 — Spark", film: 0.5 },
   { id: "flame", act: "06", label: "Phase 02 — Flame", film: 0.6 },
-  { id: "fire", act: "07", label: "Phase 03 — Fire", film: 0.76 },
-  { id: "what-we-post", act: "08", label: "What we post", film: 1.0 },
-  { id: "rhythm", act: "09", label: "The publishing system", film: 1.04 },
-  { id: "pipeline", act: "10", label: "The pipeline", film: 1.07 },
-  { id: "measure", act: "11", label: "How we know it's working", film: 1.09 },
-  { id: "road-ahead", act: "12", label: "The road ahead", film: 1.12 },
+  { id: "light", act: "07", label: "Phase 03 — Light", film: 0.76 },
+  { id: "pipeline", act: "08", label: "The pipeline", film: 0.975 },
+  { id: "road-ahead", act: "09", label: "The next chapter", film: 1.06 },
 ] as const;
 
 /** The index menu (kept short on purpose; the lighter is the main navigation). */
@@ -36,9 +33,9 @@ export const menu = [
   { label: "The system", target: "system", note: "Objective and content engine" },
   { label: "Spark", target: "spark", note: "Month 01–02" },
   { label: "Flame", target: "flame", note: "Month 03–06" },
-  { label: "Fire", target: "fire", note: "Month 07–12" },
-  { label: "Content engine", target: "what-we-post", note: "Pillars, rhythm, pipeline" },
-  { label: "The road ahead", target: "measure", note: "Measurement and finale" },
+  { label: "Light", target: "light", note: "Month 07–12" },
+  { label: "The pipeline", target: "pipeline", note: "How the work keeps moving" },
+  { label: "The next chapter", target: "road-ahead", note: "The ending" },
 ];
 
 export const hero = {
@@ -61,24 +58,22 @@ export const whereWeAre = {
     { label: "Engagement", status: "↓", glyph: "down" },
     { label: "Audience", status: "?", glyph: "unknown" },
   ],
-  gridNote: "Illustrative feed pattern, not a screenshot.",
-  gridPosts: [
-    { kind: "notice", text: "We're hiring", age: "2d" },
-    { kind: "empty", text: "", age: "" },
-    { kind: "logo", text: "BL", age: "3w" },
-    { kind: "event", text: "Event recap", age: "5w" },
-    { kind: "quote", text: "“Creativity is…”", age: "7w" },
-    { kind: "empty", text: "", age: "" },
-    { kind: "notice", text: "Announcement", age: "9w" },
-    { kind: "repost", text: "Repost", age: "11w" },
-    { kind: "logo", text: "BL", age: "14w" },
-  ],
+  /** The real profile, as it stands. Only what is visible in the screenshot is described. */
+  profile: {
+    src: "/assets/images/buzzlab-instagram.jpg",
+    width: 738,
+    height: 1600,
+    alt: "Screenshot of the buzzlab.global Instagram profile: 90 posts, 1,139 followers, 15 following. Bio: Content Scientist. Trusted by Supermoney by Flipkart, Wakefit, Practo, Acko, Stable money, Snitch, Snabbit etc. www.buzzlab.in",
+    slate: "@buzzlab.global · Instagram",
+    caption: "This is where BuzzLab is right now.",
+  },
   question: ["So what happens if we stop treating Instagram like a", "notice board", "?"],
 };
 
 export const objective = {
   eyebrow: "Act 02 — The objective",
-  statement: ["Make BuzzLab", "worth following."],
+  /** MAKE / BUZZLAB / WORTH / NOTICING. — one word at a time, the last one carries the weight. */
+  statement: ["Make", "BuzzLab", "worth", "noticing."],
   chain: ["Attention", "Identity", "Community", "IP"],
   explain: [
     "We are not trying to post more.",
@@ -114,7 +109,7 @@ export const engine = {
   loopNote: "Community brings new attention. The engine feeds itself.",
 };
 
-export type PhaseKey = "spark" | "flame" | "fire";
+export type PhaseKey = "spark" | "flame" | "light";
 
 export const phases: {
   key: PhaseKey;
@@ -147,9 +142,9 @@ export const phases: {
     heat: 0.68,
   },
   {
-    key: "fire",
+    key: "light",
     n: "03",
-    name: "Fire",
+    name: "Light",
     months: "Month 07–12",
     duration: "The horizon",
     objective: "Build original BuzzLab IP.",
@@ -160,9 +155,9 @@ export const phases: {
 
 export const lighterSection = {
   eyebrow: "Act 04 — The plan",
-  title: ["One lighter.", "Three temperatures."],
-  sub: "Six months of committed work, and the horizon it opens up. Hover a phase to preview it, click to ignite.",
-  hint: "Hover · click to ignite",
+  title: ["One lighter.", "Three moments."],
+  sub: "Six months of committed work, and the horizon it opens up. Hover a phase to watch it play out, click to go there.",
+  hint: "Hover · click to go there",
 };
 
 export const spark = {
@@ -291,9 +286,9 @@ export const flame = {
   shift: { from: "Content", to: "Formats", note: "A random post starts from zero every time. A format compounds: every episode makes the next one easier to recognise." },
 };
 
-export const fire = {
+export const light = {
   n: "03",
-  name: "Fire",
+  name: "Light",
   months: "Month 07–12",
   objective: "Build original BuzzLab IP.",
   beats: [
@@ -327,43 +322,8 @@ export const fire = {
   ],
 };
 
-export const pillars = {
-  eyebrow: "Act 08",
-  title: "What we post",
-  sub: "Five pillars, mixed like a track. People carry the page; everything else gives it range.",
-  list: [
-    { n: "01", name: "People", share: 40, items: ["Team", "Personality", "Culture", "Characters"] },
-    { n: "02", name: "Process", share: 20, items: ["BTS", "Production", "Editing", "Creative process"] },
-    { n: "03", name: "Proof", share: 20, items: ["Client work", "Campaigns", "Results", "Case studies"] },
-    { n: "04", name: "Play", share: 10, items: ["Experiments", "Trends", "Entertainment", "Creative challenges"] },
-    { n: "05", name: "IP", share: 10, items: ["Original formats", "Characters", "Series", "Shows", "Original concepts"] },
-  ],
-  stripNote: "A month of feed posts at this mix",
-};
-
-export const rhythm = {
-  eyebrow: "Act 09",
-  title: "The publishing system",
-  sub: "A rhythm the audience can learn, and the team can plan around.",
-  week: [
-    { day: "Mon", slot: "Hero / entertainment", note: "The week's big swing. Built to travel. Once a month this slot carries the hero piece.", pillar: "People · Play · IP" },
-    { day: "Tue", slot: null, note: "Stories: polls, reposts, community replies.", pillar: "" },
-    { day: "Wed", slot: "BTS / process", note: "How the work gets made. Cut-downs from shoot days keep this cheap to produce.", pillar: "Process · Proof" },
-    { day: "Thu", slot: null, note: "Stories: work-in-progress, team moments.", pillar: "" },
-    { day: "Fri", slot: "People / culture", note: "The faces of BuzzLab. Characters, rituals, the office.", pillar: "People" },
-    { day: "Sat", slot: null, note: "Stories: weekend shoots, behind the scenes.", pillar: "" },
-    { day: "Sun", slot: "Creative / experiment", note: "Tests, trends and ideas we're curious about. Where new formats start.", pillar: "Play · IP" },
-  ],
-  month: [
-    { value: 1, display: "1", label: "Hero piece", note: "The month's tentpole" },
-    { value: 8, display: "4–8", label: "Supporting pieces", note: "Reels and carousels" },
-    { value: 15, display: "8–15", label: "Stories", note: "Daily texture" },
-  ],
-  footnote: "Targets, not promises. Volume follows quality: we scale up once the pipeline holds.",
-};
-
 export const pipeline = {
-  eyebrow: "Act 10",
+  eyebrow: "Act 08",
   title: "The pipeline",
   sub: "The problem isn't only generating ideas. The system has to keep moving every single week.",
   stages: [
@@ -380,58 +340,7 @@ export const pipeline = {
   groups: ["Idea", "Execution", "Publishing", "Learning"],
 };
 
-export const measure = {
-  eyebrow: "Act 11",
-  title: "How we know it's working",
-  sub: "No follower promises. A feedback loop instead, read every week.",
-  groups: [
-    {
-      name: "Stop",
-      question: "Did it stop the scroll?",
-      metrics: [
-        { name: "Reach", asks: "How many new people saw it?" },
-        { name: "3-second views", asks: "Did the hook work?" },
-      ],
-    },
-    {
-      name: "Hold",
-      question: "Did they stay?",
-      metrics: [
-        { name: "Average watch time", asks: "How long did they watch?" },
-        { name: "Completion rate", asks: "Did they reach the end?" },
-      ],
-    },
-    {
-      name: "Spread",
-      question: "Was it worth passing on?",
-      metrics: [
-        { name: "Shares", asks: "Did they send it to someone?" },
-        { name: "Saves", asks: "Will they come back to it?" },
-      ],
-    },
-    {
-      name: "Stay",
-      question: "Did they choose BuzzLab?",
-      metrics: [
-        { name: "Profile visits", asks: "Did they want to know who made it?" },
-        { name: "Followers gained", asks: "Did they decide to stay?" },
-      ],
-    },
-  ],
-  loop: ["Post", "Measure", "Learn", "Improve", "Post again"],
-  cadence: [
-    { value: 8, label: "Signals tracked" },
-    { value: 48, label: "Hour first check", suffix: "h" },
-    { value: 7, label: "Day review", suffix: "d" },
-    { value: 1, label: "Monthly deep dive" },
-  ],
-  sparkNote: "Trend lines are illustrative. They show the review loop, not a forecast.",
-};
-
 export const finale = {
-  clicks: ["Click.", "Nothing.", "Click.", "Nothing.", "Click."],
-  ignite: "Let's light BuzzLab up.",
-  lines: ["6 months.", "Hundreds of pieces.", "A recognisable voice.", "And eventually…", "Something only BuzzLab owns."],
   final: ["This isn't a content plan.", "It's a media engine."],
-  credits: "BuzzLab · Instagram strategy · Spark → Flame → Fire",
+  credits: "BuzzLab · Instagram strategy · Spark → Flame → Light",
 };

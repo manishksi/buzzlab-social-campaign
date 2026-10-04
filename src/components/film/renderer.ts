@@ -1,52 +1,24 @@
-import { band, clamp, hash, invLerp, lerp, smooth } from "@/lib/math";
+import { band, clamp, hash, invLerp, smooth } from "@/lib/math";
+import { CharacterScene, type ScenePreview } from "./character";
 
 /**
  * The background film, drawn procedurally on a 2D canvas.
- * `t` is film time: 0 = dead feed … 1.0 = the IP world … 1.2 = finale (black).
+ * `t` is film time: 0 = dead feed … 0.46 the character steps out of the dark … 1.2 = black.
  * Every scene is a pure function of (t, clock) so scrolling backwards plays the film backwards.
  */
 
-type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; kind: 0 | 1 | 2; seed: number };
-
-const SPRITE_BINS = 24;
-const FLAME_STOPS: [number, number, number][] = [
-  [255, 236, 200],
-  [255, 206, 140],
-  [247, 150, 70],
-  [239, 106, 42],
-  [180, 52, 18],
-  [90, 22, 10],
-];
-
-function rampColor(u: number): [number, number, number] {
-  const p = clamp(u) * (FLAME_STOPS.length - 1);
-  const i = Math.floor(p);
-  const f = p - i;
-  const a = FLAME_STOPS[i];
-  const b = FLAME_STOPS[Math.min(i + 1, FLAME_STOPS.length - 1)];
-  return [lerp(a[0], b[0], f), lerp(a[1], b[1], f), lerp(a[2], b[2], f)];
-}
-
-export type FilmFrame = { t: number; clock: number; dt: number; velocity: number };
+export type FilmFrame = { t: number; clock: number; dt: number; velocity: number; preview: ScenePreview };
 
 export class FilmRenderer {
   private ctx: CanvasRenderingContext2D;
   private w = 0;
   private h = 0;
   private dpr = 1;
-  private sprites: HTMLCanvasElement[] = [];
-  private particles: Particle[] = [];
-  private frames: { x: number; y: number; z: number; r: number; tall: boolean }[] = [];
-  private lowPower: boolean;
-  private seed = 1;
+  private character: CharacterScene;
 
   constructor(private canvas: HTMLCanvasElement, opts: { lowPower: boolean }) {
     this.ctx = canvas.getContext("2d", { alpha: false })!;
-    this.lowPower = opts.lowPower;
-    this.buildSprites();
-    for (let i = 0; i < (this.lowPower ? 28 : 56); i++) {
-      this.frames.push({ x: hash(i) * 2 - 1, y: hash(i + 99) * 2 - 1, z: hash(i + 7), r: hash(i + 3), tall: hash(i + 11) > 0.45 });
-    }
+    this.character = new CharacterScene(opts.lowPower);
   }
 
   resize(w: number, h: number, dpr: number) {
@@ -57,37 +29,10 @@ export class FilmRenderer {
     this.canvas.height = Math.round(h * dpr);
     this.canvas.style.width = `${w}px`;
     this.canvas.style.height = `${h}px`;
+    this.character.resize(w, h, dpr);
   }
 
-  /** Pre-tinted soft dots: drawing these is far cheaper than a gradient per particle. */
-  private buildSprites() {
-    const size = 64;
-    for (let i = 0; i < SPRITE_BINS; i++) {
-      const c = document.createElement("canvas");
-      c.width = c.height = size;
-      const g = c.getContext("2d")!;
-      const [r, gg, b] = rampColor(i / (SPRITE_BINS - 1));
-      const grad = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-      grad.addColorStop(0, `rgba(${r | 0},${gg | 0},${b | 0},1)`);
-      grad.addColorStop(0.35, `rgba(${r | 0},${gg | 0},${b | 0},0.55)`);
-      grad.addColorStop(1, `rgba(${r | 0},${gg | 0},${b | 0},0)`);
-      g.fillStyle = grad;
-      g.fillRect(0, 0, size, size);
-      this.sprites.push(c);
-    }
-  }
-
-  private rnd() {
-    this.seed = (this.seed * 16807) % 2147483647;
-    return (this.seed - 1) / 2147483646;
-  }
-
-  private emit(n: number, make: () => Particle) {
-    const cap = this.lowPower ? 380 : 900;
-    for (let i = 0; i < n && this.particles.length < cap; i++) this.particles.push(make());
-  }
-
-  render({ t, clock, dt, velocity }: FilmFrame) {
+  render({ t, clock, dt, velocity, preview }: FilmFrame) {
     const { ctx, w, h } = this;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.globalCompositeOperation = "source-over";
@@ -101,28 +46,15 @@ export class FilmRenderer {
     const camW = band(0.15, 0.2, 0.27, 0.315, t);
     const powerP = invLerp(0.15, 0.21, t);
     const tlW = band(0.205, 0.245, 0.29, 0.325, t);
-    const engineW = band(0.39, 0.425, 0.445, 0.475, t);
-    const sparkW = band(0.45, 0.49, 0.58, 0.64, t);
-    const flameW = band(0.55, 0.62, 0.74, 0.8, t);
-    const flameH = smooth(0.55, 0.76, t);
-    const energyW = band(0.66, 0.72, 0.8, 0.86, t);
-    const fireW = band(0.76, 0.82, 0.9, 0.96, t);
-    const worldW = band(0.89, 0.95, 0.995, 1.02, t);
-    const emberW = band(0.98, 1.02, 1.09, 1.13, t);
+    const engineW = band(0.39, 0.42, 0.44, 0.465, t);
 
     if (feedW > 0.01) this.drawFeed(feedW, breakP, clock, velocity);
     if (engineW > 0.01) this.drawEngine(engineW, clock, t);
     if (camW > 0.01) this.drawCamera(camW, powerP, clock, t);
     if (tlW > 0.01) this.drawTimeline(tlW, t, clock);
 
-    // ---- particles (spark → flame → fire → world → embers) ----
-    const heat = Math.max(sparkW * 0.25, flameW * (0.35 + flameH * 0.5), fireW, worldW * 0.6, emberW * 0.3);
-    if (energyW > 0.01) this.drawFrames(energyW, dt, velocity);
-    this.updateParticles({ t, dt, clock, sparkW, flameW, flameH, fireW, worldW, emberW });
-    this.drawGlow(heat, fireW, worldW);
-    this.drawParticles();
-    if (worldW > 0.01) this.drawWorld(worldW, clock, t);
-    return heat;
+    // from ACT 04 on: one continuous shot of the character, the lighter and the cigarette
+    return this.character.render(ctx, { t, clock, dt, velocity, preview });
   }
 
   // ======================================================================
@@ -517,229 +449,6 @@ export class FilmRenderer {
       ctx.stroke();
     }
     ctx.setLineDash([]);
-    ctx.globalAlpha = 1;
-  }
-
-  // ======================================================================
-  // Energy: frames rushing toward the lens
-  // ======================================================================
-  private drawFrames(alpha: number, dt: number, velocity: number) {
-    const { ctx, w, h } = this;
-    const speed = (0.12 + Math.min(Math.abs(velocity) * 0.0004, 0.5)) * dt;
-    ctx.lineWidth = 1;
-    for (const f of this.frames) {
-      f.z -= speed * (0.6 + f.r);
-      if (f.z <= 0.02) {
-        f.z = 1;
-        f.x = this.rnd() * 2 - 1;
-        f.y = this.rnd() * 2 - 1;
-      }
-      const persp = 1 / (f.z * 2.2 + 0.08);
-      const x = w / 2 + f.x * w * 0.5 * persp * 0.35;
-      const y = h / 2 + f.y * h * 0.5 * persp * 0.35;
-      const s = 40 * persp;
-      const fw = f.tall ? s * 0.5625 : s;
-      const fh = f.tall ? s : s;
-      const a = alpha * smooth(1, 0.6, f.z) * (1 - smooth(0.1, 0.02, f.z));
-      if (a < 0.01) continue;
-      ctx.globalAlpha = a;
-      ctx.fillStyle = f.r > 0.7 ? "rgba(239,106,42,0.18)" : "rgba(239,232,222,0.05)";
-      ctx.fillRect(x - fw / 2, y - fh / 2, fw, fh);
-      ctx.strokeStyle = f.r > 0.7 ? "rgba(245,165,74,0.7)" : "rgba(239,232,222,0.35)";
-      ctx.strokeRect(x - fw / 2, y - fh / 2, fw, fh);
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  // ======================================================================
-  // Particles: sparks, flame, fire, world, embers
-  // ======================================================================
-  private updateParticles(s: { t: number; dt: number; clock: number; sparkW: number; flameW: number; flameH: number; fireW: number; worldW: number; emberW: number }) {
-    const { w, h } = this;
-    const k = this.lowPower ? 0.5 : 1;
-    const dt = Math.min(s.dt, 0.05);
-    const scale = Math.min(w, h) / 900;
-
-    // sparks: occasional bursts near the lower third
-    if (s.sparkW > 0.02 && this.rnd() < 0.06 * s.sparkW) {
-      const bx = w * (0.3 + this.rnd() * 0.4);
-      const by = h * (0.62 + this.rnd() * 0.2);
-      this.emit(Math.round(14 * k), () => ({
-        x: bx, y: by, vx: (this.rnd() - 0.5) * 320, vy: -this.rnd() * 300 - 40,
-        life: 0, max: 0.4 + this.rnd() * 0.5, size: 3 + this.rnd() * 4, kind: 0, seed: this.rnd(),
-      }));
-    }
-    // flame: one source at bottom centre, growing with scroll
-    if (s.flameW > 0.02) {
-      const n = Math.round((3 + s.flameH * 10) * s.flameW * k);
-      const base = Math.min(w, h) * (0.05 + s.flameH * 0.1);
-      this.emit(n, () => ({
-        x: w / 2 + (this.rnd() - 0.5) * base * 1.4, y: h + 20,
-        vx: (this.rnd() - 0.5) * 40, vy: -(160 + this.rnd() * 180) * (0.6 + s.flameH) * scale,
-        life: 0, max: 0.9 + this.rnd() * 0.8 * (0.5 + s.flameH), size: (50 + this.rnd() * 90) * (0.6 + s.flameH) * scale, kind: 1, seed: this.rnd(),
-      }));
-    }
-    // fire: the whole bottom edge
-    if (s.fireW > 0.02) {
-      const n = Math.round(22 * s.fireW * k);
-      this.emit(n, () => ({
-        x: this.rnd() * w, y: h + 30,
-        vx: (this.rnd() - 0.5) * 60, vy: -(220 + this.rnd() * 260) * scale,
-        life: 0, max: 1.1 + this.rnd() * 1.2, size: (90 + this.rnd() * 160) * scale, kind: 1, seed: this.rnd(),
-      }));
-    }
-    // embers drift everywhere warm
-    const emberRate = Math.max(s.flameW * 0.6, s.fireW * 1.4, s.worldW * 0.5, s.emberW * 0.35, s.sparkW * 0.2);
-    if (emberRate > 0.02 && this.rnd() < emberRate * k) {
-      this.emit(1 + (this.rnd() < emberRate * 0.5 ? 1 : 0), () => ({
-        x: this.rnd() * w, y: h + 10,
-        vx: (this.rnd() - 0.5) * 30, vy: -(40 + this.rnd() * 120) * scale,
-        life: 0, max: 3 + this.rnd() * 4, size: 2 + this.rnd() * 3.5, kind: 2, seed: this.rnd(),
-      }));
-    }
-
-    const cx = w / 2;
-    const cy = h * 0.46;
-    const pull = smooth(0.9, 0.97, s.t) * (1 - smooth(1.0, 1.06, s.t));
-    const ps = this.particles;
-    for (let i = ps.length - 1; i >= 0; i--) {
-      const p = ps[i];
-      p.life += dt;
-      if (p.life >= p.max || p.y < -200) {
-        ps[i] = ps[ps.length - 1];
-        ps.pop();
-        continue;
-      }
-      if (p.kind === 0) {
-        p.vy += 520 * dt;
-      } else if (p.kind === 1) {
-        p.vx += Math.sin(s.clock * 3 + p.seed * 20 + p.y * 0.01) * 60 * dt;
-        p.vx *= 0.98;
-        // flames lean toward the world when it forms
-        if (pull > 0) {
-          p.vx += (cx - p.x) * pull * 2.2 * dt;
-          p.vy += (cy - p.y) * pull * 2.2 * dt;
-        }
-      } else {
-        p.vx += Math.sin(s.clock * 1.3 + p.seed * 40) * 18 * dt;
-      }
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-    }
-  }
-
-  private drawParticles() {
-    const { ctx } = this;
-    ctx.globalCompositeOperation = "lighter";
-    for (const p of this.particles) {
-      const u = p.life / p.max;
-      if (p.kind === 1) {
-        const bin = Math.min(SPRITE_BINS - 1, Math.floor(u * u * 0.9 * SPRITE_BINS + 1));
-        const size = p.size * (1 - u * 0.65);
-        ctx.globalAlpha = (1 - u) * 0.42 * smooth(0, 0.12, u);
-        ctx.drawImage(this.sprites[bin], p.x - size / 2, p.y - size / 2, size, size);
-      } else if (p.kind === 0) {
-        ctx.globalAlpha = 1 - u;
-        const size = p.size * 3 * (1 - u * 0.5);
-        ctx.drawImage(this.sprites[1], p.x - size / 2, p.y - size / 2, size, size);
-      } else {
-        const tw = 0.6 + 0.4 * Math.sin(p.life * 7 + p.seed * 30);
-        ctx.globalAlpha = (1 - u) * tw * 0.9;
-        const size = p.size * 3;
-        ctx.drawImage(this.sprites[3], p.x - size / 2, p.y - size / 2, size, size);
-      }
-    }
-    ctx.globalAlpha = 1;
-    ctx.globalCompositeOperation = "source-over";
-  }
-
-  private drawGlow(heat: number, fireW: number, worldW: number) {
-    const { ctx, w, h } = this;
-    if (heat < 0.01) return;
-    const g = ctx.createRadialGradient(w / 2, h * 1.05, 0, w / 2, h * 1.05, Math.max(w, h) * (0.35 + heat * 0.55));
-    g.addColorStop(0, `rgba(239,106,42,${0.32 * heat})`);
-    g.addColorStop(0.5, `rgba(180,52,18,${0.14 * heat})`);
-    g.addColorStop(1, "rgba(11,10,9,0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, w, h);
-    if (fireW > 0.05) {
-      const lg = ctx.createLinearGradient(0, h, 0, h * 0.35);
-      lg.addColorStop(0, `rgba(239,106,42,${0.22 * fireW})`);
-      lg.addColorStop(1, "rgba(239,106,42,0)");
-      ctx.fillStyle = lg;
-      ctx.fillRect(0, 0, w, h);
-    }
-    void worldW;
-  }
-
-  // ======================================================================
-  // The world: everything collapses into one place of its own
-  // ======================================================================
-  private drawWorld(alpha: number, clock: number, t: number) {
-    const { ctx, w, h } = this;
-    const cx = w / 2;
-    const cy = h * 0.46;
-    const R = Math.min(w, h) * 0.15 * (0.6 + 0.4 * smooth(0.89, 0.97, t));
-    ctx.globalAlpha = alpha;
-    // halo
-    const halo = ctx.createRadialGradient(cx, cy, R * 0.8, cx, cy, R * 3.2);
-    halo.addColorStop(0, "rgba(245,165,74,0.28)");
-    halo.addColorStop(1, "rgba(245,165,74,0)");
-    ctx.fillStyle = halo;
-    ctx.fillRect(cx - R * 3.4, cy - R * 3.4, R * 6.8, R * 6.8);
-    // ring (back half)
-    const tilt = 0.28;
-    const spin = clock * 0.25;
-    ctx.lineWidth = 1.2;
-    ctx.strokeStyle = "rgba(239,232,222,0.35)";
-    ctx.setLineDash([3, 7]);
-    ctx.lineDashOffset = -clock * 20;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, R * 1.9, R * 1.9 * tilt, -0.22, Math.PI, Math.PI * 2);
-    ctx.stroke();
-    // sphere
-    const body = ctx.createRadialGradient(cx - R * 0.35, cy - R * 0.4, R * 0.1, cx, cy, R);
-    body.addColorStop(0, "#ffd6a0");
-    body.addColorStop(0.35, "#ef6a2a");
-    body.addColorStop(0.8, "#4a1708");
-    body.addColorStop(1, "#160805");
-    ctx.fillStyle = body;
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.fill();
-    // latitude lines turning
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, R, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.setLineDash([]);
-    ctx.strokeStyle = "rgba(255,214,160,0.18)";
-    for (let i = 0; i < 6; i++) {
-      const ph = ((spin + i / 6) % 1) * Math.PI;
-      const rx = Math.abs(Math.cos(ph)) * R;
-      ctx.beginPath();
-      ctx.ellipse(cx, cy, rx, R, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.restore();
-    // ring (front half)
-    ctx.strokeStyle = "rgba(255,214,160,0.7)";
-    ctx.setLineDash([3, 7]);
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, R * 1.9, R * 1.9 * tilt, -0.22, 0, Math.PI);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    // orbiting satellites
-    for (let i = 0; i < 9; i++) {
-      const a = clock * (0.3 + i * 0.05) + i * 2.1;
-      const rr = R * (1.35 + (i % 3) * 0.32);
-      const x = cx + Math.cos(a) * rr;
-      const y = cy + Math.sin(a) * rr * tilt * 1.4 - Math.cos(a) * 0.22 * rr * tilt;
-      ctx.fillStyle = i % 3 === 0 ? "#f5a54a" : "rgba(239,232,222,0.8)";
-      ctx.beginPath();
-      ctx.arc(x, y, i % 3 === 0 ? 3 : 1.6, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.globalAlpha = 1;
   }
 

@@ -4,12 +4,17 @@ import { useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { flame as F } from "@/content/strategy";
+import { filmKeys } from "@/lib/film-keys";
 import { PhaseHeader } from "./PhaseHeader";
 import { FootageSlot } from "@/components/ui/FootageSlot";
 import { Reveal } from "@/components/ui/Reveal";
 import type { ReelKind } from "@/components/ui/PreviewReel";
 
-/** PHASE 02 — five recurring series, presented as a programme lineup. */
+/**
+ * PHASE 02 — five recurring series, presented as a programme lineup.
+ * In the film: the lighter catches as FLAME comes up, he lights the cigarette across the quote,
+ * and the lighter is put away as the lineup starts.
+ */
 export function Flame() {
   const root = useRef<HTMLElement>(null);
   const [sel, setSel] = useState(0);
@@ -23,6 +28,24 @@ export function Flame() {
         .fromTo("[data-from]", { opacity: 1 }, { opacity: 0.25, ease: "none" }, 0)
         .fromTo("[data-from-strike]", { scaleX: 0 }, { scaleX: 1, ease: "none" }, 0)
         .fromTo("[data-to]", { opacity: 0.15, letterSpacing: "0.2em" }, { opacity: 1, letterSpacing: "0em", ease: "none" }, 0.2);
+
+      const el = root.current!;
+      const abs = (sel: string) => {
+        const r = el.querySelector(sel)!.getBoundingClientRect();
+        return { top: r.top + window.scrollY, bottom: r.bottom + window.scrollY };
+      };
+      const off = filmKeys.register("flame", () => {
+        const vh = window.innerHeight;
+        const keys = [
+          { y: abs("h2").top - vh * 0.6, t: 0.597 }, // it catches as FLAME comes up
+          { y: abs("blockquote").top - vh * 0.7, t: 0.63 }, // up to the cigarette
+          { y: abs("blockquote").bottom - vh * 0.55, t: 0.676 }, // lit
+          { y: abs("[data-lineup]").top - vh * 0.45, t: 0.705 }, // lighter away
+        ];
+        for (let i = 1; i < keys.length; i++) keys[i].y = Math.max(keys[i].y, keys[i - 1].y + 1);
+        return keys;
+      });
+      return () => off();
     },
     { scope: root },
   );
@@ -36,7 +59,7 @@ export function Flame() {
           <Reveal as="p" className="t-big max-w-[18ch]">
             {F.quote[0]}
           </Reveal>
-          <Reveal as="p" className="t-serif mt-3 max-w-[24ch] text-[clamp(2rem,4.4vw,4.4rem)] leading-[1.02] text-amber" delay={0.15}>
+          <Reveal as="p" className="t-serif mt-3 max-w-[24ch] text-[clamp(2rem,4.4vw,4.4rem)] leading-[1.02] text-amber lg:max-w-[20ch]" delay={0.15}>
             {F.quote[1]}
           </Reveal>
         </blockquote>

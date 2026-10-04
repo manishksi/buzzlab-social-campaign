@@ -16,16 +16,13 @@ import { Engine } from "./sections/Engine";
 import { LighterSelector } from "./sections/LighterSelector";
 import { Spark } from "./sections/Spark";
 import { Flame } from "./sections/Flame";
-import { Fire } from "./sections/Fire";
-import { Pillars } from "./sections/Pillars";
-import { Rhythm } from "./sections/Rhythm";
+import { Light } from "./sections/Light";
 import { Pipeline } from "./sections/Pipeline";
-import { Measure } from "./sections/Measure";
 import { Finale } from "./sections/Finale";
 
 /**
  * The whole presentation is one page: a fixed scroll-scrubbed film at the back,
- * twelve acts scrolling over it, and a thin layer of chrome on top.
+ * ten acts scrolling over it, and a thin layer of chrome on top.
  */
 export function Experience() {
   return (
@@ -42,11 +39,8 @@ export function Experience() {
         <LighterSelector />
         <Spark />
         <Flame />
-        <Fire />
-        <Pillars />
-        <Rhythm />
+        <Light />
         <Pipeline />
-        <Measure />
         <Finale />
       </main>
       <IgniteOverlay />

@@ -7,7 +7,7 @@ import { scrollToId, useLenis } from "./SmoothScroll";
 
 export type IgniteDetail = { x: number; y: number; target: string };
 
-/** Listens for "ignite:go" and burns the screen through to the chosen phase. */
+/** Listens for "ignite:go": warm light opens out of the flame, the cut happens inside it, then it dissolves. */
 export function IgniteOverlay() {
   const el = useRef<HTMLDivElement>(null);
   const lenis = useLenis();
@@ -27,9 +27,9 @@ export function IgniteOverlay() {
           },
         })
         .set(node, { autoAlpha: 1, clipPath: `circle(0% at ${at})`, "--fx": `${x}px`, "--fy": `${y}px` })
-        .to(node, { clipPath: `circle(150% at ${at})`, duration: 0.85, ease: "expo.in" })
+        .to(node, { clipPath: `circle(150% at ${at})`, duration: 0.9, ease: "power2.in" })
         .add(() => scrollToId(lenis, target, { immediate: true }))
-        .to(node, { autoAlpha: 0, duration: 0.9, ease: "power2.out" }, "+=0.12");
+        .to(node, { autoAlpha: 0, duration: 1.1, ease: "power2.out" }, "+=0.15");
     };
     window.addEventListener("ignite:go", onGo);
     return () => window.removeEventListener("ignite:go", onGo);
@@ -42,7 +42,7 @@ export function IgniteOverlay() {
       className="pointer-events-none fixed inset-0 z-[75] opacity-0"
       style={{
         background:
-          "radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), #fff1d8 0%, #ffd6a0 6%, #f5a54a 14%, #ef6a2a 26%, #8a2a0c 44%, #1a0a05 70%, #0b0a09 100%)",
+          "radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), rgba(255,236,210,.95) 0%, rgba(245,190,120,.6) 5%, rgba(150,78,34,.4) 14%, #1a120d 34%, #0b0a09 60%)",
       }}
     />
   );

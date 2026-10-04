@@ -1,7 +1,7 @@
 # BuzzLab — Light It Up
 
 An interactive, scroll-driven presentation of BuzzLab's 6-month Instagram growth and content strategy.
-It plays like one continuous film: **Dead feed → Creation → Spark → Flame → Fire → Original IP.**
+It plays like one continuous film: **Dead feed → Creation → Spark → Flame → Light**, then the cigarette is put out and the next chapter begins.
 
 ## Run it
 
@@ -14,11 +14,11 @@ npm start          # serves /out on http://localhost:3000
 
 `/out` is a plain static site. Deploy it anywhere (Vercel, Netlify, S3) or open it from a USB stick with any static server.
 For the pitch, present on a laptop in Chrome or Safari, full screen, scrolling with a trackpad.
-Turn **Sound on** (top right) for the lighter clicks and ignition.
+Turn **Sound on** (top right) for the lighter wheel and ignition in ACT 04.
 
 ## Edit the words
 
-All copy, phases, series, pillars, the weekly rhythm, pipeline stages and metrics live in
+All copy, phases, series, pipeline stages and the final lines live in
 `src/content/strategy.ts`. Components only render it.
 
 ## Add real footage
@@ -35,10 +35,11 @@ ffmpeg commands that keep scroll-scrubbing smooth.
 - **Lenis** smooth scrolling on GSAP's ticker
 - **Motion** (Framer Motion) for the index menu, act indicator and preview swaps
 - **Background film**: `src/components/film/renderer.ts` draws the whole film on a 2D canvas as a pure
-  function of scroll position (dead feed, camera power-on, edit timeline, sparks, flame, fire, the IP
-  world). When `film.src` is set it scrubs your real video instead.
-- **The lighter** (`src/components/lighter/Lighter.tsx`) is an SVG with a hinged lid, knurled wheel,
-  three-layer flame and spark bursts; it is the phase selector.
+  function of scroll position (dead feed, camera power-on, edit timeline). From ACT 04 on it hands over
+  to `src/components/film/character.ts`: one continuous shot of an original noir figure on the right of
+  frame — the lighter is sparked, catches, lights his cigarette, the cigarette burns down with the scroll,
+  and at the end he drops it and steps on it. Hovering a phase in ACT 04 plays that moment on him.
+  When `film.src` is set the site scrubs your real video instead.
 - Sound effects are synthesised with Web Audio, so there are no audio files.
 
 ```
@@ -47,11 +48,10 @@ src/
   content/strategy.ts   every word on the page
   content/media.ts      footage slots
   components/
-    film/               scroll-scrubbed background film
-    lighter/            the lighter
+    film/               scroll-scrubbed background film and the character shot
     chrome/             top bar, index menu, cursor, phase rail, intro slate, ignite transition
-    sections/           the twelve acts
-    ui/                 reveals, counters, footage slots, placeholder reels
+    sections/           the ten acts (00–09)
+    ui/                 reveals, footage slots, placeholder reels
 public/assets/
   video/ images/ icons/ fonts/
 ```

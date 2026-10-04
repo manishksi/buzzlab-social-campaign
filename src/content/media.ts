@@ -34,7 +34,7 @@ export const film: MediaSlot = {
   poster: null,
   file: "/assets/video/film.mp4",
   brief:
-    "One continuous 60–90s piece, landscape 16:9. Dead feed → camera powers on → edit timeline → first spark → flame → everything on fire → a single glowing world. Dark, slow, low-key; text sits on top of it.",
+    "One continuous 60–90s piece, landscape 16:9. Dead feed → camera powers on → edit timeline → then one man in profile on the right of frame, low-key: he sparks a lighter, it catches, he lights a cigarette, smokes it down, drops it and steps on it. Dark, slow, minimal; text sits on top of it.",
 };
 
 export const slots: Record<string, MediaSlot> = {

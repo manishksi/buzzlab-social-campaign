@@ -4,7 +4,7 @@ import { meta } from "@/content/strategy";
 
 export const metadata: Metadata = {
   title: meta.title,
-  description: "BuzzLab's 6-month Instagram growth and content strategy: Spark, Flame, Fire.",
+  description: "BuzzLab's 6-month Instagram growth and content strategy: Spark, Flame, Light.",
 };
 
 export const viewport: Viewport = {

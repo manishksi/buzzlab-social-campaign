@@ -9,9 +9,11 @@ type State = {
   act: number;
   progress: number;
   igniting: boolean;
+  /** ACT 04 hover: which phase the character is previewing. */
+  preview: "spark" | "flame" | "light" | null;
 };
 
-let state: State = { sound: false, menuOpen: false, act: 0, progress: 0, igniting: false };
+let state: State = { sound: false, menuOpen: false, act: 0, progress: 0, igniting: false, preview: null };
 const listeners = new Set<() => void>();
 
 export const store = {
