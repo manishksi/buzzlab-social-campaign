@@ -372,19 +372,6 @@ export const measure = {
   cadence: "48-hour check · 7-day review · monthly deep dive",
 };
 
-/** The content mix, set like the faders on a desk: people carry the page, everything else gives it range. */
-export const mix = {
-  label: "The content mix",
-  title: "Mixed like a track, not cut like a pie.",
-  channels: [
-    { name: "People", share: 40, items: "Team · personality · culture · characters" },
-    { name: "Process", share: 20, items: "BTS · production · editing" },
-    { name: "Proof", share: 20, items: "Client work · campaigns · results" },
-    { name: "Play", share: 10, items: "Experiments · trends · challenges" },
-    { name: "IP", share: 10, items: "Original formats · series · shows" },
-  ],
-};
-
 /** The weekly broadcast schedule and the monthly output it adds up to. */
 export const rhythm = {
   label: "The broadcast schedule",

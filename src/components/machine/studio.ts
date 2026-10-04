@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
-import { applyPose, blink, breathe, makePerson, POSES, type Person } from "./people";
+import { anchorWorld, applyPose, blink, breathe, makePerson, orientHand, POSES, reach, type Person } from "./people";
 import { cinemaCamera, directorsChair, mats, microphone, softbox } from "./props";
 import { contentTextures } from "./textures";
 import type { Label } from "./worlds";
@@ -10,14 +10,16 @@ import type { Label } from "./worlds";
 /**
  * THE STUDIO — ACT 02 → ACT 03 as one continuous camera move through one physical place.
  *
- *   .00  wide: an editor at his desk in the dark, the monitor the brightest thing in the room
- *   .22  over his shoulder: the edit, the timeline, the footage
- *   .32  round the desk: keyboard, mouse, drives, cards, a lens, notes, coffee
- *   .48  past the monitor — the room keeps going
- *   .58  a second edit bay, a storyboard wall, the production table
- *   .68  the set: camera, DOP, softboxes, talent on a stool, the director at a monitor
- *   .86  crane up: the whole creative machine
- *   .93  the lights go out, one zone at a time (into ACT 04)
+ * Directed as a handful of motivated moves, each from one focal point to the next, each starting
+ * and ending softly, and never through anything:
+ *   .00  hold: a wide on the editor at his desk in the dark, the monitor the brightest thing
+ *   .10  a slow push over his right shoulder onto the edit and the timeline
+ *   .26  a lateral glide along the desk to the camera body beside the lamp
+ *   .36  rise and pull back: the desk becomes foreground, the room beyond starts to light up
+ *   .50  a high crane forward down the middle of the studio (above the table, clear of every
+ *        board, stand and lamp): the second bay, the storyboard wall, the production table
+ *   .76  down to eye level on the set: camera, DOP, talent, director, producer
+ *   .88  a slow widen while the lights go out, zone by zone (into ACT 04)
  *
  * Driven by `t` (0 → 1) from scroll, plus a clock for life. Units are metres.
  */
@@ -29,46 +31,65 @@ const sm = (a: number, b: number, v: number) => {
 };
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
-type Key = [number, number, number, number, number, number, number];
 /** a part of the room that lights up as the camera reaches it (`at`, in world time) */
 type Zone = { at: number; lights: { l: THREE.Light; i: number }[]; glows: THREE.MeshBasicMaterial[]; tints: { m: THREE.MeshStandardMaterial; c: THREE.Color }[] };
-const CAM: Key[] = [
-  [0.0, 2.7, 1.75, 3.4, 0.05, 0.95, -0.15],
-  [0.12, 1.35, 1.5, 1.75, 0, 1.02, -0.25],
-  [0.22, 0.62, 1.45, 1.0, -0.06, 1.1, -0.25],
-  [0.31, 1.02, 1.1, 0.74, 0.22, 0.82, 0.02],
-  [0.39, 0.66, 1.04, -0.56, 0.02, 1.17, 0.5],
-  [0.44, 0.2, 1.72, -0.7, -1.3, 1.2, -2.2],
-  [0.5, -0.7, 1.45, -1.05, -1.9, 1.15, -3.0],
-  [0.58, -0.35, 1.55, -2.0, 1.3, 1.2, -3.6],
-  [0.68, 2.3, 1.7, -5.3, -0.3, 1.1, -8.2],
-  [0.78, -1.6, 1.95, -4.95, -0.3, 1.15, -8.6],
-  [0.89, 4.8, 5.6, 1.6, -0.3, 0.6, -4.6],
-  [1.0, 5.4, 6.4, 2.6, -0.3, 0.5, -4.6],
+type V3 = [number, number, number];
+/** the shot list: where the camera is (p), what it looks at (l), and an optional arc control point */
+const SHOTS: { t: number; p: V3; l: V3; via?: V3 }[] = [
+  { t: 0.0, p: [2.15, 1.72, 3.05], l: [0.0, 1.0, -0.2] },
+  { t: 0.1, p: [2.0, 1.68, 2.85], l: [0.0, 1.02, -0.22] },
+  { t: 0.26, p: [0.52, 1.45, 1.22], l: [-0.02, 1.12, -0.24] },
+  { t: 0.36, p: [0.98, 1.3, 0.95], l: [0.64, 0.92, -0.08] },
+  { t: 0.5, p: [1.75, 2.15, 2.4], l: [0.2, 0.95, -2.6] },
+  { t: 0.64, p: [0.6, 2.8, -0.6], l: [0.3, 0.9, -4.8], via: [1.95, 2.6, 0.9] },
+  { t: 0.76, p: [0.05, 3.1, -3.4], l: [0.0, 1.0, -8.6] },
+  { t: 0.88, p: [1.65, 1.68, -6.2], l: [-0.15, 1.2, -8.7], via: [1.4, 2.8, -5.0] },
+  { t: 1.0, p: [2.6, 3.4, -2.6], l: [-0.3, 0.9, -7.2], via: [2.4, 2.4, -4.8] },
 ];
+const DOWN = new THREE.Vector3(0, -1, 0);
+/** the editor faces -z: "away" is forward for him; his elbows go out, down and back */
+const AWAY = new THREE.Vector3(0, -0.15, -1);
+const POLE_R = new THREE.Vector3(1, -1, 1);
+const POLE_L = new THREE.Vector3(-1, -1, 1);
 
-function catmull(p0: number, p1: number, p2: number, p3: number, t: number) {
-  const t2 = t * t;
-  const t3 = t2 * t;
-  return 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+function officeChair(steel: THREE.Material) {
+  const chair = new THREE.Group();
+  const cmat = new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.7 });
+  const seat = new THREE.Mesh(new RoundedBoxGeometry(0.5, 0.08, 0.48, 3, 0.03), cmat);
+  seat.position.y = 0.47;
+  const backrest = new THREE.Mesh(new RoundedBoxGeometry(0.46, 0.6, 0.07, 3, 0.03), cmat);
+  backrest.position.set(0, 0.86, -0.27);
+  backrest.rotation.x = -0.12;
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.32, 10), steel);
+  post.position.y = 0.26;
+  chair.add(seat, backrest, post);
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    const legc = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.03, 0.04), steel);
+    legc.position.set(Math.cos(a) * 0.15, 0.08, Math.sin(a) * 0.15);
+    legc.rotation.y = -a;
+    chair.add(legc);
+    const caster = new THREE.Mesh(new THREE.SphereGeometry(0.025, 8, 8), cmat);
+    caster.position.set(Math.cos(a) * 0.3, 0.025, Math.sin(a) * 0.3);
+    chair.add(caster);
+  }
+  chair.traverse((n) => ((n as THREE.Mesh).castShadow = true));
+  return chair;
 }
+
+/** Each move eases in and out (smootherstep), so the camera settles on every focal point. */
 function camAt(t: number, p: THREE.Vector3, l: THREE.Vector3) {
   let i = 0;
-  while (i < CAM.length - 2 && t > CAM[i + 1][0]) i++;
-  const b = CAM[i];
-  const c = CAM[i + 1];
-  const dist = (x: Key, y: Key) => Math.hypot(x[1] - y[1], x[2] - y[2], x[3] - y[3]);
-  const span = dist(b, c);
-  // a neighbour much further away than this segment would make the spline overshoot: mirror instead
-  const mirror = (from: Key, to: Key) => from.map((v, k) => (k === 0 ? v : 2 * v - to[k])) as Key;
-  let a = CAM[Math.max(0, i - 1)];
-  let d = CAM[Math.min(CAM.length - 1, i + 2)];
-  if (dist(a, b) > span * 1.8) a = mirror(b, c);
-  if (dist(c, d) > span * 1.8) d = mirror(c, b);
-  const u = clamp((t - b[0]) / (c[0] - b[0]));
-  const v = [1, 2, 3, 4, 5, 6].map((k) => catmull(a[k], b[k], c[k], d[k], u));
-  p.set(v[0], v[1], v[2]);
-  l.set(v[3], v[4], v[5]);
+  while (i < SHOTS.length - 2 && t > SHOTS[i + 1].t) i++;
+  const a = SHOTS[i];
+  const b = SHOTS[i + 1];
+  const u = clamp((t - a.t) / (b.t - a.t));
+  const e = u * u * u * (u * (u * 6 - 15) + 10);
+  for (let k = 0; k < 3; k++) {
+    const v = b.via ? (1 - e) * (1 - e) * a.p[k] + 2 * (1 - e) * e * b.via[k] + e * e * b.p[k] : lerp(a.p[k], b.p[k], e);
+    p.setComponent(k, v);
+    l.setComponent(k, lerp(a.l[k], b.l[k], e));
+  }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -291,7 +312,8 @@ export class StudioScene {
   private T = contentTextures();
   private edit: EditScreen;
   private editor!: Person;
-  private crew: { p: Person; kind: string; seed: number }[] = [];
+  private crew: { p: Person; seed: number; pose: (k: number) => void }[] = [];
+  private V = new THREE.Vector3();
   private mouse!: THREE.Object3D;
   private zones: Zone[] = [];
   private master!: THREE.HemisphereLight;
@@ -382,7 +404,7 @@ export class StudioScene {
     A.glows.push(screen.material as THREE.MeshBasicMaterial);
     mon.position.set(0, 1.205, -0.24);
     s.add(mon);
-    this.mark("edit", "The edit — v07", mon, 0.3, 0.13, 0.25);
+    this.mark("edit", "The edit — v07", mon, 0.3, 0.16, 0.28);
     const glow = new THREE.RectAreaLight(0xcfe0ff, 3.2, 0.73, 0.41);
     glow.position.set(0, 1.205, -0.21);
     glow.lookAt(0, 1.0, 1);
@@ -464,7 +486,6 @@ export class StudioScene {
       d.rotation.y = 0.2 * i;
       d.castShadow = true;
       s.add(d);
-      if (i === 2) this.mark("drives", "Drives · cards · 2.4 TB of footage", d, 0.05, 0.27, 0.36);
     }
     for (let i = 0; i < 4; i++) {
       const card = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.003, 0.024), new THREE.MeshStandardMaterial({ color: i % 2 ? 0x222222 : 0x3a3a3a, roughness: 0.5 }));
@@ -481,7 +502,7 @@ export class StudioScene {
     lg.rotation.x = -Math.PI / 2;
     lg.position.y = 0.061;
     lens.add(lb1, lr, lg);
-    lens.position.set(0.66, 0.825, 0.05);
+    lens.position.set(0.5, 0.825, 0.16);
     s.add(lens);
     const nb = new THREE.Mesh(new RoundedBoxGeometry(0.17, 0.018, 0.23, 2, 0.004), new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.8 }));
     nb.position.set(0.58, 0.773, 0.3);
@@ -496,7 +517,6 @@ export class StudioScene {
     notes.rotation.z = 0.25;
     notes.position.set(-0.3, 0.7655, 0.31);
     s.add(notes);
-    this.mark("notes", "Notes: hook first, logo last", lens, 0.12, 0.27, 0.36);
     const mug = new THREE.Group();
     const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.09, 24), new THREE.MeshStandardMaterial({ color: 0xeeebe3, roughness: 0.4 }));
     const handle = new THREE.Mesh(new THREE.TorusGeometry(0.022, 0.006, 8, 16), new THREE.MeshStandardMaterial({ color: 0xeeebe3, roughness: 0.4 }));
@@ -507,17 +527,14 @@ export class StudioScene {
     const coaster = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.005, 32), new THREE.MeshStandardMaterial({ color: 0xf2ea10, roughness: 0.7 }));
     coaster.position.y = -0.047;
     mug.add(cup, handle, coffee, coaster);
-    mug.position.set(0.48, 0.81, -0.02);
+    mug.position.set(0.3, 0.81, -0.1);
     s.add(mug);
     for (let i = 0; i < 3; i++) {
       const st = new THREE.Mesh(new THREE.PlaneGeometry(0.03, 0.12), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05, depthWrite: false }));
-      st.position.set(0.48 + (i - 1) * 0.01, 0.92, -0.02);
+      st.position.set(0.3 + (i - 1) * 0.01, 0.92, -0.1);
       s.add(st);
       this.steam.push(st);
     }
-    const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.22, 20), new THREE.MeshPhysicalMaterial({ color: 0xffffff, transmission: 0.0, roughness: 0.15, transparent: true, opacity: 0.28 }));
-    bottle.position.set(-0.8, 0.875, 0.05);
-    s.add(bottle);
     const clap = new THREE.Group();
     const cb = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.085, 0.008), new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.6 }));
     const ct = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, 0.008), new THREE.MeshStandardMaterial({ color: 0xeeebe3, roughness: 0.6 }));
@@ -562,10 +579,18 @@ export class StudioScene {
     chair.rotation.y = Math.PI;
     s.add(chair);
     // the editor
-    this.editor = makePerson({ shirt: 0xf3ec18, oversized: true, headphones: true, hairStyle: "short", skin: 0xb98463 });
-    this.editor.root.position.set(0.02, 0, 0.6);
+    this.editor = makePerson({ sex: "m", outfit: "tee", top: 0xf2e300, bottom: 0x121212, hair: "short02", hairColor: 0x2d241d, shoes: "sneakers", headphones: true });
+    this.editor.root.position.set(0.02, 0, 0.62);
     this.editor.root.rotation.y = Math.PI;
     s.add(this.editor.root);
+    // the camera body beside the lamp: where the camera's eye goes after the edit
+    const deskCam = cinemaCamera(T);
+    deskCam.group.scale.setScalar(0.32);
+    deskCam.legs.visible = false;
+    deskCam.group.position.set(0.68, 0.856, -0.06);
+    deskCam.group.rotation.y = 2.5;
+    s.add(deskCam.group);
+    this.mark("gear", "The camera — the shoot comes back here", deskCam.group, 0.22, 0.29, 0.42);
     // a gear shelf behind the desk
     const shelf = new THREE.Group();
     for (let i = 0; i < 3; i++) {
@@ -587,7 +612,7 @@ export class StudioScene {
     s.add(shelf);
 
     // ================= ZONE B: second bay, storyboard wall, production table =================
-    const B = this.zone(0.36);
+    const B = this.zone(0.4);
     const bay = new THREE.Group();
     const bayDesk = new THREE.Mesh(new RoundedBoxGeometry(1.4, 0.04, 0.7, 2, 0.01), wood);
     bayDesk.position.y = 0.74;
@@ -616,11 +641,30 @@ export class StudioScene {
     bayLamp.target.position.set(-2.6, 0.75, -3.0);
     s.add(bayLamp, bayLamp.target);
     B.lights.push({ l: bayLamp, i: 7 });
-    const assistant = makePerson({ shirt: 0x2b2b2b, hairStyle: "bun", female: true, skin: 0xa8765a, hair: 0x120d09, sleeves: "long" });
-    assistant.root.position.set(-2.3, 0, -2.75);
-    assistant.root.rotation.y = 0.9 + Math.PI;
-    s.add(assistant.root);
-    this.crew.push({ p: assistant, kind: "assistant", seed: 1 });
+    if (!low) {
+      const ac = officeChair(steel);
+      ac.position.set(-2.3, 0, -2.75);
+      ac.rotation.y = 0.9 + Math.PI;
+      s.add(ac);
+      const assistant = makePerson({ sex: "f", outfit: "tee", top: 0x2b2b2b, bottom: 0x1d2330, hair: "ponytail01", hairColor: 0x221a14, shoes: "sneakers" });
+      assistant.root.position.set(-2.3, 0, -2.75);
+      assistant.root.rotation.y = 0.9 + Math.PI;
+      s.add(assistant.root);
+      const kL = assistant.root.localToWorld(new THREE.Vector3(0.14, 0.8, 0.36));
+      const kR = assistant.root.localToWorld(new THREE.Vector3(-0.2, 0.8, 0.34));
+      const fwd = new THREE.Vector3(0, 0, 1).applyQuaternion(assistant.root.quaternion);
+      this.crew.push({
+        p: assistant,
+        seed: 1,
+        pose: (k) => {
+          applyPose(assistant, POSES.sit, { spine: [0.18, 0, 0], head: [0.12, 0, 0] });
+          reach(assistant, "L", this.V.copy(kL).add(new THREE.Vector3(0, Math.max(0, Math.sin(k * 9)) * 0.01, 0)), new THREE.Vector3(1, -1, -1).applyQuaternion(assistant.root.quaternion));
+          reach(assistant, "R", kR, new THREE.Vector3(-1, -1, -1).applyQuaternion(assistant.root.quaternion));
+          orientHand(assistant, "L", fwd, DOWN);
+          orientHand(assistant, "R", fwd, DOWN);
+        },
+      });
+    }
     // storyboard + moodboard wall
     const wallMat2 = new THREE.MeshStandardMaterial({ map: boardTexture(T), roughness: 0.85 });
     B.tints.push({ m: wallMat2, c: new THREE.Color(0xffffff) });
@@ -628,7 +672,7 @@ export class StudioScene {
     wall.position.set(1.85, 1.35, -3.7);
     wall.rotation.y = -0.5;
     s.add(wall);
-    this.mark("boards", "Boards & mood — the idea gets a shape", wall, 0.9, 0.53, 0.64);
+    this.mark("boards", "Boards & mood — the idea gets a shape", wall, 0.9, 0.56, 0.68);
     for (const dx of [-1.2, 1.2]) {
       const st = new THREE.Mesh(new THREE.BoxGeometry(0.04, 1.4, 0.04), steel);
       st.position.set(1.85 + dx * Math.cos(0.5), 0.3, -3.7 + dx * Math.sin(0.5));
@@ -639,11 +683,23 @@ export class StudioScene {
     wallLight.target.position.set(1.85, 1.3, -3.7);
     s.add(wallLight, wallLight.target);
     B.lights.push({ l: wallLight, i: 14 });
-    const creative = makePerson({ shirt: 0xeeebe3, hairStyle: "buzz", skin: 0x8a5a3e, pants: 0x2a2a2a });
-    creative.root.position.set(2.35, 0, -2.75);
-    creative.root.rotation.y = 2.3;
-    s.add(creative.root);
-    this.crew.push({ p: creative, kind: "pointing", seed: 2 });
+    if (!low) {
+      const creative = makePerson({ sex: "m", outfit: "whitetee", hair: "short01", hairColor: 0x1d1612, shoes: "navy", skin: "skin_m_deep" });
+      creative.root.position.set(2.45, 0, -2.75);
+      creative.root.rotation.y = 2.45;
+      s.add(creative.root);
+      // the card he's about to move on the board
+      const onBoard = wall.localToWorld(new THREE.Vector3(0.62, 0.05, 0.05));
+      this.crew.push({
+        p: creative,
+        seed: 2,
+        pose: (k) => {
+          const up = 0.5 + 0.5 * Math.sin(k * 0.45);
+          applyPose(creative, POSES.stand, { head: [0.05, 0.15, 0], spine: [0, 0.15, 0] });
+          reach(creative, "R", this.V.copy(onBoard).add(new THREE.Vector3(0, up * 0.12, 0)).lerp(creative.root.localToWorld(new THREE.Vector3(-0.2, 1.0, 0.25)), 1 - up), new THREE.Vector3(1, -1, 0).applyQuaternion(creative.root.quaternion));
+        },
+      });
+    }
     // the production table
     const table = new THREE.Group();
     const top = new THREE.Mesh(new RoundedBoxGeometry(2.0, 0.05, 0.95, 2, 0.01), wood);
@@ -686,8 +742,8 @@ export class StudioScene {
     table.add(laptop);
     table.position.set(0.05, 0, -4.75);
     s.add(table);
-    this.mark("table", "Production table — scripts, products, the plan", table, 1.0, 0.56, 0.66);
-    this.mark("bay", "Second edit bay", bay, 1.5, 0.46, 0.56);
+    this.mark("table", "Production table — scripts, products, the plan", table, 1.0, 0.64, 0.76);
+    this.mark("bay", "Second edit bay", bay, 1.5, 0.52, 0.64);
     for (const x of [-0.5, 0.6]) {
       const cordL = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 1.6, 6), cableMat);
       cordL.position.set(x, 3.0, -4.75);
@@ -705,7 +761,7 @@ export class StudioScene {
     }
 
     // ================= ZONE C: the set =================
-    const C = this.zone(0.52);
+    const C = this.zone(0.64);
     // a cyc: floor sweeping up into a wall
     const cycMat = new THREE.MeshStandardMaterial({ color: 0xd9d6cf, roughness: 0.9 });
     C.tints.push({ m: cycMat, c: new THREE.Color(0xd9d6cf) });
@@ -735,23 +791,41 @@ export class StudioScene {
     }
     stool.position.set(0, 0, -9.2);
     s.add(stool);
-    const talent = makePerson({ shirt: 0x0e0e0e, hairStyle: "bob", female: true, skin: 0xc9926e, hair: 0x1c120b, sleeves: "long", pants: 0x2e2a26 });
-    talent.root.position.set(0, 0.16, -9.15);
+    const talent = makePerson({ sex: "f", outfit: "tee", top: 0x101010, bottom: 0x2a2626, hair: "bob01", hairColor: 0x2a1d14, shoes: "boots", skin: "skin_f_light", trimFringe: true });
+    talent.root.position.set(0, 0, -9.12);
     s.add(talent.root);
-    this.crew.push({ p: talent, kind: "talent", seed: 3 });
-    this.mark("talent", "Talent", talent.root, 1.55, 0.64, 0.82);
+    const kneeL = talent.root.localToWorld(new THREE.Vector3(0.12, 0.7, 0.36));
+    const kneeR = talent.root.localToWorld(new THREE.Vector3(-0.12, 0.7, 0.36));
+    this.crew.push({
+      p: talent,
+      seed: 3,
+      pose: (k) => {
+        applyPose(talent, POSES.sit, { hipY: 0.76, hipL: [0.12, 0, 0.12], kneeL: [-0.18, 0, 0], hipR: [0.12, 0, -0.1], kneeR: [-0.12, 0, 0], ankleL: [-0.1, 0, 0], ankleR: [-0.1, 0, 0], head: [0, Math.sin(k * 0.4) * 0.15, 0], spine: [0.04, 0, 0] });
+        reach(talent, "L", kneeL, new THREE.Vector3(1, -0.5, -1));
+        reach(talent, "R", kneeR, new THREE.Vector3(-1, -0.5, -1));
+      },
+    });
+    this.mark("talent", "Talent", talent.root, 1.55, 0.8, 0.92);
     // camera on sticks + DOP
     const setCam = cinemaCamera(T);
     setCam.group.position.set(0.1, 1.45, -7.2);
     setCam.group.rotation.y = -Math.PI / 2;
     s.add(setCam.group);
     this.dimWith(setCam.group, C);
-    const dop = makePerson({ shirt: 0x1b1b1b, hairStyle: "short", skin: 0xa36f52, sleeves: "long", hair: 0x0e0a07 });
-    dop.root.position.set(0.32, 0, -6.55);
+    const dop = makePerson({ sex: "m", outfit: "jacket", hair: "short04", hairColor: 0x1d1612, shoes: "sneakers" });
+    dop.root.position.set(0.34, 0, -6.45);
     dop.root.rotation.y = Math.PI;
     s.add(dop.root);
-    this.crew.push({ p: dop, kind: "dop", seed: 4 });
-    this.mark("dop", "DOP", dop.root, 1.95, 0.64, 0.82);
+    this.crew.push({
+      p: dop,
+      seed: 4,
+      pose: () => {
+        applyPose(dop, POSES.stand, { spine: [0.14, 0.12, 0], neck: [0.1, 0, 0], head: [0.08, 0.2, 0], gripR: 0.6, gripL: 0.5 });
+        reach(dop, "R", new THREE.Vector3(0.36, 1.38, -6.92), new THREE.Vector3(1, -1, 1));
+        reach(dop, "L", new THREE.Vector3(0.08, 1.7, -7.08), new THREE.Vector3(-1, -0.6, 1));
+      },
+    });
+    this.mark("dop", "DOP", dop.root, 1.95, 0.8, 0.92);
     // two softboxes and an LED panel
     for (const sx of [-1, 1]) {
       const sb = softbox();
@@ -797,12 +871,23 @@ export class StudioScene {
     dChair.rotation.y = Math.PI + 0.35;
     s.add(dChair);
     this.dimWith(dChair, C);
-    const director = makePerson({ shirt: 0x0f0f0f, hairStyle: "short", skin: 0xc28f6c, sleeves: "long", hair: 0x3a3a3a });
-    director.root.position.set(-1.33, 0.32, -5.42);
+    const director = makePerson({ sex: "m", outfit: "shirt", hair: "short01", hairColor: 0x2a2a2a, shoes: "boots", skin: "skin_m_deep" });
+    director.root.position.set(-1.33, 0, -5.4);
     director.root.rotation.y = Math.PI + 0.35;
     s.add(director.root);
-    this.crew.push({ p: director, kind: "director", seed: 5 });
-    this.mark("director", "Director — the monitor", dirMon, 0.3, 0.72, 0.84);
+    const dKnee = director.root.localToWorld(new THREE.Vector3(-0.1, 0.92, 0.42));
+    this.crew.push({
+      p: director,
+      seed: 5,
+      pose: (k) => {
+        applyPose(director, POSES.sit, { hipY: 0.9, spine: [0.22, 0, 0], head: [-0.05, 0, 0], kneeL: [-0.1, 0, 0], kneeR: [-0.1, 0, 0] });
+        // a hand at his chin, watching the monitor; the other on his knee
+        reach(director, "L", anchorWorld(director, "mouth", this.V).add(new THREE.Vector3(0, -0.085, 0).applyQuaternion(director.root.quaternion)).addScaledVector(new THREE.Vector3(0, 0, 1).applyQuaternion(director.root.quaternion), 0.02), new THREE.Vector3(0.6, -1, 0.3).applyQuaternion(director.root.quaternion));
+        reach(director, "R", dKnee, new THREE.Vector3(-1, -0.4, -0.5).applyQuaternion(director.root.quaternion));
+        void k;
+      },
+    });
+    this.mark("director", "Director — the monitor", dirMon, 0.3, 0.8, 0.92);
     // C-stands
     for (const [x, z] of [
       [2.4, -7.2],
@@ -829,16 +914,28 @@ export class StudioScene {
       cs.rotation.y = x > 0 ? 0 : Math.PI;
       s.add(cs);
     }
-    const producer = makePerson({ shirt: 0x3a3a3a, hairStyle: "bob", female: true, glasses: true, skin: 0xd2a07e, hair: 0x2b1a12, sleeves: "long" });
-    producer.root.position.set(2.05, 0, -6.95);
-    producer.root.rotation.y = -1.9;
-    s.add(producer.root);
-    this.crew.push({ p: producer, kind: "producer", seed: 6 });
-    this.mark("producer", "Producer — the call sheet", producer.root, 1.95, 0.64, 0.84);
-    const clip = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.25, 0.01), new THREE.MeshStandardMaterial({ map: paperTexture(["CALL SHEET", "DAY 03 · 09:00", "EP.01 INTRO", "SET A · CYC", "TALENT: 2", "WRAP 18:30"], { title: "SHOOT" }), roughness: 0.8 }));
-    producer.j.wristR.add(clip);
-    clip.position.set(0.0, -0.16, 0.05);
-    clip.rotation.x = -0.6;
+    if (!low) {
+      const producer = makePerson({ sex: "f", outfit: "blouse", hair: "ponytail01", hairColor: 0x2b1a12, shoes: "boots", glasses: true });
+      producer.root.position.set(-2.05, 0, -6.45);
+      producer.root.rotation.y = 2.5;
+      s.add(producer.root);
+      this.mark("producer", "Producer — the call sheet", producer.root, 1.95, 0.8, 0.92);
+      const clip = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.27, 0.008), new THREE.MeshStandardMaterial({ map: paperTexture(["CALL SHEET", "DAY 03 · 09:00", "EP.01 INTRO", "SET A · CYC", "TALENT: 2", "WRAP 18:30"], { title: "SHOOT" }), roughness: 0.8 }));
+      clip.position.copy(producer.root.localToWorld(new THREE.Vector3(0.04, 1.1, 0.3)));
+      clip.quaternion.copy(producer.root.quaternion).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-0.95, 0, 0)));
+      s.add(clip);
+      const holdL = producer.root.localToWorld(new THREE.Vector3(0.12, 1.02, 0.28));
+      const pen = producer.root.localToWorld(new THREE.Vector3(-0.02, 1.12, 0.32));
+      this.crew.push({
+        p: producer,
+        seed: 6,
+        pose: (k) => {
+          applyPose(producer, POSES.stand, { neck: [0.25, 0, 0], head: [0.2, 0, 0], gripL: 0.7 });
+          reach(producer, "L", holdL, new THREE.Vector3(1, -1, 0).applyQuaternion(producer.root.quaternion));
+          reach(producer, "R", this.V.copy(pen).add(new THREE.Vector3(Math.sin(k * 1.7) * 0.02, 0, 0)), new THREE.Vector3(-1, -1, 0).applyQuaternion(producer.root.quaternion));
+        },
+      });
+    }
 
     // a key light over the whole place that only matters for the wide shot at the end
     const overhead = new THREE.DirectionalLight(0xfff2dc, 0);
@@ -910,45 +1007,26 @@ export class StudioScene {
     const head = ((clock * 0.012) % 0.8) + 0.1 + scrub;
     this.edit.update(clock, head);
 
-    // the editor: mouse hand scrubbing, the other hand on the keys, now and then a reach to the headphones
+    // the editor: right hand on the mouse, scrubbing; left on the keys; now and then a hand up to the headphones
     const e = this.editor;
     const adjust = Math.max(0, Math.sin(((clock % 14) / 14) * Math.PI * 2 - 4.9)) ** 3; // one slow reach every ~14 s
-    const typing = (Math.sin(clock * 0.21) > 0.4 ? 1 : 0) * (Math.sin(clock * 13) * 0.5 + 0.5);
-    applyPose(e, POSES.sit, {
-      spine: [0.12, 0, 0],
-      neck: [0.08, 0, 0],
-      head: [0.06, Math.sin(clock * 0.31) * 0.05, 0],
-      shoulderR: [-0.72 + scrub * 1.2, 0.0, -0.22],
-      elbowR: [-1.05, 0.25, 0],
-      wristR: [0.35, 0, 0.1],
-      shoulderL: [lerp(-0.68, -2.25, adjust) + typing * 0.02, 0, lerp(0.22, 0.72, adjust)],
-      elbowL: [lerp(-1.0, -1.7, adjust), lerp(-0.2, 0.6, adjust), 0],
-      wristL: [0.3 - typing * 0.12, 0, -0.1],
-    });
+    const typing = Math.sin(clock * 0.21) > 0.4 ? Math.max(0, Math.sin(clock * 11)) : 0;
+    applyPose(e, POSES.sit, { hipY: 0.6, spine: [0.16, 0, 0], neck: [0.04, 0, 0], head: [0.08, Math.sin(clock * 0.31) * 0.05, 0], gripR: 0.35, gripL: 0.3 });
     breathe(e, clock, 0, 0.6);
-    blink(e, clock, 0);
-    // the mouse follows his hand
     this.mouse.position.x = 0.32 - scrub * 0.35;
+    reach(e, "R", this.V.set(this.mouse.position.x + 0.01, 0.81, 0.27), POLE_R);
+    orientHand(e, "R", AWAY, DOWN);
+    const keys = this.V.set(-0.17, 0.81 + typing * 0.012, 0.3);
+    if (adjust > 0.001) keys.lerp(anchorWorld(e, "earL", this.tmp).add(new THREE.Vector3(-0.06, -0.02, 0.02)), adjust);
+    reach(e, "L", keys, POLE_L);
+    if (adjust < 0.5) orientHand(e, "L", AWAY, DOWN);
+    blink(e, clock, 0);
     // crew: small, believable business
     for (const c of this.crew) {
-      const p = c.p;
       const k = clock + c.seed * 3.1;
-      if (c.kind === "assistant") {
-        applyPose(p, POSES.sit, { spine: [0.15, 0, 0], shoulderR: [-0.8, 0, -0.2], elbowR: [-1.0, 0.2, 0], shoulderL: [-0.75, 0, 0.2], elbowL: [-1.0, -0.2, 0], wristL: [Math.sin(k * 11) * 0.1, 0, 0] });
-      } else if (c.kind === "pointing") {
-        const pt = Math.max(0, Math.sin(k * 0.4));
-        applyPose(p, POSES.stand, { shoulderR: [-1.4 * pt - 0.1, 0, -0.2 - 0.3 * pt], elbowR: [-0.3 * pt, 0, 0], head: [0, 0.3, 0] });
-      } else if (c.kind === "talent") {
-        applyPose(p, POSES.sit, { hipL: [0.15, 0, 0.1], kneeL: [-0.25, 0, 0], shoulderL: [-0.2, 0, 0.25], elbowL: [-1.2, 0, 0], shoulderR: [-0.3, 0, -0.2], elbowR: [-1.0, 0, 0], head: [0, Math.sin(k * 0.5) * 0.25, 0] });
-      } else if (c.kind === "dop") {
-        applyPose(p, POSES.stand, { spine: [0.18, 0, 0], shoulderR: [-1.25, 0, -0.3], elbowR: [-0.9, 0, 0], shoulderL: [-1.15, 0, 0.35], elbowL: [-1.0, 0, 0], head: [0.15, 0, 0] });
-      } else if (c.kind === "director") {
-        applyPose(p, POSES.sit, { hipY: 0.5, spine: [0.2, 0, 0], shoulderL: [-0.6, 0, 0.3], elbowL: [-1.8, 0, 0], shoulderR: [-0.4, 0, -0.25], elbowR: [-1.2, 0, 0], head: [0.1, 0.1, 0] });
-      } else if (c.kind === "producer") {
-        applyPose(p, POSES.stand, { shoulderR: [-0.9, 0, -0.1], elbowR: [-1.2, 0, 0], shoulderL: [-0.4, 0, 0.2], elbowL: [-1.4, 0, 0], head: [0.35, 0, 0] });
-      }
-      breathe(p, k, c.seed);
-      blink(p, k, c.seed);
+      c.pose(k);
+      breathe(c.p, k, c.seed);
+      blink(c.p, k, c.seed);
     }
     this.steam.forEach((st, i) => {
       st.position.y = 0.9 + ((clock * 0.05 + i * 0.33) % 1) * 0.12;

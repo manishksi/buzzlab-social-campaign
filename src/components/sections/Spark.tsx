@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { spark as S } from "@/content/strategy";
 import { PhaseHeader } from "./PhaseHeader";
-import { ContentMix } from "./ContentMix";
 import { FootageSlot } from "@/components/ui/FootageSlot";
 import type { ReelKind } from "@/components/ui/PreviewReel";
 
@@ -131,9 +130,6 @@ export function Spark() {
           </div>
         </div>
       </div>
-
-      {/* what Spark (and everything after it) is made of */}
-      <ContentMix />
     </section>
   );
 }

@@ -154,7 +154,7 @@ export function Tanishka() {
   );
 
   return (
-    <section ref={root} id="tanishka" className="relative z-10 h-[100svh] overflow-hidden" aria-label={N.name}>
+    <section ref={root} id="tanishka" className="relative z-10 h-[100svh] overflow-hidden" aria-label={`${N.name} — the real blocker`}>
       {/* everything she's about to eat */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         {WORDS.map((w, i) => (
@@ -201,9 +201,7 @@ export function Tanishka() {
         <div className="relative col-span-12 md:col-span-6 lg:col-span-5">
           <div data-caption className="studio-beat" style={{ opacity: 0 }}>
             <p className="t-slate mb-4">?? — Not in the deck</p>
-            <p className="t-big">
-              This is <span className="text-buzz">{N.name}.</span>
-            </p>
+            <p className="t-big">The real blocker</p>
           </div>
         </div>
       </div>

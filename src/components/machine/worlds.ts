@@ -25,10 +25,22 @@ export function createRenderer(canvas: HTMLCanvasElement, opts: Opts) {
   return r;
 }
 
+/** worlds with people in them wait for the people library first */
+const people = async () => (await import("./people")).loadPeople();
+
 export const loaders: Record<WorldId, (r: THREE.WebGLRenderer, o: Opts) => Promise<World>> = {
-  studio: async (r, o) => new (await import("./studio")).StudioScene(r, o),
+  studio: async (r, o) => {
+    await people();
+    return new (await import("./studio")).StudioScene(r, o);
+  },
   machine: async (r, o) => new (await import("./scene")).MachineScene(r, o),
   pipeline: async (r, o) => new (await import("./pipeline")).PipelineScene(r, o),
-  set: async (r, o) => new (await import("./set")).SetScene(r, o),
-  tanishka: async (r, o) => new (await import("./tanishka")).TanishkaScene(r, o),
+  set: async (r, o) => {
+    await people();
+    return new (await import("./set")).SetScene(r, o);
+  },
+  tanishka: async (r, o) => {
+    await people();
+    return new (await import("./tanishka")).TanishkaScene(r, o);
+  },
 };

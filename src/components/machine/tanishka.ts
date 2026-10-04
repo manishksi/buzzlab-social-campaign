@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
-import { applyPose, blink, breathe, makePerson, POSES, type Person } from "./people";
+import { anchorWorld, applyPose, blink, breathe, makePerson, openMouth, POSES, type Person } from "./people";
 import { cinemaCamera, mats } from "./props";
 import { contentTextures } from "./textures";
 import { TAN, tanishkaMouth } from "./tanishka-time";
@@ -42,8 +42,10 @@ export class TanishkaScene {
   private h = 1;
   private T = contentTextures();
   private her!: Person;
-  private lips!: THREE.Mesh;
   private throat!: THREE.Mesh;
+  /** her eye height, which everything in the shot is placed from */
+  private headY = 1.55;
+  private cigRest = new THREE.Vector3();
   private cig = new THREE.Group();
   private ember!: THREE.MeshBasicMaterial;
   private smoke: THREE.Mesh[] = [];
@@ -84,19 +86,17 @@ export class TanishkaScene {
     s.add(this.yellowRim);
 
     // Tanishka
-    const her = makePerson({ shirt: 0x161616, female: true, hairStyle: "bob", glasses: true, skin: 0xc99474, hair: 0x15100c, sleeves: "long", pants: 0x1c1c1c });
+    const her = makePerson({ sex: "f", outfit: "tee", top: 0x151515, bottom: 0x23232a, hair: "bob02", hairColor: 0x2a2018, shoes: "boots", glasses: true, trimFringe: true, skin: "skin_f" });
     this.her = her;
     s.add(her.root);
-    (her.face.mouthOpen.material as THREE.MeshBasicMaterial).side = THREE.DoubleSide;
-    // lips round the opening, so it reads as a mouth and not a hole
-    this.lips = new THREE.Mesh(new THREE.TorusGeometry(1, 0.16, 10, 40), new THREE.MeshStandardMaterial({ color: 0x9a4f42, roughness: 0.5 }));
-    this.lips.position.copy(her.face.mouthOpen.position);
-    this.lips.scale.setScalar(0.0001);
-    her.face.group.add(this.lips);
+    her.root.updateMatrixWorld(true);
+    this.headY = anchorWorld(her, "eyeL", new THREE.Vector3()).y;
+    this.key.target.position.set(0, this.headY, 0);
+    this.rim.target.position.set(0, this.headY, 0);
     // behind the mouth, only black: the camera ends up in here
-    this.throat = new THREE.Mesh(new THREE.SphereGeometry(0.058, 24, 16), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide }));
-    this.throat.position.set(0, -0.085, 0.02);
-    her.face.group.add(this.throat);
+    this.throat = new THREE.Mesh(new THREE.SphereGeometry(0.03, 24, 16), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide }));
+    this.throat.position.copy(her.anchors.mouth).add(new THREE.Vector3(0, -0.014, -0.035));
+    her.j.head.add(this.throat);
 
     // the cigarette, in the corner of her mouth
     const paper = new THREE.Mesh(new THREE.CylinderGeometry(0.0042, 0.0042, 0.062, 14), new THREE.MeshStandardMaterial({ color: 0xf1efe8, roughness: 0.7 }));
@@ -110,8 +110,10 @@ export class TanishkaScene {
     ember.position.y = 0.0885;
     ember.scale.y = 0.45;
     this.cig.add(paper, filter, ash, ember);
-    this.cig.position.set(0.022, 0.03, 0.09);
-    this.cig.rotation.set(Math.PI / 2 - 0.35, 0, -0.45);
+    // the filter sits in the corner of her lips, the cigarette hangs forward and a little down
+    this.cigRest.copy(her.anchors.cornerL).add(new THREE.Vector3(-0.006, -0.003, 0.004));
+    this.cig.position.copy(this.cigRest);
+    this.cig.rotation.set(Math.PI / 2 + 0.3, 0, -0.45);
     her.j.head.add(this.cig);
     const puff = tex(64, 64, (g) => {
       const r = g.createRadialGradient(32, 32, 1, 32, 32, 32);
@@ -146,9 +148,9 @@ export class TanishkaScene {
         roughness: 0.6,
       }),
     );
-    badge.position.set(0.075, 0.4, 0.118);
-    badge.rotation.set(-0.08, 0.28, 0.05);
-    her.j.spine.add(badge);
+    badge.position.copy(her.anchors.chestL).add(new THREE.Vector3(0, 0.02, 0.012));
+    badge.rotation.set(-0.12, 0.22, 0.05);
+    her.j.chest.add(badge);
 
     // a yellow tag on a string, pointing right at her
     const tagTex = tex(600, 220, (g, w, h) => {
@@ -174,7 +176,7 @@ export class TanishkaScene {
     const string = new THREE.Mesh(new THREE.CylinderGeometry(0.0007, 0.0007, 0.5, 4), new THREE.MeshBasicMaterial({ color: 0x777777 }));
     string.position.set(-0.07, 0.25, 0);
     this.tag.add(card, string);
-    this.tag.position.set(0.24, 1.73, 0.05);
+    this.tag.position.set(0.24, this.headY + 0.15, 0.05);
     this.tag.rotation.z = -0.22;
     s.add(this.tag);
 
@@ -185,7 +187,7 @@ export class TanishkaScene {
       // a loose shell around her head, mostly in front and to the sides
       const a = (i * 2.399963) % (Math.PI * 2);
       const r = 0.36 + ((i * 37) % 11) * 0.05;
-      const y = 1.64 + Math.sin(a) * r * 0.62;
+      const y = this.headY + Math.sin(a) * r * 0.62;
       const from = new THREE.Vector3(Math.cos(a) * r * 1.25, y, -0.1 + ((i * 29) % 9) * 0.04);
       o.position.copy(from);
       o.rotation.set(((i * 17) % 7) * 0.3, ((i * 11) % 5) * 0.5, ((i * 13) % 9) * 0.2);
@@ -254,32 +256,20 @@ export class TanishkaScene {
     const open = Math.pow(clamp((w - TAN.open) / (TAN.opened - TAN.open)), 1.6);
     const enter = sm(TAN.enter, TAN.inside, w);
 
-    // she stands, looks at you, breathes; the jaw drops as the mouth opens
-    applyPose(her, POSES.stand, { head: [-open * 0.14 + Math.sin(clock * 0.4) * 0.01 * (1 - open), Math.sin(clock * 0.23) * 0.04 * (1 - open), 0.03], spine: [-open * 0.05, 0, 0] });
+    // she stands, looks at you, breathes; then the jaw drops — further than a jaw should
+    applyPose(her, POSES.stand, { head: [-open * 0.1 + Math.sin(clock * 0.4) * 0.01 * (1 - open), Math.sin(clock * 0.23) * 0.04 * (1 - open), 0.03], neck: [-open * 0.05, 0, 0], spine: [-open * 0.04, 0, 0] });
     breathe(her, clock, 1.2, 0.6 * (1 - open));
+    openMouth(her, open * 1.6);
+    her.j.jaw.scale.set(1, 1 + open * 0.18, 1 + open * 0.08);
     if (open < 0.05) blink(her, clock, 1.3);
-    else for (const e of her.face.eyes) e.scale.y = 1 + open * 0.25; // eyes widen, deadpan
-    her.face.brows.forEach((b, i) => (b.position.y = 0.014 + open * 0.008 + (i ? 0.002 : 0)));
-    // the jaw drops: the head lengthens from the top down, the mouth opens and slides with it
-    her.face.skull.scale.y = 1 + open * 0.24;
-    her.face.skull.position.y = 0.105 - open * 0.026;
-    const mo = her.face.mouthOpen;
-    const mx = 0.0001 + open * 0.03;
-    const my = 0.0001 + open * 0.046;
-    mo.scale.set(mx, my, 0.012 + open * 0.02);
-    mo.position.y = -0.077 - open * 0.032;
-    mo.position.z = 0.085 + open * 0.006;
-    this.lips.position.copy(mo.position).setZ(mo.position.z + 0.004);
-    this.lips.scale.set(mx * 1.04, my * 1.04, Math.max(0.0001, open * 0.03));
-    this.lips.visible = open > 0.03;
-    her.face.mouth.visible = open < 0.08;
+    else for (const l of her.face.lids) l.rotation.x = -open * 0.12; // eyes widen, deadpan
     // the black behind the mouth only exists once the camera is on its way in
     this.throat.visible = enter > 0.35;
 
     // the cigarette: smoulders, then falls out when the jaw goes
     const fall = sm(TAN.open, TAN.open + 0.08, w);
-    this.cig.position.set(0.022 + fall * 0.02, 0.03 - fall * fall * 0.9, 0.09 + fall * 0.05);
-    this.cig.rotation.set(Math.PI / 2 - 0.35 + fall * 2.2, 0, -0.45 - fall * 0.8);
+    this.cig.position.copy(this.cigRest).add(this.tmp.set(fall * 0.02, -fall * fall * 0.9, fall * 0.05));
+    this.cig.rotation.set(Math.PI / 2 + 0.3 + fall * 2.2, 0, -0.45 - fall * 0.8);
     this.cig.visible = fall < 0.98;
     this.ember.color.setRGB(1, 0.62 + Math.sin(clock * 2.2) * 0.08, 0.2).multiplyScalar(0.8 + Math.sin(clock * 1.7) * 0.2);
     const tip = this.tmp;
@@ -293,12 +283,12 @@ export class TanishkaScene {
     });
     this.tag.rotation.z = -0.22 + Math.sin(clock * 0.9) * 0.04 - open * 0.3;
     this.tag.position.x = 0.24 - sm(0.55, 0.75, w) * 0.2;
-    this.tag.position.y = 1.73 - sm(0.55, 0.75, w) * 0.1;
+    this.tag.position.y = this.headY + 0.15 - sm(0.55, 0.75, w) * 0.1;
     this.tag.scale.setScalar(1 - sm(0.6, 0.76, w) * 0.999);
 
     // where the mouth is, in the world and on screen
     her.root.updateMatrixWorld(true);
-    mo.getWorldPosition(this.mouthAt);
+    her.j.head.localToWorld(this.mouthAt.copy(her.anchors.mouth).add(this.tmp.set(0, -0.022 * open, 0.004)));
 
     // the pull: everything spirals into the mouth and vanishes there
     for (const t of this.things) {
@@ -319,8 +309,8 @@ export class TanishkaScene {
 
     // camera: a slow push, a hold while she opens, then straight into the mouth
     const push = sm(0, TAN.open, w);
-    this.p.set(0, 1.66, lerp(1.7, 1.05, push) - open * 0.12);
-    this.l.set(0, 1.635, 0);
+    this.p.set(0, this.headY + 0.03, lerp(1.7, 1.05, push) - open * 0.12);
+    this.l.set(0, this.headY - 0.03, 0);
     this.p.x += pointer.x * 0.03 * (1 - enter);
     this.p.y += pointer.y * 0.02 * (1 - enter);
     if (enter > 0) {
