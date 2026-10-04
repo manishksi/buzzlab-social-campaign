@@ -284,6 +284,14 @@ body {
   }
 }
 
+/* The broadcast schedule: the day under the on-air playhead */
+.broadcast-day {
+  transition: background-color 0.4s ease;
+}
+.broadcast-day.is-on {
+  background-color: rgba(249, 254, 2, 0.06);
+}
+
 /* Labels pinned to objects in the 3D worlds */
 .machine-label {
   position: absolute;

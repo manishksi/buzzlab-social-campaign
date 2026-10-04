@@ -1,7 +1,7 @@
 # BuzzLab — Light It Up
 
 An interactive, scroll-driven presentation of BuzzLab's 6-month Instagram growth and content strategy.
-It plays like one continuous film that loops: **the dead page → where we are → make BuzzLab worth noticing → the page notices you back → Spark → Flame → Light → the creative machine → Original BuzzLab IP → Landy eats the presentation → the page is dead.**
+It plays like one continuous film that loops: **the dead page → where we are → make BuzzLab worth noticing → the editor at his desk → the studio behind him → Spark → Flame → Light → a yellow dot becomes the creative machine → Original BuzzLab IP → the pipeline → the set → Tanishka eats the presentation → the page is dead.**
 
 Black, off-white and BuzzLab yellow (`--color-buzz` in `src/app/globals.css`).
 
@@ -42,15 +42,31 @@ ffmpeg commands that keep scroll-scrubbing smooth.
   frame — the lighter is sparked, catches, lights his cigarette, the cigarette burns down through
   Phase 03 and ends on the floor under his boot. Hovering a phase in ACT 04 plays that moment on him.
   When `film.src` is set the site scrubs your real video instead.
-- **The eyes** (`sections/Watching.tsx`, between ACT 02 and 03) track the cursor, blink, get curious,
-  and react to scroll speed.
-- **The creative machine** (`src/components/machine/`) is a three.js world, loaded only when it is
-  about to be seen: a yellow dot becomes a play button, content pours out, cameras catch it, it is cut
-  on a giant timeline, multiplies into a feed, turns to chaos, stops, and the last reel opens into a
-  world. The pipeline stages caption each shot (`sections/Machine.tsx`); the IP reveal plays over the
-  world (`sections/OriginalIP.tsx`).
-- **Landy** (`sections/Landy.tsx`) eats the presentation, then the page loops back to the top under a
-  black veil — no reload.
+- **The 3D worlds** (`src/components/machine/`) all play on one fixed WebGL canvas
+  (`WorldFilm.tsx`, one three.js renderer). Each world's code loads just before it is reached, and only
+  the world holding the middle of the screen renders. Pinned sections write each world's scroll time
+  into `src/lib/world-clock.ts`.
+  - **The studio** (`studio.ts`, ACT 02–03, `sections/Workstation.tsx` + `sections/Studio.tsx`): one
+    camera move from an editor at his desk (yellow tee, studio headphones) round the workstation and
+    past the monitor into the rest of the studio: a second edit bay, the storyboard wall, the
+    production table, the set with camera, DOP, lights, talent, director and producer. Then the
+    lights go out and ACT 04 starts in the dark.
+  - **The creative machine** (`scene.ts`, ACT 07, `sections/Machine.tsx` + `sections/OriginalIP.tsx`):
+    a yellow dot becomes a play button, content pours out, cameras catch it, it is cut on a giant
+    timeline, multiplies into a feed, turns to chaos, stops, and the last reel opens into a world —
+    ORIGINAL BUZZLAB IP.
+  - **The pipeline** (`pipeline.ts`, ACT 08, `sections/Pipeline.tsx`): a yellow piece of content travels
+    a closed track through nine stations, from idea to iterate, with the eight signals at Analyse.
+    Then it runs the loop again from above: post, measure, learn, improve, new idea, post again.
+  - **The set** (`set.ts`, ACT 09, `sections/ProductionSet.tsx`): a miniature production on a plinth;
+    the camera visits the director, DOP, lighting, producer, editor, creative, social and talent.
+  - **Tanishka** (`tanishka.ts`, `sections/Tanishka.tsx`) opens her mouth and eats the presentation;
+    the camera goes in after it, and the page loops back to the top under a black veil — no reload.
+  - Everyone is built by one character builder (`people.ts`), so the crew, the editor and Tanishka
+    share a look.
+- **The strategy systems** sit inside the phases: the content mix as a mixing desk in Spark
+  (`sections/ContentMix.tsx`), the weekly rhythm as a broadcast schedule in Flame
+  (`sections/Broadcast.tsx`).
 - Sound effects are synthesised with Web Audio, so there are no audio files.
 
 ```
@@ -60,7 +76,7 @@ src/
   content/media.ts      footage slots
   components/
     film/               scroll-scrubbed background film and the character shot
-    machine/            the creative machine (three.js) and its painted content
+    machine/            the 3D worlds (three.js), the character builder and their painted content
     chrome/             top bar, index menu, cursor, phase rail, intro slate, ignite transition
     sections/           the acts, in order
     ui/                 reveals, footage slots, placeholder reels

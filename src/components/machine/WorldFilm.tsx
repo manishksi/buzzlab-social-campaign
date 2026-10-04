@@ -75,6 +75,7 @@ export function WorldFilm() {
         await document.fonts?.ready;
         w.resize(window.innerWidth, window.innerHeight);
         worlds.set(id, w);
+        smooth[id] = worldClock[id].w; // start where the scroll already is, not from 0
         loading.delete(id);
       });
     };
@@ -124,7 +125,9 @@ export function WorldFilm() {
           spans.set(key, s);
         }
         s.style.opacity = l.a.toFixed(3);
-        s.style.transform = `translate3d(${l.x.toFixed(1)}px, ${l.y.toFixed(1)}px, 0)`;
+        // keep the whole label on screen
+        const x = Math.min(Math.max(8, l.x), window.innerWidth - s.offsetWidth - 8);
+        s.style.transform = `translate3d(${x.toFixed(1)}px, ${l.y.toFixed(1)}px, 0)`;
       }
       spans.forEach((s, id) => {
         if (!seen.has(id)) s.style.opacity = "0";

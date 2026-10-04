@@ -6,6 +6,7 @@ import { gsap, useGSAP } from "@/lib/gsap";
 import { flame as F } from "@/content/strategy";
 import { filmKeys } from "@/lib/film-keys";
 import { PhaseHeader } from "./PhaseHeader";
+import { Broadcast } from "./Broadcast";
 import { FootageSlot } from "@/components/ui/FootageSlot";
 import { Reveal } from "@/components/ui/Reveal";
 import type { ReelKind } from "@/components/ui/PreviewReel";
@@ -139,6 +140,9 @@ export function Flame() {
           </div>
         </div>
       </div>
+
+      {/* recurring formats need a rhythm people can learn */}
+      <Broadcast />
 
       <div data-shift data-dim="0.55" className="gutter mx-auto mt-[22vh] max-w-[1600px] pb-[10vh]">
         <div className="grid items-end gap-8 md:grid-cols-2">
