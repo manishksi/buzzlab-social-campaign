@@ -8,7 +8,8 @@ import { playSwell } from "@/lib/audio";
 /**
  * ACT 02 — the turn. The screen goes dark, then one word at a time:
  * MAKE / BUZZLAB / WORTH / NOTICING. The last word lands hardest (a focus lock, like the camera
- * in the cold open), then the chain that sentence sets off.
+ * in the cold open), then the evolution that sentence sets off: content → … → Original IP.
+ * The editor's studio (Workstation) fades up underneath as this leaves.
  */
 export function Objective() {
   const root = useRef<HTMLElement>(null);
@@ -55,12 +56,13 @@ export function Objective() {
         .to(brackets, { autoAlpha: 0, duration: 0.04 }, 0.58)
         .to(words, { opacity: 0.75, duration: 0.06 }, 0.58)
         .to("[data-statement]", { scale: 0.56, y: () => -window.innerHeight * 0.22, duration: 0.1, ease: "power2.inOut" }, 0.6)
+        .to("[data-eyebrow]", { autoAlpha: 0, duration: 0.05 }, 0.6)
         .fromTo("[data-chain-line]", { autoAlpha: 0, scaleX: 0, scaleY: 0 }, { autoAlpha: 1, scaleX: 1, scaleY: 1, duration: 0.24, ease: "none" }, 0.66);
       gsap.utils.toArray<HTMLElement>("[data-chain-node]", el).forEach((n, i) => {
-        tl.fromTo(n, { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.05, ease: "power2.out" }, 0.68 + i * 0.055)
-          .fromTo(n.querySelector("[data-dot]"), { scale: 0 }, { scale: 1, duration: 0.04 }, 0.68 + i * 0.055);
+        tl.fromTo(n, { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.04, ease: "power2.out" }, 0.66 + i * 0.038)
+          .fromTo(n.querySelector("[data-dot]"), { scale: 0 }, { scale: 1, duration: 0.03 }, 0.66 + i * 0.038);
       });
-      tl.fromTo("[data-explain]", { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.08 }, 0.9).to({}, { duration: 0.06 });
+      tl.to({}, { duration: 0.1 });
     },
     { scope: root },
   );
@@ -102,21 +104,17 @@ export function Objective() {
         </span>
       </h2>
 
-      <div className="gutter absolute inset-x-0 top-[38%] md:top-[50%]">
-        <ol className="relative mx-auto flex w-max max-w-[1200px] flex-col items-start gap-4 md:w-auto md:flex-row md:items-center md:justify-between md:gap-0">
-          <span data-chain-line aria-hidden className="absolute left-[23px] top-[11px] h-[calc(100%-22px)] w-px origin-top bg-gradient-to-b from-bone/10 via-buzz to-buzz-soft md:left-[6%] md:right-[6%] md:top-[11px] md:h-px md:w-auto md:origin-left md:bg-gradient-to-r" />
+      <div className="gutter absolute inset-x-0 top-[36%] lg:top-[52%]">
+        <ol className="relative mx-auto flex w-max max-w-[1400px] flex-col items-start gap-2.5 lg:w-auto lg:flex-row lg:items-center lg:justify-between lg:gap-0">
+          <span data-chain-line aria-hidden className="absolute left-[21px] top-[9px] h-[calc(100%-18px)] w-px origin-top bg-gradient-to-b from-bone/10 via-buzz to-buzz-soft lg:left-[4%] lg:right-[4%] lg:top-[9px] lg:h-px lg:w-auto lg:origin-left lg:bg-gradient-to-r" />
           {O.chain.map((c, i) => (
-            <li key={c} data-chain-node className="relative z-10 flex flex-row items-center gap-3 bg-ink px-3 md:flex-col">
-              <span data-dot className={`h-[22px] w-[22px] shrink-0 rounded-full border ${i === O.chain.length - 1 ? "border-buzz bg-buzz shadow-[0_0_30px_rgba(249,254,2,.8)]" : "border-bone/60 bg-ink"}`} />
+            <li key={c} data-chain-node className="relative z-10 flex flex-row items-center gap-3 bg-ink px-3 lg:flex-col lg:gap-2.5">
+              <span data-dot className={`h-[18px] w-[18px] shrink-0 rounded-full border ${i === O.chain.length - 1 ? "border-buzz bg-buzz shadow-[0_0_30px_rgba(249,254,2,.8)]" : "border-bone/60 bg-ink"}`} />
               <span className="t-slate">0{i + 1}</span>
-              <span className={`font-display text-[clamp(1.8rem,3.4vw,3.4rem)] font-extrabold uppercase leading-none ${i === O.chain.length - 1 ? "text-buzz" : ""}`}>{c}</span>
+              <span className={`font-display text-[clamp(1.5rem,1.9vw,2.3rem)] font-extrabold uppercase leading-none ${i === O.chain.length - 1 ? "text-buzz" : ""}`}>{c}</span>
             </li>
           ))}
         </ol>
-        <div data-explain className="mx-auto mt-8 max-w-[44rem] md:mt-14">
-          <p className="font-display text-[clamp(1.4rem,2.2vw,2rem)] font-bold uppercase leading-tight">{O.explain[0]}</p>
-          <p className="t-lede mx-auto mt-3">{O.explain[1]}</p>
-        </div>
       </div>
     </section>
   );

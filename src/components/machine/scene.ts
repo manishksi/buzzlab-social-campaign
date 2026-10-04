@@ -106,7 +106,6 @@ type Tile = ReturnType<typeof tile> & { w: number; h: number; kind: string };
 export type Label = { id: string; text: string; x: number; y: number; a: number };
 
 export class MachineScene {
-  private renderer: THREE.WebGLRenderer;
   private scene = new THREE.Scene();
   private cam = new THREE.PerspectiveCamera(35, 1, 0.05, 900);
   private world = new THREE.Scene();
@@ -147,14 +146,8 @@ export class MachineScene {
   private orb!: THREE.Mesh;
   private islands: THREE.Group[] = [];
 
-  constructor(private canvas: HTMLCanvasElement, opts: { lowPower: boolean }) {
+  constructor(private renderer: THREE.WebGLRenderer, opts: { lowPower: boolean }) {
     this.low = opts.lowPower;
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !this.low, alpha: false, powerPreference: "high-performance" });
-    this.renderer.setClearColor(0x000000, 1);
-    this.renderer.toneMapping = THREE.NeutralToneMapping;
-    this.renderer.toneMappingExposure = 1.0;
-    this.renderer.shadowMap.enabled = !this.low;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.rt = new THREE.WebGLRenderTarget(this.low ? 360 : 720, this.low ? 640 : 1280, { colorSpace: THREE.SRGBColorSpace });
 
     const pmrem = new THREE.PMREMGenerator(this.renderer);
@@ -466,11 +459,9 @@ export class MachineScene {
     W.add(fig);
   }
 
-  resize(w: number, h: number, dpr: number) {
+  resize(w: number, h: number) {
     this.w = w;
     this.h = h;
-    this.renderer.setPixelRatio(dpr);
-    this.renderer.setSize(w, h, false);
     this.cam.aspect = w / h;
     this.cam.updateProjectionMatrix();
   }
@@ -779,7 +770,6 @@ export class MachineScene {
   }
 
   dispose() {
-    this.renderer.dispose();
     this.rt.dispose();
   }
 }

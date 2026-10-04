@@ -16,27 +16,30 @@ export const meta = {
 export const acts = [
   { id: "top", act: "00", label: "Cold open", film: 0 },
   { id: "problem", act: "01", label: "Where we are", film: 0.32 },
-  { id: "system", act: "02", label: "The objective", film: 0.36 },
-  { id: "engine", act: "03", label: "The content engine", film: 0.4 },
-  { id: "phases", act: "04", label: "The plan", film: 0.46 },
-  { id: "spark", act: "05", label: "Phase 01 — Spark", film: 0.5 },
-  { id: "flame", act: "06", label: "Phase 02 — Flame", film: 0.6 },
-  { id: "light", act: "07", label: "Phase 03 — Light", film: 0.76 },
-  { id: "machine", act: "08", label: "The creative machine", film: 1.12 },
-  { id: "ip", act: "09", label: "Original BuzzLab IP", film: 1.16 },
-  { id: "landy", act: "??", label: "Not in the deck", film: 1.2 },
+  { id: "system", act: "02", label: "Worth noticing", film: 0.36 },
+  { id: "engine", act: "03", label: "The studio", film: 0.4 },
+  { id: "phases", act: "04", label: "The lighter", film: 0.46 },
+  { id: "spark", act: "04", label: "Phase 01 — Spark", film: 0.5 },
+  { id: "flame", act: "05", label: "Phase 02 — Flame", film: 0.6 },
+  { id: "light", act: "06", label: "Phase 03 — Light", film: 0.76 },
+  { id: "machine", act: "07", label: "Original BuzzLab IP", film: 1.12 },
+  { id: "pipeline", act: "08", label: "The pipeline", film: 1.16 },
+  { id: "set", act: "09", label: "The set", film: 1.18 },
+  { id: "tanishka", act: "??", label: "Not in the deck", film: 1.2 },
 ] as const;
 
 /** The index menu (kept short on purpose; the lighter is the main navigation). */
 export const menu = [
   { label: "BuzzLab", target: "top", note: "Cold open" },
   { label: "The problem", target: "problem", note: "Where the page is today" },
-  { label: "The system", target: "system", note: "Objective and content engine" },
-  { label: "Spark", target: "spark", note: "Month 01–02" },
-  { label: "Flame", target: "flame", note: "Month 03–06" },
-  { label: "Light", target: "light", note: "Month 07–12" },
-  { label: "The machine", target: "machine", note: "How the work keeps moving" },
-  { label: "Original IP", target: "ip", note: "What if we made worlds?" },
+  { label: "Worth noticing", target: "system", note: "The objective, and the editor" },
+  { label: "The studio", target: "engine", note: "Editing → creative → production" },
+  { label: "Spark", target: "spark", note: "2 months" },
+  { label: "Flame", target: "flame", note: "4 months" },
+  { label: "Light", target: "light", note: "6 months" },
+  { label: "Original IP", target: "machine", note: "What if we made worlds?" },
+  { label: "The pipeline", target: "pipeline", note: "Post, measure, learn, improve" },
+  { label: "The set", target: "set", note: "Everyone, doing their job" },
 ];
 
 export const hero = {
@@ -72,47 +75,33 @@ export const whereWeAre = {
 };
 
 export const objective = {
-  eyebrow: "Act 02 — The objective",
+  eyebrow: "Act 02 — Worth noticing",
   /** MAKE / BUZZLAB / WORTH / NOTICING. — one word at a time, the last one carries the weight. */
   statement: ["Make", "BuzzLab", "worth", "noticing."],
-  chain: ["Attention", "Identity", "Community", "IP"],
-  explain: [
-    "We are not trying to post more.",
-    "We are building a recognisable media identity: a page people choose to follow, come back to, and talk about.",
-  ],
+  /** what that sentence sets off */
+  chain: ["Content", "Formats", "Media", "Attention", "Identity", "Community", "Original IP"],
 };
 
-/** ACT 02 → 03: the page looks back at you. */
-export const watching = {
-  caption: "Now it's noticing you.",
-};
-
-export const engine = {
-  eyebrow: "Act 03",
-  title: "The content engine",
-  sub: "Three layers. Each one does a different job, and each one feeds the next.",
-  layers: [
-    {
-      n: "01",
-      name: "Attention",
-      job: "Content designed to stop people scrolling.",
-      examples: ["Strong hooks", "Trends", "Visual experiments", "Short-form entertainment", "Unexpected edits", "Creative concepts"],
-    },
-    {
-      n: "02",
-      name: "Identity",
-      job: "Content that makes people understand BuzzLab.",
-      examples: ["Team", "Creatives", "BTS", "Campaigns", "Office culture", "Client work", "Personality"],
-    },
-    {
-      n: "03",
-      name: "IP",
-      job: "Content that makes people come back.",
-      examples: ["Recurring characters", "Series", "Shows", "Original concepts", "Recurring formats", "Original BuzzLab IP"],
-    },
-  ],
-  loop: ["Attention", "Identity", "IP", "Community"],
-  loopNote: "Community brings new attention. The engine feeds itself.",
+/** ACT 02 → 03: the editor at his desk, then the room keeps going (machine/studio.ts). */
+export const studio = {
+  act2: {
+    eyebrow: "Act 02 — Worth noticing",
+    title: ["The page isn't just inactive.", "It's invisible."],
+    sub: "We don't need more content. We need something people actually want to notice.",
+    hand: "Hours in. Still cutting.",
+    handNote: "It starts with someone who cares about every frame.",
+  },
+  act3: {
+    eyebrow: "Act 03 — The studio",
+    ladder: ["Editing", "Creative", "Production"],
+    title: ["Content doesn't become a media brand", "because you post more."],
+    titleB: ["It becomes one when people", "want to come back."],
+    layers: [
+      { n: "01", name: "Attention", job: "Stop the scroll." },
+      { n: "02", name: "Identity", job: "Make people understand BuzzLab." },
+      { n: "03", name: "IP", job: "Make them come back." },
+    ],
+  },
 };
 
 export type PhaseKey = "spark" | "flame" | "light";
@@ -152,7 +141,7 @@ export const phases: {
     n: "03",
     name: "Light",
     months: "Month 07–12",
-    duration: "The horizon",
+    duration: "6 months",
     objective: "Build original BuzzLab IP.",
     preview: ["Something only BuzzLab owns", "Chosen by what the audience returns to", "Formats → IP"],
     heat: 1,
@@ -315,31 +304,22 @@ export const light = {
  * whole pipeline plays out as a production world. Each stage is a caption over its shot.
  */
 export const machine = {
-  eyebrow: "Act 08 — The creative machine",
-  title: "Content → Creative → Media → IP",
-  sub: "The problem isn't only generating ideas. The system has to keep moving every single week.",
+  eyebrow: "Act 07 — Original BuzzLab IP",
+  /** one short line per shot of the machine (machine time); the ladder word sits above it */
   shots: [
-    { key: "idea", label: "Idea", group: "Idea" },
-    { key: "shoot", label: "Shoot", group: "Execution" },
-    { key: "edit", label: "Edit", group: "Execution" },
-    { key: "post", label: "Post", group: "Publishing" },
-    { key: "chaos", label: "Iterate", group: "Learning" },
+    { at: 0.1, rung: 0, line: "One idea. One click." },
+    { at: 0.22, rung: 1, line: "Then a camera. Then a crew." },
+    { at: 0.37, rung: 1, line: "Every cut becomes something." },
+    { at: 0.52, rung: 2, line: "One shoot. A whole feed." },
+    { at: 0.66, rung: 2, line: "Every role. One machine." },
   ],
-  roles: [
-    { role: "DOP", object: "Camera" },
-    { role: "Director", object: "Monitor" },
-    { role: "Editor", object: "Timeline" },
-    { role: "Copywriter", object: "Script" },
-    { role: "Social", object: "Feed" },
-    { role: "Producer", object: "Kit" },
-    { role: "Creative director", object: "Storyboard" },
-    { role: "Designer", object: "Frames" },
-  ],
+  shotsEnd: 0.775,
+  ladder: ["Content", "Creative", "Media", "IP"],
 };
 
 /** ORIGINAL BUZZLAB IP — the reveal that closes the machine. */
 export const ip = {
-  eyebrow: "Act 09 — Original BuzzLab IP",
+  eyebrow: "Act 07 — Original BuzzLab IP",
   beats: ["What if we didn't just make content?", "What if we made worlds?"],
   reveal: ["Original", "BuzzLab IP"],
   possibilities: [
@@ -355,7 +335,6 @@ export const ip = {
     "An original entertainment property",
   ],
   notLocked: "Not locked. On purpose.",
-  final: ["This isn't a content plan.", "It's a media engine."],
 };
 
 export const pipeline = {
@@ -363,20 +342,88 @@ export const pipeline = {
   title: "The pipeline",
   sub: "The problem isn't only generating ideas. The system has to keep moving every single week.",
   stages: [
-    { name: "Idea", group: 0, note: "Every idea goes into one shared bank, not into someone's head." },
-    { name: "Script", group: 0, note: "Hook, beats and ending on one page." },
-    { name: "Pre-production", group: 1, note: "Shot list, cast, location, props. Booked, not hoped for." },
-    { name: "Shoot", group: 1, note: "Batch days: one shoot, several pieces." },
-    { name: "Edit", group: 1, note: "Cut the first two seconds first." },
-    { name: "Approval", group: 2, note: "One reviewer, one round, a fixed turnaround." },
-    { name: "Post", group: 2, note: "Scheduled into the weekly rhythm." },
-    { name: "Analyse", group: 3, note: "A 48-hour and a 7-day check on every piece." },
-    { name: "Iterate", group: 3, note: "What worked gets a sequel. What didn't gets a fix." },
+    { name: "Idea", does: "A concept forms", note: "Every idea goes into one shared bank, not into someone's head." },
+    { name: "Script", does: "It becomes a story", note: "Hook, beats and ending on one page." },
+    { name: "Pre-production", does: "It gets planned", note: "Shot list, cast, location, props. Booked, not hoped for." },
+    { name: "Shoot", does: "It becomes footage", note: "Batch days: one shoot, several pieces." },
+    { name: "Edit", does: "It becomes content", note: "Cut the first two seconds first." },
+    { name: "Approval", does: "It gets reviewed", note: "One reviewer, one round, a fixed turnaround." },
+    { name: "Post", does: "It goes out", note: "Scheduled into the weekly rhythm." },
+    { name: "Analyse", does: "It gets measured", note: "A 48-hour and a 7-day check on every piece." },
+    { name: "Iterate", does: "It becomes the next idea", note: "What worked gets a sequel. What didn't gets a fix." },
   ],
-  groups: ["Idea", "Execution", "Publishing", "Learning"],
+  loop: ["Post", "Measure", "Learn", "Improve", "New idea", "Post again"],
+  line: ["We don't just make content.", "We learn from it.", "Then make it better."],
 };
 
-/** The last character. Landy stares, opens wide, and eats the whole presentation. */
-export const landy = {
-  name: "Landy",
+/** No follower promises: what we read on every piece, and what each number asks. */
+export const measure = {
+  title: ["We don't just post.", "We measure. We learn. We iterate."],
+  metrics: [
+    { name: "Reach", asks: "Did new people see it?" },
+    { name: "3-second views", asks: "Did the hook work?" },
+    { name: "Avg. watch time", asks: "How long did they stay?" },
+    { name: "Completion rate", asks: "Did they reach the end?" },
+    { name: "Shares", asks: "Was it worth passing on?" },
+    { name: "Saves", asks: "Will they come back to it?" },
+    { name: "Profile visits", asks: "Did they want to know who made it?" },
+    { name: "Followers gained", asks: "Did they decide to stay?" },
+  ],
+  cadence: "48-hour check · 7-day review · monthly deep dive",
+};
+
+/** The content mix, set like the faders on a desk: people carry the page, everything else gives it range. */
+export const mix = {
+  label: "The content mix",
+  title: "Mixed like a track, not cut like a pie.",
+  channels: [
+    { name: "People", share: 40, items: "Team · personality · culture · characters" },
+    { name: "Process", share: 20, items: "BTS · production · editing" },
+    { name: "Proof", share: 20, items: "Client work · campaigns · results" },
+    { name: "Play", share: 10, items: "Experiments · trends · challenges" },
+    { name: "IP", share: 10, items: "Original formats · series · shows" },
+  ],
+};
+
+/** The weekly broadcast schedule and the monthly output it adds up to. */
+export const rhythm = {
+  label: "The broadcast schedule",
+  title: "A rhythm the audience can learn.",
+  week: [
+    { day: "Mon", slot: "Hero / entertainment", note: "The week's big swing." },
+    { day: "Tue", slot: null, note: "Stories" },
+    { day: "Wed", slot: "BTS / process", note: "How the work gets made." },
+    { day: "Thu", slot: null, note: "Stories" },
+    { day: "Fri", slot: "People / culture", note: "The faces of BuzzLab." },
+    { day: "Sat", slot: null, note: "Stories" },
+    { day: "Sun", slot: "Creative / experiment", note: "Where new formats start." },
+  ],
+  month: [
+    { display: "1", label: "Hero piece" },
+    { display: "4–8", label: "Supporting pieces" },
+    { display: "8–15", label: "Stories" },
+  ],
+  footnote: "Targets, not promises. Volume follows quality.",
+};
+
+/** ACT 09 — the miniature set: everyone on the job, in the order the camera visits them. */
+export const set = {
+  eyebrow: "Act 09 — The set",
+  title: ["Everyone has a job.", "Every job makes the work."],
+  roles: [
+    { key: "director", role: "Director", does: "Calls the shot at the monitor." },
+    { key: "dop", role: "DOP", does: "Frames it, lights it, rolls." },
+    { key: "lighting", role: "Lighting", does: "Shapes the light on the talent." },
+    { key: "producer", role: "Producer", does: "Keeps the day on schedule." },
+    { key: "editor", role: "Editor", does: "Cuts it while it's still warm." },
+    { key: "creative", role: "Creative", does: "Holds the idea on the board." },
+    { key: "social", role: "Social", does: "Posts it, then reads the numbers." },
+    { key: "talent", role: "Talent", does: "Makes you stop scrolling." },
+  ],
+  final: ["This isn't a content plan.", "It's a media engine."],
+};
+
+/** The last character. Tanishka stares, opens wide, and eats the whole presentation. */
+export const tanishka = {
+  name: "Tanishka",
 };

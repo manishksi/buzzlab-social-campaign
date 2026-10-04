@@ -46,10 +46,8 @@ export class FilmRenderer {
     const camW = band(0.15, 0.2, 0.27, 0.315, t);
     const powerP = invLerp(0.15, 0.21, t);
     const tlW = band(0.205, 0.245, 0.29, 0.325, t);
-    const engineW = band(0.39, 0.42, 0.44, 0.465, t);
 
     if (feedW > 0.01) this.drawFeed(feedW, breakP, clock, velocity);
-    if (engineW > 0.01) this.drawEngine(engineW, clock, t);
     if (camW > 0.01) this.drawCamera(camW, powerP, clock, t);
     if (tlW > 0.01) this.drawTimeline(tlW, t, clock);
 
@@ -427,28 +425,6 @@ export class FilmRenderer {
       ctx.textBaseline = "alphabetic";
       ctx.fillText(`PROGRAM  ▶  ${this.timecode(play * 48)}`, mx, my - 8);
     }
-    ctx.globalAlpha = 1;
-  }
-
-  // ======================================================================
-  // Engine: slow concentric rings behind the content-engine act
-  // ======================================================================
-  private drawEngine(alpha: number, clock: number, t: number) {
-    const { ctx, w, h } = this;
-    const cx = w * 0.72;
-    const cy = h * 0.52;
-    const R = Math.min(w, h) * 0.42;
-    ctx.globalAlpha = alpha * 0.5;
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 3; i++) {
-      ctx.strokeStyle = i === 1 ? "rgba(249,254,2,0.35)" : "rgba(239,232,222,0.14)";
-      ctx.setLineDash([2 + i * 4, 10 + i * 6]);
-      ctx.lineDashOffset = clock * (12 + i * 8) * (i % 2 ? -1 : 1) + t * 600;
-      ctx.beginPath();
-      ctx.arc(cx, cy, R * (0.45 + i * 0.25), 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]);
     ctx.globalAlpha = 1;
   }
 

@@ -3,13 +3,13 @@
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 import { ip as I } from "@/content/strategy";
-import { machineClock } from "@/lib/machine-clock";
+import { worldClock } from "@/lib/world-clock";
 import { playSwell } from "@/lib/audio";
 
 /**
- * ACT 09 — Original BuzzLab IP. The last reel opens into a world (machine/scene.ts), and over it:
- * WHAT IF WE DIDN'T JUST MAKE CONTENT? / WHAT IF WE MADE WORLDS? / ORIGINAL BUZZLAB IP.
- * Then, quietly: this isn't a content plan — it's a media engine. The world fades to black.
+ * ACT 07 — Original BuzzLab IP, part two. The last reel opens into a world (machine/scene.ts), and
+ * over it: WHAT IF WE DIDN'T JUST MAKE CONTENT? / WHAT IF WE MADE WORLDS? / ORIGINAL BUZZLAB IP.
+ * Then what that could be, and the world fades to black.
  */
 export function OriginalIP() {
   const root = useRef<HTMLElement>(null);
@@ -18,7 +18,7 @@ export function OriginalIP() {
     () => {
       const el = root.current!;
       const q = (s: string) => el.querySelectorAll(s);
-      gsap.set([q("[data-b]"), q("[data-r]"), q("[data-poss] li"), q("[data-nl]"), q("[data-f]")], { autoAlpha: 0 });
+      gsap.set([q("[data-b]"), q("[data-r]"), q("[data-poss] li"), q("[data-nl]")], { autoAlpha: 0 });
       let swelled = false;
       const tl = gsap.timeline({
         defaults: { ease: "power2.out" },
@@ -30,8 +30,8 @@ export function OriginalIP() {
           scrub: 0.6,
           onUpdate: (self) => {
             const p = self.progress;
-            machineClock.w = 0.8 + Math.min(1, p / 0.97) * 0.2;
-            machineClock.fade = 1 - gsap.utils.clamp(0, 1, (p - 0.965) / 0.03);
+            worldClock.machine.w = 0.8 + Math.min(1, p / 0.97) * 0.2;
+            worldClock.machine.fade = 1 - gsap.utils.clamp(0, 1, (p - 0.965) / 0.03);
             const now = p > 0.7;
             if (now && !swelled && self.direction > 0) playSwell();
             swelled = now;
@@ -52,11 +52,8 @@ export function OriginalIP() {
         .to("[data-reveal]", { y: () => -window.innerHeight * 0.16, scale: 0.7, duration: 0.05, ease: "power2.inOut" }, 0.8)
         .fromTo(q("[data-poss] li"), { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.025, stagger: 0.004 }, 0.81)
         .fromTo(q("[data-nl]"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.02 }, 0.85)
-        // clear the stage for the last two lines
-        .to(["[data-reveal]", q("[data-poss] li"), q("[data-nl]")], { autoAlpha: 0, duration: 0.025 }, 0.875)
-        .fromTo("[data-f1]", { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.03 }, 0.89)
-        .fromTo("[data-f2]", { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.03 }, 0.92)
-        .to(q("[data-f]"), { autoAlpha: 0, duration: 0.02 }, 0.965)
+        // hold, then everything leaves before the world goes dark (the pipeline is next)
+        .to(["[data-reveal]", q("[data-poss] li"), q("[data-nl]")], { autoAlpha: 0, duration: 0.03 }, 0.93)
         .to({}, { duration: 0.01 }, 0.99);
     },
     { scope: root },
@@ -100,14 +97,6 @@ export function OriginalIP() {
           </p>
         </div>
 
-        <div className="absolute flex flex-col items-center">
-          <p data-f data-f1 className="t-big text-bone/75">
-            {I.final[0]}
-          </p>
-          <p data-f data-f2 className="t-mega mt-3">
-            {I.final[1]}
-          </p>
-        </div>
       </div>
     </section>
   );

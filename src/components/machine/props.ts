@@ -162,9 +162,13 @@ export function directorsChair(T: Record<string, THREE.Texture>) {
     arm.position.set(x, 1.02, 0);
     g.add(arm);
   }
-  const back = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.22), new THREE.MeshStandardMaterial({ map: T.chair, side: THREE.DoubleSide, roughness: 0.7 }));
-  back.position.set(0, 1.36, -0.2);
-  g.add(back);
+  // the canvas back reads correctly from both sides
+  for (const side of [0, 1]) {
+    const back = new THREE.Mesh(new THREE.PlaneGeometry(0.56, 0.22), new THREE.MeshStandardMaterial({ map: T.chair, roughness: 0.7 }));
+    back.position.set(0, 1.36, -0.2 - side * 0.002);
+    back.rotation.y = side * Math.PI;
+    g.add(back);
+  }
   return g;
 }
 
