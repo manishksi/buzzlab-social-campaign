@@ -33,6 +33,10 @@ export const loaders: Record<WorldId, (r: THREE.WebGLRenderer, o: Opts) => Promi
     await people();
     return new (await import("./studio")).StudioScene(r, o);
   },
+  lighter: async (r, o) => {
+    await people();
+    return new (await import("./lighter")).LighterScene(r, o);
+  },
   machine: async (r, o) => new (await import("./scene")).MachineScene(r, o),
   pipeline: async (r, o) => new (await import("./pipeline")).PipelineScene(r, o),
   set: async (r, o) => {

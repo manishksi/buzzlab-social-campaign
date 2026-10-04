@@ -26,14 +26,14 @@ export const scenePoints = { flame: { x: -1, y: -1 }, ember: { x: -1, y: -1 } };
 // Timeline (film time). The film sits at: 0.46 ACT 04 · 0.5 Spark · 0.6 Flame · 0.76 Light ·
 // 0.94 the last cigarette · 1.08 black.
 // ---------------------------------------------------------------------------------------------
-const DRAGS: [number, number][] = [
+export const DRAGS: [number, number][] = [
   [0.662, 0.68], // the first pull that lights it
   [0.795, 0.81],
   [0.852, 0.868],
   [0.902, 0.916],
   [0.957, 0.974], // the final drag
 ];
-const EXHALES: [number, number, number][] = [
+export const EXHALES: [number, number, number][] = [
   [0.68, 0.73, 1],
   [0.81, 0.845, 0.75],
   [0.868, 0.9, 0.85],
@@ -48,10 +48,10 @@ const BURN: [number, number][] = [
   [1.2, 0.9],
 ];
 // the end of his story: final drag → drop → boot → ember out → black
-const FINALE_A = 0.94;
-const FINALE_B = 1.08;
+export const FINALE_A = 0.94;
+export const FINALE_B = 1.08;
 
-type P = {
+export type P = {
   present: number; // the shot fades up from black
   hand: number; // lighter hand in frame
   pose: number; // 0 rest · 1 spark · 2 flame · 3 at the cigarette
@@ -74,8 +74,8 @@ type P = {
   lift: number;
   fade: number;
 };
-const P_KEYS: (keyof P)[] = ["present", "hand", "pose", "lid", "strike", "flame", "lit", "burn", "drag", "lean", "take", "away", "lower", "fall", "tilt", "land", "step", "stub", "out", "lift", "fade"];
-const blank = (): P => Object.fromEntries(P_KEYS.map((k) => [k, 0])) as P;
+export const P_KEYS: (keyof P)[] = ["present", "hand", "pose", "lid", "strike", "flame", "lit", "burn", "drag", "lean", "take", "away", "lower", "fall", "tilt", "land", "step", "stub", "out", "lift", "fade"];
+export const blank = (): P => Object.fromEntries(P_KEYS.map((k) => [k, 0])) as P;
 
 function piecewise(pts: [number, number][], t: number) {
   if (t <= pts[0][0]) return pts[0][1];
@@ -91,7 +91,8 @@ const pulse = (a: number, b: number, t: number) => {
   return smooth(a, a + d * 0.35, t) * (1 - smooth(a + d * 0.6, b, t));
 };
 
-function scrollParams(t: number): P {
+/** Every state of his story as a pure function of film time (shared with the 3D version, machine/lighter.ts). */
+export function scrollParams(t: number): P {
   const p = blank();
   p.present = smooth(0.435, 0.468, t);
   p.hand = smooth(0.44, 0.475, t) * (1 - smooth(0.7, 0.735, t));
@@ -119,7 +120,7 @@ function scrollParams(t: number): P {
   return p;
 }
 
-function previewParams(kind: Exclude<ScenePreview, null>, s: number): P {
+export function previewParams(kind: Exclude<ScenePreview, null>, s: number): P {
   const p = blank();
   p.present = 1;
   p.hand = 1;

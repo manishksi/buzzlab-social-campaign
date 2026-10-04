@@ -7,7 +7,7 @@ import { CharacterScene, type ScenePreview } from "./character";
  * Every scene is a pure function of (t, clock) so scrolling backwards plays the film backwards.
  */
 
-export type FilmFrame = { t: number; clock: number; dt: number; velocity: number; preview: ScenePreview };
+export type FilmFrame = { t: number; clock: number; dt: number; velocity: number; preview: ScenePreview; characterOff?: boolean; heat?: number };
 
 export class FilmRenderer {
   private ctx: CanvasRenderingContext2D;
@@ -32,7 +32,8 @@ export class FilmRenderer {
     this.character.resize(w, h, dpr);
   }
 
-  render({ t, clock, dt, velocity, preview }: FilmFrame) {
+  render(frame: FilmFrame) {
+    const { t, clock, dt, velocity, preview } = frame;
     const { ctx, w, h } = this;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.globalCompositeOperation = "source-over";
@@ -52,6 +53,7 @@ export class FilmRenderer {
     if (tlW > 0.01) this.drawTimeline(tlW, t, clock);
 
     // from ACT 04 on: one continuous shot of the character, the lighter and the cigarette
+    if (frame.characterOff) return frame.heat ?? 0;
     return this.character.render(ctx, { t, clock, dt, velocity, preview });
   }
 
