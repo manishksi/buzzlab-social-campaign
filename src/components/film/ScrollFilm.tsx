@@ -132,9 +132,15 @@ export function ScrollFilm() {
       }
     };
     raf = requestAnimationFrame(loop);
+    // the loop at the end jumps back to the top: land on the right frame at once
+    const snap = () => {
+      filmT = filmAt(window.scrollY);
+    };
+    window.addEventListener("film:snap", snap);
 
     return () => {
       cancelAnimationFrame(raf);
+      window.removeEventListener("film:snap", snap);
       ScrollTrigger.removeEventListener("refresh", compute);
       window.removeEventListener("resize", onResize);
     };

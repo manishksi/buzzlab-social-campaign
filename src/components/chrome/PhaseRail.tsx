@@ -28,9 +28,9 @@ export function PhaseRail() {
           aria-label={`Phase ${p.n}: ${p.name}`}
         >
           <span className="relative flex h-6 w-3 items-end justify-center" aria-hidden>
-            <span className={`absolute bottom-0 h-[2px] w-3 ${i <= active ? "bg-ember" : "bg-bone/25"}`} />
+            <span className={`absolute bottom-0 h-[2px] w-3 ${i <= active ? "bg-buzz" : "bg-bone/25"}`} />
             <span
-              className="absolute bottom-1 h-3 w-2 origin-bottom rounded-[50%_50%_45%_45%/65%_65%_35%_35%] bg-gradient-to-t from-ember via-amber to-glow transition-transform duration-500"
+              className="absolute bottom-1 h-3 w-2 origin-bottom rounded-[50%_50%_45%_45%/65%_65%_35%_35%] bg-gradient-to-t from-buzz via-buzz-soft to-buzz-pale transition-transform duration-500"
               style={{ transform: `scale(${i === active ? 1 + i * 0.25 : 0})` }}
             />
           </span>

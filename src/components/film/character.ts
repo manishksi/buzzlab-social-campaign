@@ -10,6 +10,7 @@ import { clamp, hash, invLerp, lerp, smooth } from "@/lib/math";
  *   light  — he lights the cigarette, and it burns down as the presentation goes on
  * and at the end he takes a final drag, drops it and steps on it.
  *
+ * His story ends with Phase 03; after FINALE_B the shot is black and the film hands over.
  * Everything is drawn in "units": 1 unit = the height of his head. All scroll-driven states are pure
  * functions of film time `t`, so scrubbing backwards plays the shot backwards. ACT 04 can also
  * preview a phase on hover, which blends in on top of the scroll state.
@@ -23,36 +24,32 @@ export const scenePoints = { flame: { x: -1, y: -1 }, ember: { x: -1, y: -1 } };
 
 // ---------------------------------------------------------------------------------------------
 // Timeline (film time). The film sits at: 0.46 ACT 04 · 0.5 Spark · 0.6 Flame · 0.76 Light ·
-// 0.975 the pipeline · 1.06 the ending · 1.2 black.
+// 0.94 the last cigarette · 1.08 black.
 // ---------------------------------------------------------------------------------------------
 const DRAGS: [number, number][] = [
   [0.662, 0.68], // the first pull that lights it
-  [0.795, 0.815],
-  [0.862, 0.885], // as "Original BuzzLab IP" lands
-  [0.915, 0.93],
-  [0.968, 0.985], // before the long exhale into the pipeline
-  [1.077, 1.094], // the final drag
+  [0.795, 0.81],
+  [0.852, 0.868],
+  [0.902, 0.916],
+  [0.957, 0.974], // the final drag
 ];
 const EXHALES: [number, number, number][] = [
   [0.68, 0.73, 1],
-  [0.815, 0.85, 0.75],
-  [0.885, 0.92, 0.9],
-  [0.93, 0.96, 0.6],
-  [0.985, 1.035, 2.6], // the transition into the pipeline
-  [1.094, 1.125, 1.1],
+  [0.81, 0.845, 0.75],
+  [0.868, 0.9, 0.85],
+  [0.916, 0.94, 0.6],
+  [0.975, 0.998, 1.1],
 ];
 const BURN: [number, number][] = [
   [0.676, 0],
   [0.76, 0.1],
-  [0.93, 0.5],
-  [0.975, 0.62],
-  [1.02, 0.7],
-  [1.06, 0.78],
-  [1.094, 0.9],
+  [0.93, 0.78],
+  [0.974, 0.9],
   [1.2, 0.9],
 ];
-const FINALE_A = 1.06;
-const FINALE_B = 1.2;
+// the end of his story: final drag → drop → boot → ember out → black
+const FINALE_A = 0.94;
+const FINALE_B = 1.08;
 
 type P = {
   present: number; // the shot fades up from black
@@ -580,7 +577,7 @@ export class CharacterScene {
 
     // --- dark: the silhouette, a faint memory of the face
     const D = this.layer();
-    D.g.fillStyle = "#0b0908";
+    D.g.fillStyle = "#090909";
     D.g.fill(head);
     D.g.globalAlpha = 0.07;
     D.g.drawImage(L.c, HEAD_BOX.x0, HEAD_BOX.y0, HEAD_BOX.x1 - HEAD_BOX.x0, HEAD_BOX.y1 - HEAD_BOX.y0);
@@ -597,7 +594,7 @@ export class CharacterScene {
       R.g.restore();
       return R.c;
     };
-    const rimW = rim("#ffbe82", 0.014, -0.004, 0.012);
+    const rimW = rim("#ffd890", 0.014, -0.004, 0.012);
     const rimC = rim("#aab4bc", -0.006, 0.009, 0.014);
     {
       // the backlight catches the top of the hair and fades down the neck
@@ -636,10 +633,10 @@ export class CharacterScene {
     c.width = c.height = 128;
     const g = c.getContext("2d")!;
     const r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
-    r.addColorStop(0, "rgba(255,214,160,1)");
-    r.addColorStop(0.18, "rgba(245,150,70,0.55)");
-    r.addColorStop(0.5, "rgba(239,106,42,0.14)");
-    r.addColorStop(1, "rgba(239,106,42,0)");
+    r.addColorStop(0, "rgba(255,240,180,1)");
+    r.addColorStop(0.18, "rgba(250,205,90,0.55)");
+    r.addColorStop(0.5, "rgba(240,180,40,0.14)");
+    r.addColorStop(1, "rgba(240,180,40,0)");
     g.fillStyle = r;
     g.fillRect(0, 0, 128, 128);
     return c;
@@ -683,7 +680,7 @@ export class CharacterScene {
   // ------------------------------------------------------------------------------------------
 
   render(ctx: CanvasRenderingContext2D, { t, clock, dt, velocity, preview }: SceneFrame) {
-    if (!this.head || t < 0.42) {
+    if (!this.head || t < 0.42 || t >= FINALE_B) {
       this.sparks.length = 0;
       scenePoints.flame.x = scenePoints.ember.x = -1;
       return 0;
@@ -819,9 +816,9 @@ export class CharacterScene {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const hazeY = this.ay - (0.3 + p.tilt * 5.95 * 0.55) * SZ;
     const hz = ctx.createRadialGradient(this.ax + 0.35 * SZ, hazeY, 0, this.ax + 0.35 * SZ, hazeY, 2.8 * SZ);
-    hz.addColorStop(0, `rgba(66,59,52,${0.36 * pres})`);
-    hz.addColorStop(0.45, `rgba(40,36,32,${0.18 * pres})`);
-    hz.addColorStop(1, "rgba(11,10,9,0)");
+    hz.addColorStop(0, `rgba(60,58,54,${0.36 * pres})`);
+    hz.addColorStop(0.45, `rgba(36,35,32,${0.18 * pres})`);
+    hz.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = hz;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "lighter";
@@ -957,7 +954,7 @@ export class CharacterScene {
     if (p.fade > 0) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.globalAlpha = p.fade;
-      ctx.fillStyle = "#0b0a09";
+      ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, w, h);
     }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -992,14 +989,14 @@ export class CharacterScene {
     rims: { pts: [number, number][]; c: string; w: number }[],
     pres: number,
   ) {
-    ctx.fillStyle = "#0c0a09";
+    ctx.fillStyle = "#0a0a0a";
     ctx.fill(path);
     if (light.i > 0.01) {
       ctx.save();
       ctx.clip(path);
       const g = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.r * reach);
-      g.addColorStop(0, `rgba(120,66,32,${0.4 * Math.min(1, light.i)})`);
-      g.addColorStop(0.4, `rgba(60,30,14,${0.16 * Math.min(1, light.i)})`);
+      g.addColorStop(0, `rgba(116,84,36,${0.4 * Math.min(1, light.i)})`);
+      g.addColorStop(0.4, `rgba(56,40,16,${0.16 * Math.min(1, light.i)})`);
       g.addColorStop(1, "rgba(30,14,6,0)");
       ctx.fillStyle = g;
       ctx.fillRect(light.x - 3, light.y - 3, 6, 6);
@@ -1056,7 +1053,7 @@ export class CharacterScene {
       const ash = 0.012 * p.lit;
       ctx.fillStyle = `rgba(${Math.round(70 + 40 * lit)},${Math.round(66 + 36 * lit)},${Math.round(62 + 32 * lit)},1)`;
       ctx.fillRect(ex, -wd / 2, ash, wd);
-      ctx.fillStyle = `rgba(255,${Math.round(110 + 110 * p.drag)},${Math.round(40 + 90 * p.drag)},${glow})`;
+      ctx.fillStyle = `rgba(255,${Math.round(150 + 90 * p.drag)},${Math.round(40 + 100 * p.drag)},${glow})`;
       ctx.fillRect(ex - 0.003, -wd / 2, 0.009 + ash * 0.5, wd);
       ctx.fillStyle = `rgba(255,236,190,${glow * p.drag})`;
       ctx.fillRect(ex, -wd * 0.25, 0.006, wd * 0.5);
@@ -1071,7 +1068,7 @@ export class CharacterScene {
     ctx.rotate(a);
     const L = Math.min(1.2, If + this.flash + light.i * 0.3);
     // sleeve and wrist, coming up from below the frame
-    ctx.fillStyle = "#0b0908";
+    ctx.fillStyle = "#090909";
     ctx.beginPath();
     ctx.moveTo(0.1, 0.3);
     ctx.bezierCurveTo(0.16, 0.6, 0.3, 1.2, 0.46, 2.3);
@@ -1257,9 +1254,9 @@ export class CharacterScene {
     path.quadraticCurveTo(x, y + 0.012, x - wid * 0.7, y - 0.004);
     const g = ctx.createRadialGradient(x, y - hgt * 0.22, 0, x, y - hgt * 0.3, hgt * 0.85);
     g.addColorStop(0, "rgba(255,250,235,0.95)");
-    g.addColorStop(0.3, "rgba(255,214,140,0.9)");
-    g.addColorStop(0.65, "rgba(245,140,50,0.65)");
-    g.addColorStop(1, "rgba(220,80,20,0)");
+    g.addColorStop(0.3, "rgba(255,226,130,0.9)");
+    g.addColorStop(0.65, "rgba(245,175,50,0.65)");
+    g.addColorStop(1, "rgba(225,120,20,0)");
     ctx.fillStyle = g;
     ctx.fill(path);
     // blue root
@@ -1281,7 +1278,7 @@ export class CharacterScene {
     const L = clamp(light.i * (1.1 - d * 2)) * 0.6;
     const skin = (k: number) => `rgb(${Math.round(14 + 150 * k)},${Math.round(9 + 92 * k)},${Math.round(7 + 58 * k)})`;
     // sleeve
-    ctx.fillStyle = "#0b0908";
+    ctx.fillStyle = "#090909";
     ctx.beginPath();
     ctx.moveTo(0.22, 0.26);
     ctx.bezierCurveTo(0.3, 0.7, 0.46, 1.3, 0.64, 2.4);
@@ -1357,7 +1354,7 @@ export class CharacterScene {
       for (let i = right.length - 2; i >= 0; i -= 2) ctx.lineTo(right[i], right[i + 1]);
       ctx.closePath();
       const g = ctx.createLinearGradient(0, tip.y, 0, tip.y - len);
-      g.addColorStop(0, `rgba(255,200,150,${0.5 * strength})`);
+      g.addColorStop(0, `rgba(255,226,160,${0.5 * strength})`);
       g.addColorStop(0.1, `rgba(214,206,196,${0.3 * strength})`);
       g.addColorStop(0.55, `rgba(190,186,180,${0.12 * strength})`);
       g.addColorStop(1, "rgba(180,176,170,0)");
@@ -1410,7 +1407,7 @@ export class CharacterScene {
     // floor: dark concrete, lit only where the ember is
     const fy = FLOOR;
     const fg = ctx.createLinearGradient(0, fy - 1.6, 0, fy + 1.4);
-    fg.addColorStop(0, "rgba(11,10,9,1)");
+    fg.addColorStop(0, "rgba(0,0,0,1)");
     fg.addColorStop(0.45, "rgba(20,18,16,1)");
     fg.addColorStop(1, "rgba(14,13,12,1)");
     ctx.fillStyle = fg;
@@ -1425,7 +1422,7 @@ export class CharacterScene {
     const bl = ctx.createRadialGradient(0.6, fy - 0.7, 0, 0.6, fy - 0.7, 3.2);
     bl.addColorStop(0, `rgba(72,66,60,${0.42 * pres})`);
     bl.addColorStop(0.5, `rgba(40,37,34,${0.2 * pres})`);
-    bl.addColorStop(1, "rgba(11,10,9,0)");
+    bl.addColorStop(1, "rgba(0,0,0,0)");
     ctx.fillStyle = bl;
     ctx.fillRect(-3, fy - 4, 7, 5);
     if (light.i > 0.01) {
@@ -1433,8 +1430,8 @@ export class CharacterScene {
       ctx.translate(light.x, fy);
       ctx.scale(1, 0.3);
       const lg = ctx.createRadialGradient(0, 0, 0, 0, 0, 1.2);
-      lg.addColorStop(0, `rgba(239,120,50,${0.32 * light.i})`);
-      lg.addColorStop(1, "rgba(239,120,50,0)");
+      lg.addColorStop(0, `rgba(240,190,70,${0.32 * light.i})`);
+      lg.addColorStop(1, "rgba(240,190,70,0)");
       ctx.fillStyle = lg;
       ctx.fillRect(-1.2, -1.2, 2.4, 2.4);
       ctx.restore();
@@ -1443,9 +1440,9 @@ export class CharacterScene {
     // back leg, planted
     ctx.save();
     ctx.translate(0.2, fy);
-    ctx.fillStyle = "#080706";
+    ctx.fillStyle = "#070707";
     ctx.fill(trouserPath(2.6));
-    ctx.fillStyle = "#090807";
+    ctx.fillStyle = "#080808";
     ctx.fill(this.paths.boot);
     ctx.strokeStyle = `rgba(170,180,188,${0.08 * pres})`;
     ctx.lineWidth = 0.008;
@@ -1477,9 +1474,9 @@ export class CharacterScene {
     ctx.restore();
     ctx.rotate(-twist);
     ctx.scale(1 - Math.abs(twist) * 0.6, 1);
-    ctx.fillStyle = "#0c0a09";
+    ctx.fillStyle = "#0a0a0a";
     ctx.fill(trouserPath(2.6));
-    ctx.fillStyle = "#0d0b0a";
+    ctx.fillStyle = "#0b0b0b";
     ctx.fill(this.paths.boot);
     ctx.strokeStyle = `rgba(170,180,188,${0.14 * pres})`;
     ctx.lineWidth = 0.008;
@@ -1551,7 +1548,7 @@ export class CharacterScene {
       s.y += s.vy * d;
       const u = s.life / s.max;
       ctx.globalAlpha = (1 - u) * pres;
-      ctx.strokeStyle = u < 0.4 ? "#fff1d6" : "#ffb35e";
+      ctx.strokeStyle = u < 0.4 ? "#fffbd6" : "#ffd65e";
       ctx.lineWidth = 0.0045;
       ctx.beginPath();
       ctx.moveTo(s.x - s.vx * 0.03, s.y - s.vy * 0.03);

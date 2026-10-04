@@ -59,7 +59,7 @@ export function Flame() {
           <Reveal as="p" className="t-big max-w-[18ch]">
             {F.quote[0]}
           </Reveal>
-          <Reveal as="p" className="t-serif mt-3 max-w-[24ch] text-[clamp(2rem,4.4vw,4.4rem)] leading-[1.02] text-amber lg:max-w-[20ch]" delay={0.15}>
+          <Reveal as="p" className="t-serif mt-3 max-w-[24ch] text-[clamp(2rem,4.4vw,4.4rem)] leading-[1.02] text-buzz-soft lg:max-w-[20ch]" delay={0.15}>
             {F.quote[1]}
           </Reveal>
         </blockquote>
@@ -85,7 +85,7 @@ export function Flame() {
                     aria-pressed={on}
                     className="group grid w-full grid-cols-[5.5rem_1fr] items-baseline gap-3 py-5 text-left md:grid-cols-[6.5rem_1fr_auto]"
                   >
-                    <span className={`t-slate transition-colors ${on ? "text-ember" : ""}`}>Series {x.n}</span>
+                    <span className={`t-slate transition-colors ${on ? "text-buzz" : ""}`}>Series {x.n}</span>
                     <span className={`font-display text-[clamp(1.7rem,3vw,3rem)] font-extrabold uppercase leading-[0.92] transition-all duration-500 ${on ? "translate-x-2 text-bone" : "text-bone/45 group-hover:text-bone/80"}`}>
                       {x.title}
                     </span>
@@ -123,7 +123,7 @@ export function Flame() {
                 </div>
                 <div>
                   <dt className="t-slate">Cadence</dt>
-                  <dd className="t-label mt-1 text-amber">{s.cadence}</dd>
+                  <dd className="t-label mt-1 text-buzz-soft">{s.cadence}</dd>
                 </div>
               </dl>
               <ul className="mt-5 space-y-2 border-t hairline pt-4">
@@ -146,12 +146,12 @@ export function Flame() {
             <p className="t-slate mb-3">Phase 01</p>
             <p data-from className="relative inline-block font-display text-[clamp(3.5rem,11vw,11rem)] font-extrabold uppercase leading-[0.85]">
               {F.shift.from}
-              <span data-from-strike aria-hidden className="absolute left-0 right-0 top-1/2 h-[0.06em] origin-left bg-ember" />
+              <span data-from-strike aria-hidden className="absolute left-0 right-0 top-1/2 h-[0.06em] origin-left bg-buzz" />
             </p>
           </div>
           <div>
-            <p className="t-slate mb-3 text-amber">Phase 02</p>
-            <p data-to className="font-display text-[clamp(3.5rem,11vw,11rem)] font-extrabold uppercase leading-[0.85] text-amber">
+            <p className="t-slate mb-3 text-buzz-soft">Phase 02</p>
+            <p data-to className="font-display text-[clamp(3.5rem,11vw,11rem)] font-extrabold uppercase leading-[0.85] text-buzz-soft">
               {F.shift.to}
             </p>
           </div>

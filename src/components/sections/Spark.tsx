@@ -47,10 +47,9 @@ export function Spark() {
 
   return (
     <section ref={root} id="spark" className="relative z-10 pt-[20vh]">
-      <PhaseHeader n={S.n} name={S.name} months={S.months} objective={S.objective} heat={0.35} />
-      <div className="gutter mx-auto mt-10 max-w-[1600px]">
-        <p className="t-lede md:ml-[25%] lg:max-w-[28em]">{S.line}</p>
-      </div>
+      <PhaseHeader n={S.n} name={S.name} months={S.months} objective={S.objective} heat={0.35}>
+        <p className="t-lede mt-6">{S.line}</p>
+      </PhaseHeader>
 
       <div data-strip className="relative mt-[12vh] flex min-h-[100svh] flex-col justify-center overflow-hidden py-16">
         <div className="gutter mb-6 flex items-end justify-between">
@@ -72,10 +71,10 @@ export function Spark() {
                   onClick={() => setPlaying((v) => (v === i ? null : i))}
                 >
                   <div className="flex items-baseline justify-between pb-3">
-                    <span className={`t-label transition-colors ${on ? "text-ember" : "text-bone"}`}>{p.week}</span>
+                    <span className={`t-label transition-colors ${on ? "text-buzz" : "text-bone"}`}>{p.week}</span>
                     <span className="t-slate">{p.length}</span>
                   </div>
-                  <div className="relative border-y-[14px] border-[#100e0c] bg-[#100e0c] px-2.5">
+                  <div className="relative border-y-[14px] border-[#0d0d0d] bg-[#0d0d0d] px-2.5">
                     <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-[11px] h-[8px] opacity-70" style={{ background: "repeating-linear-gradient(90deg, transparent 0 8px, rgba(239,232,222,.22) 8px 18px, transparent 18px 26px)" }} />
                     <div aria-hidden className="pointer-events-none absolute inset-x-0 -bottom-[11px] h-[8px] opacity-70" style={{ background: "repeating-linear-gradient(90deg, transparent 0 8px, rgba(239,232,222,.22) 8px 18px, transparent 18px 26px)" }} />
                     <div className="relative aspect-[9/16] overflow-hidden transition-transform duration-700 ease-[cubic-bezier(.16,1,.3,1)] group-hover:scale-[1.015]">
@@ -93,7 +92,7 @@ export function Spark() {
                           </div>
                           <div>
                             <dt className="t-slate">Objective</dt>
-                            <dd className="t-label mt-0.5 text-amber">{p.objective}</dd>
+                            <dd className="t-label mt-0.5 text-buzz-soft">{p.objective}</dd>
                           </div>
                         </dl>
                         <p className="t-slate mt-1 leading-relaxed">{p.shows.join(" · ")}</p>
@@ -107,7 +106,7 @@ export function Spark() {
             <div className="flex w-[min(72vw,300px)] shrink-0 snap-center flex-col justify-end pb-16 md:w-[min(24vw,330px)]">
               <p className="t-slate">End of phase 01</p>
               <p className="mt-3 font-display text-[clamp(2rem,3vw,3rem)] font-extrabold uppercase leading-[0.9]">
-                The voice is <span className="t-serif text-ember">established.</span>
+                The voice is <span className="t-serif text-buzz">established.</span>
               </p>
               <p className="t-lede mt-4 text-base">Now we give people a reason to come back.</p>
             </div>
@@ -118,12 +117,12 @@ export function Spark() {
         <div className="gutter mt-12 hidden md:block">
           <div className="relative h-8">
             <div className="absolute inset-x-0 top-3 h-px bg-bone/15" />
-            <div data-playhead className="absolute left-0 right-0 top-3 h-px origin-left bg-ember" />
+            <div data-playhead className="absolute left-0 right-0 top-3 h-px origin-left bg-buzz" />
             {Array.from({ length: WEEKS }).map((_, i) => {
               const hasPiece = S.pieces.some((p) => p.week.endsWith(String(i + 1).padStart(2, "0")));
               return (
                 <div key={i} className="absolute top-0 -translate-x-1/2" style={{ left: `${(i / (WEEKS - 1)) * 100}%` }}>
-                  <div className={`mx-auto h-[7px] w-[7px] translate-y-[9px] rounded-full ${hasPiece ? "bg-ember" : "bg-bone/30"}`} />
+                  <div className={`mx-auto h-[7px] w-[7px] translate-y-[9px] rounded-full ${hasPiece ? "bg-buzz" : "bg-bone/30"}`} />
                   <div className="t-slate mt-4 whitespace-nowrap">W{String(i + 1).padStart(2, "0")}</div>
                 </div>
               );

@@ -97,8 +97,8 @@ export function Hero() {
             key={l}
             data-line
             aria-hidden={i > 0}
-            className={`t-mega gutter absolute text-center balance ${i === 2 ? "ember-text glow-text" : ""}`}
-            style={i === 2 ? { textShadow: "0 0 60px rgba(239,106,42,.35)" } : undefined}
+            className={`t-mega gutter absolute text-center balance ${i === 2 ? "buzz-text buzz-glow" : ""}`}
+            style={i === 2 ? { textShadow: "0 0 60px rgba(249,254,2,.35)" } : undefined}
           >
             {l}
           </h1>
@@ -106,15 +106,15 @@ export function Hero() {
       </div>
 
       <div data-thesis className="gutter absolute inset-x-0 top-[15%] md:top-[24%]">
-        <p className="t-label mb-5 text-ember">{hero.lines[2]}</p>
+        <p className="t-label mb-5 text-buzz">{hero.lines[2]}</p>
         <p className="t-big max-w-[16ch] md:max-w-[22ch]">{hero.thesis[0]}</p>
-        <p className="t-serif ember-text mt-2 max-w-[13ch] text-[clamp(2.2rem,5.2vw,5.4rem)] leading-[1.02]">{hero.thesis[1]}</p>
+        <p className="t-serif buzz-text mt-2 max-w-[13ch] text-[clamp(2.2rem,5.2vw,5.4rem)] leading-[1.02]">{hero.thesis[1]}</p>
       </div>
 
       <div data-cue className="gutter absolute inset-x-0 bottom-8 flex items-end justify-between">
         <span className="t-slate">{hero.scrollCue}</span>
         <span className="relative block h-14 w-px overflow-hidden bg-bone/15" aria-hidden>
-          <span className="absolute inset-x-0 top-0 h-1/2 animate-[cue_1.8s_cubic-bezier(.77,0,.18,1)_infinite] bg-ember" />
+          <span className="absolute inset-x-0 top-0 h-1/2 animate-[cue_1.8s_cubic-bezier(.77,0,.18,1)_infinite] bg-buzz" />
         </span>
       </div>
       <style>{`@keyframes cue { 0% { transform: translateY(-100%) } 100% { transform: translateY(200%) } }`}</style>

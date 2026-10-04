@@ -56,7 +56,7 @@ export function Cursor() {
   if (!enabled) return null;
   return (
     <>
-      <div ref={dot} aria-hidden className="pointer-events-none fixed left-0 top-0 z-[80] -ml-[3px] -mt-[3px] h-[6px] w-[6px] rounded-full bg-ember mix-blend-normal" />
+      <div ref={dot} data-cursor-dot aria-hidden className="pointer-events-none fixed left-0 top-0 z-[80] -ml-[3px] -mt-[3px] h-[6px] w-[6px] rounded-full bg-buzz mix-blend-normal" />
       <div ref={ring} aria-hidden className="cursor-ring pointer-events-none fixed left-0 top-0 z-[79]">
         <div className="cursor-ring__inner">
           <span>{label}</span>

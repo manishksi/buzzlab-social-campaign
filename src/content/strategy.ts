@@ -22,8 +22,9 @@ export const acts = [
   { id: "spark", act: "05", label: "Phase 01 — Spark", film: 0.5 },
   { id: "flame", act: "06", label: "Phase 02 — Flame", film: 0.6 },
   { id: "light", act: "07", label: "Phase 03 — Light", film: 0.76 },
-  { id: "pipeline", act: "08", label: "The pipeline", film: 0.975 },
-  { id: "road-ahead", act: "09", label: "The next chapter", film: 1.06 },
+  { id: "machine", act: "08", label: "The creative machine", film: 1.12 },
+  { id: "ip", act: "09", label: "Original BuzzLab IP", film: 1.16 },
+  { id: "landy", act: "??", label: "Not in the deck", film: 1.2 },
 ] as const;
 
 /** The index menu (kept short on purpose; the lighter is the main navigation). */
@@ -34,8 +35,8 @@ export const menu = [
   { label: "Spark", target: "spark", note: "Month 01–02" },
   { label: "Flame", target: "flame", note: "Month 03–06" },
   { label: "Light", target: "light", note: "Month 07–12" },
-  { label: "The pipeline", target: "pipeline", note: "How the work keeps moving" },
-  { label: "The next chapter", target: "road-ahead", note: "The ending" },
+  { label: "The machine", target: "machine", note: "How the work keeps moving" },
+  { label: "Original IP", target: "ip", note: "What if we made worlds?" },
 ];
 
 export const hero = {
@@ -79,6 +80,11 @@ export const objective = {
     "We are not trying to post more.",
     "We are building a recognisable media identity: a page people choose to follow, come back to, and talk about.",
   ],
+};
+
+/** ACT 02 → 03: the page looks back at you. */
+export const watching = {
+  caption: "Now it's noticing you.",
 };
 
 export const engine = {
@@ -291,11 +297,50 @@ export const light = {
   name: "Light",
   months: "Month 07–12",
   objective: "Build original BuzzLab IP.",
-  beats: [
-    "What if we stopped creating content for other people?",
-    "And created something of our own?",
-    "Build our own world.",
+  notLockedLede: "We don't lock the IP today. The first six months tell us what the audience wants more of; the IP grows out of that.",
+  howWeChoose: [
+    { phase: "Phase 01", learn: "shows us what people will watch." },
+    { phase: "Phase 02", learn: "shows us what people come back for." },
+    { phase: "Phase 03", learn: "turns the strongest of those into a world BuzzLab owns." },
   ],
+  evolution: [
+    { phase: "Phase 01", word: "Content" },
+    { phase: "Phase 02", word: "Formats" },
+    { phase: "Phase 03", word: "IP" },
+  ],
+};
+
+/**
+ * The creative machine: after the cigarette goes out, a yellow dot becomes a play button and the
+ * whole pipeline plays out as a production world. Each stage is a caption over its shot.
+ */
+export const machine = {
+  eyebrow: "Act 08 — The creative machine",
+  title: "Content → Creative → Media → IP",
+  sub: "The problem isn't only generating ideas. The system has to keep moving every single week.",
+  shots: [
+    { key: "idea", label: "Idea", group: "Idea" },
+    { key: "shoot", label: "Shoot", group: "Execution" },
+    { key: "edit", label: "Edit", group: "Execution" },
+    { key: "post", label: "Post", group: "Publishing" },
+    { key: "chaos", label: "Iterate", group: "Learning" },
+  ],
+  roles: [
+    { role: "DOP", object: "Camera" },
+    { role: "Director", object: "Monitor" },
+    { role: "Editor", object: "Timeline" },
+    { role: "Copywriter", object: "Script" },
+    { role: "Social", object: "Feed" },
+    { role: "Producer", object: "Kit" },
+    { role: "Creative director", object: "Storyboard" },
+    { role: "Designer", object: "Frames" },
+  ],
+};
+
+/** ORIGINAL BUZZLAB IP — the reveal that closes the machine. */
+export const ip = {
+  eyebrow: "Act 09 — Original BuzzLab IP",
+  beats: ["What if we didn't just make content?", "What if we made worlds?"],
   reveal: ["Original", "BuzzLab IP"],
   possibilities: [
     "A character",
@@ -310,20 +355,11 @@ export const light = {
     "An original entertainment property",
   ],
   notLocked: "Not locked. On purpose.",
-  howWeChoose: [
-    { phase: "Phase 01", learn: "shows us what people will watch." },
-    { phase: "Phase 02", learn: "shows us what people come back for." },
-    { phase: "Phase 03", learn: "turns the strongest of those into a world BuzzLab owns." },
-  ],
-  evolution: [
-    { phase: "Phase 01", word: "Content" },
-    { phase: "Phase 02", word: "Formats" },
-    { phase: "Phase 03", word: "IP" },
-  ],
+  final: ["This isn't a content plan.", "It's a media engine."],
 };
 
 export const pipeline = {
-  eyebrow: "Act 08",
+  eyebrow: "Act 08 — The pipeline",
   title: "The pipeline",
   sub: "The problem isn't only generating ideas. The system has to keep moving every single week.",
   stages: [
@@ -340,7 +376,7 @@ export const pipeline = {
   groups: ["Idea", "Execution", "Publishing", "Learning"],
 };
 
-export const finale = {
-  final: ["This isn't a content plan.", "It's a media engine."],
-  credits: "BuzzLab · Instagram strategy · Spark → Flame → Light",
+/** The last character. Landy stares, opens wide, and eats the whole presentation. */
+export const landy = {
+  name: "Landy",
 };

@@ -48,7 +48,7 @@ export function TopBar() {
               transition={{ duration: 0.45, ease: [0.77, 0, 0.18, 1] }}
               className="block whitespace-nowrap"
             >
-              <span className="text-ember">Act {current.act}</span>
+              <span className="text-buzz">Act {current.act}</span>
               <span className="mx-2 opacity-40">—</span>
               <span className="text-bone/80">{current.label}</span>
             </motion.span>
@@ -87,7 +87,7 @@ export function TopBar() {
             type="button"
             data-cursor="Index"
             onClick={() => store.set({ menuOpen: true })}
-            className="t-label flex items-center gap-2 border border-bone/25 px-3 py-1.5 transition-colors hover:border-ember hover:text-ember"
+            className="t-label flex items-center gap-2 border border-bone/25 px-3 py-1.5 transition-colors hover:border-buzz hover:text-buzz"
             aria-haspopup="dialog"
           >
             Index
@@ -95,7 +95,7 @@ export function TopBar() {
         </div>
       </div>
       <div className="absolute inset-x-0 bottom-0 h-px bg-bone/10">
-        <div className="h-full origin-left bg-ember" style={{ transform: `scaleX(${progress})` }} />
+        <div className="h-full origin-left bg-buzz" style={{ transform: `scaleX(${progress})` }} />
       </div>
       <style>{`@keyframes eq { from { transform: scaleY(0.35) } to { transform: scaleY(1) } }`}</style>
     </header>

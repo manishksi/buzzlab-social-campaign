@@ -42,14 +42,14 @@
    over a scroll-scrubbed background, with mono "slate" metadata.
    --------------------------------------------------------------- */
 @theme {
-  --color-ink: #0b0a09; /* stage black, warm */
-  --color-char: #151311; /* charcoal surfaces */
-  --color-line: #2a2622; /* hairlines */
-  --color-ash: #8c847a; /* secondary text */
-  --color-bone: #efe8de; /* primary text, warm off-white */
-  --color-ember: #ef6a2a; /* the flame accent */
-  --color-amber: #f5a54a; /* flame highlight */
-  --color-glow: #ffd6a0; /* hottest point */
+  --color-ink: #000000; /* stage black */
+  --color-char: #111111; /* dark charcoal */
+  --color-line: #262626; /* hairlines */
+  --color-ash: #8a8882; /* secondary text */
+  --color-bone: #eeebe3; /* primary text, off-white */
+  --color-buzz: #f9fe02; /* BuzzLab yellow: the one accent */
+  --color-buzz-soft: #e6e37a; /* softer yellow for secondary marks */
+  --color-buzz-pale: #fffbb8; /* the hottest point of a light */
 
   --font-display: "Big Shoulders Display", "Archivo Narrow", "Arial Narrow", "Helvetica Neue", sans-serif;
   --font-serif: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
@@ -62,7 +62,7 @@
 
 :root {
   color-scheme: dark;
-  --heat: 0; /* 0..1, driven by the lighter + film for global warm glow */
+  --heat: 0; /* 0..1, driven by the lighter + film for a faint warm glow */
   --gutter: clamp(16px, 4vw, 64px);
 }
 
@@ -94,7 +94,7 @@ body {
 }
 
 ::selection {
-  background: var(--color-ember);
+  background: var(--color-buzz);
   color: var(--color-ink);
 }
 
@@ -182,11 +182,11 @@ body {
 .hairline {
   border-color: var(--color-line);
 }
-.ember-text {
-  color: var(--color-ember);
+.buzz-text {
+  color: var(--color-buzz);
 }
-.glow-text {
-  text-shadow: 0 0 calc(var(--heat) * 40px) rgba(239, 106, 42, calc(var(--heat) * 0.55));
+.buzz-glow {
+  text-shadow: 0 0 calc(var(--heat) * 40px) rgba(249,254,2, calc(var(--heat) * 0.55));
 }
 
 /* Film-strip sprocket band */
@@ -222,7 +222,7 @@ body {
   position: fixed;
   inset: 0;
   z-index: 1;
-  background: radial-gradient(ellipse 120% 90% at 50% 45%, transparent 35%, rgba(11, 10, 9, 0.55) 75%, rgba(11, 10, 9, 0.92) 100%);
+  background: radial-gradient(ellipse 120% 90% at 50% 45%, transparent 35%, rgba(0,0,0, 0.55) 75%, rgba(0,0,0, 0.92) 100%);
 }
 
 /* Custom cursor */
@@ -237,7 +237,7 @@ body {
 
 /* Focus */
 :focus-visible {
-  outline: 1.5px solid var(--color-amber);
+  outline: 1.5px solid var(--color-buzz-soft);
   outline-offset: 4px;
 }
 
@@ -263,4 +263,37 @@ body {
   opacity: 0.09;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Role labels pinned to objects in the creative machine */
+.machine-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-bone);
+  padding-left: 14px;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+.machine-label::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-radius: 50%;
+  background: var(--color-buzz);
+}
+
+/* Landy has eaten everything: no cursor in the black either */
+html.is-swallowed [data-cursor-dot],
+html.is-swallowed .cursor-ring {
+  opacity: 0;
 }

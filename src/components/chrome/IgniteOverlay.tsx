@@ -42,7 +42,7 @@ export function IgniteOverlay() {
       className="pointer-events-none fixed inset-0 z-[75] opacity-0"
       style={{
         background:
-          "radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), rgba(255,236,210,.95) 0%, rgba(245,190,120,.6) 5%, rgba(150,78,34,.4) 14%, #1a120d 34%, #0b0a09 60%)",
+          "radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), rgba(255,252,214,.95) 0%, rgba(240,232,120,.6) 5%, rgba(96,92,10,.4) 14%, #0d0d06 34%, #000000 60%)",
       }}
     />
   );

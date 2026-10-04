@@ -89,8 +89,8 @@ export function LighterSelector() {
                     <span
                       className="font-display text-[clamp(2.8rem,6vw,5.6rem)] font-extrabold uppercase leading-[0.85] transition-[color,text-shadow,transform] duration-700"
                       style={{
-                        color: on ? "var(--color-amber)" : undefined,
-                        textShadow: on ? `0 0 ${16 + p.heat * 24}px rgba(239,106,42,${0.15 + p.heat * 0.2})` : "none",
+                        color: on ? "var(--color-buzz-soft)" : undefined,
+                        textShadow: on ? `0 0 ${16 + p.heat * 24}px rgba(249,254,2,${0.15 + p.heat * 0.2})` : "none",
                         transform: on ? "translateX(10px)" : "none",
                       }}
                     >
@@ -111,7 +111,7 @@ export function LighterSelector() {
             <AnimatePresence mode="wait">
               {active ? (
                 <motion.div key={active.key} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.35 }}>
-                  <p className="t-slate text-amber">
+                  <p className="t-slate text-buzz-soft">
                     Phase {active.n} · {active.months}
                   </p>
                   <p className="mt-2 font-display text-[clamp(1.4rem,2.2vw,2rem)] font-bold uppercase leading-tight">{active.objective}</p>

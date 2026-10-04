@@ -7,7 +7,7 @@ export function Atmosphere() {
         aria-hidden
         className="pointer-events-none fixed inset-0 z-[1]"
         style={{
-          background: "radial-gradient(ellipse 80% 60% at 50% 110%, rgba(239,106,42,calc(var(--heat) * 0.16)), transparent 70%)",
+          background: "radial-gradient(ellipse 80% 60% at 50% 110%, rgba(249,254,2,calc(var(--heat) * 0.16)), transparent 70%)",
         }}
       />
       <div className="grain" aria-hidden />

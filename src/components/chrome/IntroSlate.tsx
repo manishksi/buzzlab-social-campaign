@@ -51,7 +51,7 @@ export function IntroSlate() {
       <div data-flash className="pointer-events-none absolute inset-0 bg-bone opacity-0" />
       <div className="w-[min(560px,86vw)] text-bone">
         <div className="relative mb-3 h-10 overflow-hidden">
-          <div data-clap className="absolute inset-x-0 top-1 h-8 origin-bottom-left" style={{ background: "repeating-linear-gradient(115deg, #efe8de 0 22px, #0b0a09 22px 44px)" }} />
+          <div data-clap className="absolute inset-x-0 top-1 h-8 origin-bottom-left" style={{ background: "repeating-linear-gradient(115deg, #efe8de 0 22px, #000000 22px 44px)" }} />
         </div>
         <div className="grid grid-cols-3 border border-bone/40 font-mono text-[0.72rem] uppercase tracking-[0.14em]">
           {[

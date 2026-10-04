@@ -52,7 +52,7 @@ export function Engine() {
                   data-fill
                   className="font-display text-[clamp(4rem,14vw,13rem)] font-extrabold uppercase leading-[0.82]"
                   style={{
-                    backgroundImage: "linear-gradient(90deg, var(--color-ember) 0 50%, var(--color-bone) 50% 100%)",
+                    backgroundImage: "linear-gradient(90deg, var(--color-buzz) 0 50%, var(--color-bone) 50% 100%)",
                     backgroundSize: "200% 100%",
                     backgroundPositionX: "100%",
                     WebkitBackgroundClip: "text",
@@ -68,7 +68,7 @@ export function Engine() {
                 <ul className="mt-5 flex flex-wrap gap-x-1 gap-y-2">
                   {l.examples.map((x, i) => (
                     <li data-ex key={x} className="group t-label cursor-default text-ash">
-                      <span className="transition-colors duration-300 group-hover:text-ember">{x}</span>
+                      <span className="transition-colors duration-300 group-hover:text-buzz">{x}</span>
                       {i < l.examples.length - 1 && <span className="mx-2 text-bone/20">/</span>}
                     </li>
                   ))}
@@ -83,7 +83,7 @@ export function Engine() {
             <p className="t-slate mb-4">The flywheel</p>
             <ol className="t-big">
               {E.loop.map((x, i) => (
-                <li key={x} className={i === E.loop.length - 1 ? "text-ember" : ""}>
+                <li key={x} className={i === E.loop.length - 1 ? "text-buzz" : ""}>
                   {i > 0 && <span className="mr-3 text-bone/30" aria-hidden>↓</span>}
                   {x}
                 </li>
@@ -96,18 +96,18 @@ export function Engine() {
             <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full overflow-visible" aria-hidden>
               <defs>
                 <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-                  <path d="M0 0 L10 5 L0 10 z" fill="#ef6a2a" />
+                  <path d="M0 0 L10 5 L0 10 z" fill="#f9fe02" />
                 </marker>
               </defs>
               <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(239,232,222,.08)" strokeWidth="0.3" />
-              <circle data-loop-path cx="50" cy="50" r="44" fill="none" stroke="#ef6a2a" strokeWidth="0.45" pathLength={1} strokeDasharray="1" transform="rotate(-90 50 50)" />
+              <circle data-loop-path cx="50" cy="50" r="44" fill="none" stroke="#f9fe02" strokeWidth="0.45" pathLength={1} strokeDasharray="1" transform="rotate(-90 50 50)" />
               {[45, 135, 225, 315].map((a) => {
                 const r = (a - 90) * (Math.PI / 180);
                 const x = 50 + Math.cos(r) * 44;
                 const y = 50 + Math.sin(r) * 44;
                 const tx = x + Math.cos(r + Math.PI / 2) * 2;
                 const ty = y + Math.sin(r + Math.PI / 2) * 2;
-                return <line key={a} x1={x} y1={y} x2={tx} y2={ty} stroke="#ef6a2a" strokeWidth="0.45" markerEnd="url(#arrow)" />;
+                return <line key={a} x1={x} y1={y} x2={tx} y2={ty} stroke="#f9fe02" strokeWidth="0.45" markerEnd="url(#arrow)" />;
               })}
             </svg>
             {E.loop.map((name, i) => (
@@ -118,7 +118,7 @@ export function Engine() {
                 style={{ left: `${nodes[i].x}%`, top: `${nodes[i].y}%` }}
               >
                 <span className="t-slate">0{i + 1}</span>
-                <span className={`font-display text-[clamp(1.3rem,2.6vw,2.4rem)] font-extrabold uppercase leading-none ${i === 3 ? "text-ember" : ""}`}>{name}</span>
+                <span className={`font-display text-[clamp(1.3rem,2.6vw,2.4rem)] font-extrabold uppercase leading-none ${i === 3 ? "text-buzz" : ""}`}>{name}</span>
               </div>
             ))}
             <div className="absolute inset-[30%] flex items-center justify-center text-center">

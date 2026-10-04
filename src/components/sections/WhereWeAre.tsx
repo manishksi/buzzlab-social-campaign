@@ -95,10 +95,10 @@ export function WhereWeAre() {
             {W.diagnostics.map((d, i) => (
               <div data-row key={d.label} className="grid grid-cols-[7.5rem_1fr_auto] items-center gap-4 border-b hairline py-4 md:grid-cols-[10rem_1fr_auto] md:py-5">
                 <dt className="t-label text-ash">{d.label}</dt>
-                <dd className={`font-display text-[clamp(1.6rem,3.2vw,2.8rem)] font-extrabold uppercase leading-none ${i >= 3 ? "text-ember" : ""}`}>
+                <dd className={`font-display text-[clamp(1.6rem,3.2vw,2.8rem)] font-extrabold uppercase leading-none ${i >= 3 ? "text-buzz" : ""}`}>
                   <Scramble text={d.status} delay={i * 0.08} />
                 </dd>
-                <dd className={`${i >= 3 ? "text-ember" : "text-ash"}`}>
+                <dd className={`${i >= 3 ? "text-buzz" : "text-ash"}`}>
                   <Glyph kind={d.glyph} />
                 </dd>
               </div>
@@ -139,7 +139,7 @@ export function WhereWeAre() {
             </div>
             <figcaption className="mt-7 text-center">
               <span className="t-slate block">{W.profile.slate}</span>
-              <span className="mt-2 block font-display text-[clamp(1.35rem,2vw,1.9rem)] font-bold uppercase leading-tight">{W.profile.caption}</span>
+              <span className="mt-2 block font-display text-[clamp(1.35rem,2vw,1.9rem)] font-bold uppercase leading-tight balance">{W.profile.caption}</span>
             </figcaption>
           </figure>
         </div>
@@ -152,7 +152,7 @@ export function WhereWeAre() {
               {w}
             </span>
           ))}
-          <span data-word className="t-serif relative inline-block whitespace-nowrap text-ember">
+          <span data-word className="t-serif relative inline-block whitespace-nowrap text-buzz">
             {W.question[1]}
             <span data-strike className="absolute left-0 right-0 top-[54%] h-[0.07em] origin-left bg-bone" aria-hidden />
           </span>

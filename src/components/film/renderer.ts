@@ -37,7 +37,7 @@ export class FilmRenderer {
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.globalCompositeOperation = "source-over";
     ctx.globalAlpha = 1;
-    ctx.fillStyle = "#0b0a09";
+    ctx.fillStyle = "#000000";
     ctx.fillRect(0, 0, w, h);
 
     // ---- scene weights (all pure functions of t) ----
@@ -226,9 +226,9 @@ export class FilmRenderer {
       const lw = w * smooth(0, 1, k);
       ctx.globalAlpha = alpha * (1 - smooth(0.3, 0.6, power));
       const g = ctx.createLinearGradient(w / 2 - lw / 2, 0, w / 2 + lw / 2, 0);
-      g.addColorStop(0, "rgba(255,214,160,0)");
-      g.addColorStop(0.5, "rgba(255,236,210,0.95)");
-      g.addColorStop(1, "rgba(255,214,160,0)");
+      g.addColorStop(0, "rgba(255,250,190,0)");
+      g.addColorStop(0.5, "rgba(255,252,214,0.95)");
+      g.addColorStop(1, "rgba(255,250,190,0)");
       ctx.fillStyle = g;
       const lh = 2 + smooth(0.3, 0.6, power) * h * 0.4;
       ctx.fillRect(w / 2 - lw / 2, h / 2 - lh / 2, lw, lh);
@@ -268,7 +268,7 @@ export class FilmRenderer {
     const lock = smooth(0.2, 0.3, t);
     const hunt = (1 - lock) * Math.sin(clock * 9) * 0.12;
     const fs = Math.min(w, h) * (0.16 + hunt);
-    ctx.strokeStyle = lock > 0.9 ? "rgba(245,165,74,0.9)" : "rgba(239,232,222,0.55)";
+    ctx.strokeStyle = lock > 0.9 ? "rgba(230,227,122,0.9)" : "rgba(239,232,222,0.55)";
     ctx.lineWidth = 1.2;
     const fx = w / 2;
     const fy = h / 2;
@@ -286,7 +286,7 @@ export class FilmRenderer {
     ctx.textBaseline = "middle";
     const recording = t > 0.205;
     const blink = Math.sin(clock * 5) > -0.2;
-    ctx.fillStyle = recording ? (blink ? "#ef6a2a" : "rgba(239,106,42,0.25)") : "rgba(239,232,222,0.4)";
+    ctx.fillStyle = recording ? (blink ? "#f9fe02" : "rgba(249,254,2,0.25)") : "rgba(239,232,222,0.4)";
     ctx.beginPath();
     ctx.arc(m + 10, m + 26, 5, 0, Math.PI * 2);
     ctx.fill();
@@ -309,7 +309,7 @@ export class FilmRenderer {
       const lvl = 0.3 + 0.5 * Math.abs(Math.sin(clock * (3 + i) + i));
       ctx.fillStyle = "rgba(239,232,222,0.15)";
       ctx.fillRect(w - m - 140, h - m - 30 + i * 8, 80, 4);
-      ctx.fillStyle = lvl > 0.7 ? "#f5a54a" : "rgba(239,232,222,0.6)";
+      ctx.fillStyle = lvl > 0.7 ? "#e6e37a" : "rgba(239,232,222,0.6)";
       ctx.fillRect(w - m - 140, h - m - 30 + i * 8, 80 * lvl, 4);
     }
     ctx.globalAlpha = 1;
@@ -359,12 +359,12 @@ export class FilmRenderer {
           const off = (1 - smooth(0, 1, appear)) * w * 0.4;
           const isEmber = (r === 1 && c === 2) || (r === 0 && c === 4);
           ctx.globalAlpha = alpha * smooth(0, 1, appear);
-          ctx.fillStyle = r < 2 ? (isEmber ? "rgba(239,106,42,0.75)" : "rgba(239,232,222,0.22)") : "rgba(245,165,74,0.18)";
+          ctx.fillStyle = r < 2 ? (isEmber ? "rgba(249,254,2,0.75)" : "rgba(239,232,222,0.22)") : "rgba(230,227,122,0.18)";
           const cx = cursor + off;
           if (cx < right - 8) {
             ctx.fillRect(cx, y + 2, Math.min(len - 3, right - 8 - cx), trackH - 4);
             if (r >= 2) {
-              ctx.fillStyle = "rgba(245,165,74,0.55)";
+              ctx.fillStyle = "rgba(230,227,122,0.55)";
               for (let k = 0; k < len - 6; k += 4) {
                 const amp = (0.2 + 0.8 * Math.abs(Math.sin(k * 0.13 + s))) * (trackH - 8) * 0.5;
                 if (cx + k < right - 8) ctx.fillRect(cx + k + 2, y + trackH / 2 - amp / 2, 2, amp);
@@ -379,7 +379,7 @@ export class FilmRenderer {
     }
     // playhead (scroll drives it, the clock nudges it)
     const ph = left + 52 + (tw - 60) * clamp(play * 0.92 + 0.02 + Math.sin(clock * 0.8) * 0.002);
-    ctx.fillStyle = "#ef6a2a";
+    ctx.fillStyle = "#f9fe02";
     ctx.fillRect(ph, top + 2, 1.5, trackH * 5.5);
     ctx.beginPath();
     ctx.moveTo(ph - 5, top + 2);
@@ -406,9 +406,9 @@ export class FilmRenderer {
       for (let i = 0; i < 5; i++) {
         const bx = mx + ((p * 0.18 + i * 0.27) % 1.2) * mw - mw * 0.1;
         const g = ctx.createLinearGradient(bx - mw * 0.2, 0, bx + mw * 0.2, 0);
-        g.addColorStop(0, "rgba(239,106,42,0)");
-        g.addColorStop(0.5, `rgba(${i % 2 ? "245,165,74" : "239,106,42"},${0.18 + 0.1 * i / 5})`);
-        g.addColorStop(1, "rgba(239,106,42,0)");
+        g.addColorStop(0, "rgba(249,254,2,0)");
+        g.addColorStop(0.5, `rgba(${i % 2 ? "230,227,122" : "249,254,2"},${0.18 + 0.1 * i / 5})`);
+        g.addColorStop(1, "rgba(249,254,2,0)");
         ctx.fillStyle = g;
         ctx.fillRect(mx, my, mw, mh);
       }
@@ -441,7 +441,7 @@ export class FilmRenderer {
     ctx.globalAlpha = alpha * 0.5;
     ctx.lineWidth = 1;
     for (let i = 0; i < 3; i++) {
-      ctx.strokeStyle = i === 1 ? "rgba(239,106,42,0.35)" : "rgba(239,232,222,0.14)";
+      ctx.strokeStyle = i === 1 ? "rgba(249,254,2,0.35)" : "rgba(239,232,222,0.14)";
       ctx.setLineDash([2 + i * 4, 10 + i * 6]);
       ctx.lineDashOffset = clock * (12 + i * 8) * (i % 2 ? -1 : 1) + t * 600;
       ctx.beginPath();

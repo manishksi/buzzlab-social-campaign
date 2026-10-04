@@ -42,7 +42,7 @@ export function MenuOverlay() {
         >
           <div className="gutter flex items-center justify-between py-5" style={{ paddingTop: "max(1.25rem, env(safe-area-inset-top, 0px))" }}>
             <span className="font-display text-[1.35rem] font-extrabold uppercase">{meta.brand}</span>
-            <button type="button" data-cursor="Close" onClick={() => store.set({ menuOpen: false })} className="t-label border border-bone/25 px-3 py-1.5 hover:border-ember hover:text-ember">
+            <button type="button" data-cursor="Close" onClick={() => store.set({ menuOpen: false })} className="t-label border border-bone/25 px-3 py-1.5 hover:border-buzz hover:text-buzz">
               Close
             </button>
           </div>
@@ -61,7 +61,7 @@ export function MenuOverlay() {
                   className="group flex items-baseline gap-4 border-b border-line py-2 text-left md:gap-8"
                 >
                   <span className="t-slate w-10 shrink-0 tabular">{a?.act ?? "—"}</span>
-                  <span className="font-display text-[clamp(2rem,6vw,4.6rem)] font-extrabold uppercase leading-[0.95] transition-[color,transform] duration-500 group-hover:translate-x-3 group-hover:text-ember">
+                  <span className="font-display text-[clamp(2rem,6vw,4.6rem)] font-extrabold uppercase leading-[0.95] transition-[color,transform] duration-500 group-hover:translate-x-3 group-hover:text-buzz">
                     {m.label}
                   </span>
                   <span className="t-slate ml-auto hidden text-right opacity-0 transition-opacity group-hover:opacity-100 md:block">{m.note}</span>

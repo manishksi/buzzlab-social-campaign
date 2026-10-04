@@ -50,7 +50,7 @@ export function Objective() {
       )
         .to(words, { opacity: 0.4, duration: 0.08, ease: "none" }, 0.4)
         .fromTo(brackets, { autoAlpha: 0, scale: 1.35 }, { autoAlpha: 1, scale: 1, duration: 0.06, ease: "power2.out" }, 0.44)
-        .to(brackets, { borderColor: "rgba(245,165,74,0.95)", duration: 0.02 }, 0.5)
+        .to(brackets, { borderColor: "rgba(230,227,122,0.95)", duration: 0.02 }, 0.5)
         // hold, then the sentence makes room for what it sets off
         .to(brackets, { autoAlpha: 0, duration: 0.04 }, 0.58)
         .to(words, { opacity: 0.75, duration: 0.06 }, 0.58)
@@ -85,8 +85,8 @@ export function Objective() {
         </span>
         <span aria-hidden data-notice className="relative mx-auto mt-[0.04em] block w-max">
           <span
-            className="block font-display text-[clamp(4rem,17vw,18rem)] font-extrabold uppercase leading-[0.84] text-ember"
-            style={{ textShadow: "0 0 60px rgba(239,106,42,.38), 0 0 160px rgba(239,106,42,.18)" }}
+            className="block font-display text-[clamp(4rem,17vw,18rem)] font-extrabold uppercase leading-[0.84] text-buzz"
+            style={{ textShadow: "0 0 60px rgba(249,254,2,.38), 0 0 160px rgba(249,254,2,.18)" }}
           >
             {last}
           </span>
@@ -104,12 +104,12 @@ export function Objective() {
 
       <div className="gutter absolute inset-x-0 top-[38%] md:top-[50%]">
         <ol className="relative mx-auto flex w-max max-w-[1200px] flex-col items-start gap-4 md:w-auto md:flex-row md:items-center md:justify-between md:gap-0">
-          <span data-chain-line aria-hidden className="absolute left-[23px] top-[11px] h-[calc(100%-22px)] w-px origin-top bg-gradient-to-b from-bone/10 via-ember to-amber md:left-[6%] md:right-[6%] md:top-[11px] md:h-px md:w-auto md:origin-left md:bg-gradient-to-r" />
+          <span data-chain-line aria-hidden className="absolute left-[23px] top-[11px] h-[calc(100%-22px)] w-px origin-top bg-gradient-to-b from-bone/10 via-buzz to-buzz-soft md:left-[6%] md:right-[6%] md:top-[11px] md:h-px md:w-auto md:origin-left md:bg-gradient-to-r" />
           {O.chain.map((c, i) => (
             <li key={c} data-chain-node className="relative z-10 flex flex-row items-center gap-3 bg-ink px-3 md:flex-col">
-              <span data-dot className={`h-[22px] w-[22px] shrink-0 rounded-full border ${i === O.chain.length - 1 ? "border-ember bg-ember shadow-[0_0_30px_rgba(239,106,42,.8)]" : "border-bone/60 bg-ink"}`} />
+              <span data-dot className={`h-[22px] w-[22px] shrink-0 rounded-full border ${i === O.chain.length - 1 ? "border-buzz bg-buzz shadow-[0_0_30px_rgba(249,254,2,.8)]" : "border-bone/60 bg-ink"}`} />
               <span className="t-slate">0{i + 1}</span>
-              <span className={`font-display text-[clamp(1.8rem,3.4vw,3.4rem)] font-extrabold uppercase leading-none ${i === O.chain.length - 1 ? "text-ember" : ""}`}>{c}</span>
+              <span className={`font-display text-[clamp(1.8rem,3.4vw,3.4rem)] font-extrabold uppercase leading-none ${i === O.chain.length - 1 ? "text-buzz" : ""}`}>{c}</span>
             </li>
           ))}
         </ol>
