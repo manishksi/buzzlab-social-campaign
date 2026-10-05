@@ -37,11 +37,13 @@ ffmpeg commands that keep scroll-scrubbing smooth.
 - **Lenis** smooth scrolling on GSAP's ticker
 - **Motion** (Framer Motion) for the index menu, act indicator and preview swaps
 - **Background film**: `src/components/film/renderer.ts` draws the opening on a 2D canvas as a pure
-  function of scroll position (dead feed, camera power-on, edit timeline). From ACT 04 to the end of
-  Phase 03 the story belongs to the man with the lighter: `src/components/film/character.ts` holds
-  his timeline (spark, flame, light, the burn-down, the drop and the boot) as pure functions of film
-  time, and the 3D lighter world plays it (below). The painted 2D figure in the same file is the
-  fallback where WebGL isn't available. When `film.src` is set the site scrubs your real video instead.
+  function of scroll position (dead feed, camera power-on, edit timeline). From ACT 04 it hands over
+  to `src/components/film/character.ts`: one continuous, painted shot of an original noir figure on
+  the right of frame, with the cigarette held between his lips. The lighter is sparked, catches,
+  lights his cigarette, the cigarette burns down through Phase 03 and ends on the floor under his
+  boot. A scroll-driven camera pushes in from the lighter to the flame to his face and pulls back,
+  with the background moving less than he does for depth. Hovering a phase in ACT 04 plays that
+  moment on him. When `film.src` is set the site scrubs your real video instead.
 - **The 3D worlds** (`src/components/machine/`) all play on one fixed WebGL canvas
   (`WorldFilm.tsx`, one three.js renderer). Each world's code loads just before it is reached, and only
   the world holding the middle of the screen renders. Pinned sections write each world's scroll time
@@ -51,28 +53,23 @@ ffmpeg commands that keep scroll-scrubbing smooth.
     past the monitor into the rest of the studio: a second edit bay, the storyboard wall, the
     production table, the set with camera, DOP, lights, talent, director and producer. Then the
     lights go out and ACT 04 starts in the dark.
-  - **The lighter** (`lighter.ts`, ACT 04 → Phase 03, `sections/LighterSelector.tsx`, `Spark.tsx`,
-    `Flame.tsx`, `Light.tsx`): a man in the dark with a flip-top lighter. The thumb rolls the wheel
-    (sparks), the lighter catches and its flame is the light of the scene, he lights the cigarette,
-    it burns down while the phase is read, then he drops it and steps on it. The camera floats in
-    slow push-ins from the lighter to the flame to his face, and follows the cigarette to the floor.
-    It reads the film's clock (`src/lib/film-clock.ts`), so hovering a phase in ACT 04 still plays
-    that moment on him and the ignite transition still grows out of the flame.
   - **The creative machine** (`scene.ts`, ACT 07, `sections/Machine.tsx` + `sections/OriginalIP.tsx`):
-    a yellow dot becomes a play button, content pours out, cameras catch it, it is cut on a giant
-    timeline, multiplies into a feed, turns to chaos, stops, and the last reel opens into a world —
+    a yellow dot becomes a play button, content pours out, cameras catch it, and it is cut on a giant
+    timeline under a program monitor. The edit becomes one finished 9:16 Reel, the Reel is posted
+    into a phone, and the phone becomes the BuzzLab Instagram page it could be (`feed.ts`). The page
+    scrolls, stops on one post, the post opens, and the camera goes into it: it becomes a world —
     ORIGINAL BUZZLAB IP.
   - **The pipeline** (`pipeline.ts`, ACT 08, `sections/Pipeline.tsx`): a yellow piece of content travels
     a closed track through nine stations, from idea to iterate, with the eight signals at Analyse.
     Then it runs the loop again from above: post, measure, learn, improve, new idea, post again.
   - **The set** (`set.ts`, ACT 09, `sections/ProductionSet.tsx`): a miniature production on a
-    turntable; it turns slowly to bring the director, DOP, lighting, producer, editor, creative,
-    social and talent to the camera one by one.
+    turntable; it turns slowly to bring the director, DOP, producer, editor and talent to the camera
+    one by one.
   - **Tanishka** (`tanishka.ts`, `sections/Tanishka.tsx`) opens her mouth and eats the presentation;
     the camera goes in after it, and the page loops back to the top under a black veil — no reload.
   - Everyone is built by one character builder (`people.ts`): realistic, rigged human bodies, faces,
     hair, eyes and clothes baked from the CC0 MakeHuman asset library (`public/assets/people/`, see
-    its README), posed per scene. The crew, the editor, the man with the lighter and Tanishka share it.
+    its README), posed per scene. The crew, the editor and Tanishka share it.
 - **The weekly rhythm** sits inside Flame as a broadcast schedule (`sections/Broadcast.tsx`).
 - Sound effects are synthesised with Web Audio, so there are no audio files.
 

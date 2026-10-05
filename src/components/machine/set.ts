@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
-import { anchorWorld, applyPose, blink, breathe, look, makePerson, orientHand, POSES, reach, type Person, type PersonOpts } from "./people";
+import { anchorWorld, applyPose, blink, breathe, makePerson, orientHand, POSES, reach, type Person, type PersonOpts } from "./people";
 import { canvasChair, cStand, gearMats, monitorStand, proCamera, proSoftbox } from "./gear";
 import { contentTextures } from "./textures";
 import { SET, roleAt } from "./set-time";
@@ -13,8 +13,8 @@ import type { Label } from "./worlds";
  *
  * The camera never flies around. It holds one direction and only breathes in and out; the model
  * turns, one quiet step at a time, and brings each role into the light in order — director, DOP,
- * lighting, producer, editor, creative, social — and finally turns all the way round to the DOP's
- * shoulder, looking at the talent. Then it pulls back for the line that closes the deck.
+ * producer, editor — and finally turns all the way round to the DOP's shoulder, looking at the
+ * talent. Then it pulls back for the line that closes the deck.
  * Driven by `w` (0 → 1).
  */
 
@@ -30,7 +30,9 @@ const Y0 = 0.42; // the model's floor
 const R = 2.85; // where the roles stand, from the centre
 /** where a role comes to rest: front, a little right of centre */
 const SPOT_DIR = new THREE.Vector3(0.32, 0, 1).normalize();
-const STEP = Math.PI / 4;
+/** four stations round the model, a quarter turn apart; the talent sits in the middle */
+const STEP = Math.PI / 2;
+const TALENT = 4;
 const UP = new THREE.Vector3(0, 1, 0);
 
 type Role = {
@@ -190,23 +192,8 @@ export class SetScene {
         reach(p, "L", W(rig.group, -0.07, 1.42, -0.1), W(f, -1, -0.8, 0).sub(W(f, 0, 0, 0)));
       };
     });
-    // 03 lighting: up at a softbox, adjusting it
-    add("lighting", "Lighting — shapes the light", { sex: "f", outfit: "sport", hair: "ponytail01", hairColor: 0x1c140f, shoes: "sneakers", skin: "skin_f" }, 2, { lookY: 1.55 }, (p, f) => {
-      const sb = proSoftbox(m, { height: 1.95, size: 0.62 });
-      sb.group.position.set(0.15, 0, 0.75);
-      f.add(sb.group);
-      f.updateMatrixWorld(true);
-      const centre = f.worldToLocal(new THREE.Vector3(0, Y0, 0));
-      sb.group.rotation.y = Math.atan2(-(centre.x - 0.15), -(centre.z - 0.75));
-      return (k) => {
-        applyPose(p, POSES.stand, { neck: [-0.25, 0, 0], head: [-0.2, 0, 0], gripR: 0.55, gripL: 0.3 });
-        sb.group.updateMatrixWorld(true);
-        reach(p, "R", W(sb.head, 0.25, -0.05 + Math.sin(k * 1.1) * 0.02, 0.2), W(f, 1, -1, -0.5).sub(W(f, 0, 0, 0)));
-        sb.head.rotation.x = Math.sin(k * 0.5) * 0.04;
-      };
-    });
-    // 04 producer: the schedule board and a clipboard
-    add("producer", "Producer — keeps the day on time", { sex: "f", outfit: "blouse", hair: "bob02", hairColor: 0x2b1a12, shoes: "boots", glasses: true, trimFringe: true }, 3, { lookY: 1.5 }, (p, f) => {
+    // 03 producer: the schedule board and a clipboard
+    add("producer", "Producer — keeps the day on time", { sex: "f", outfit: "blouse", hair: "bob02", hairColor: 0x2b1a12, shoes: "boots", glasses: true, trimFringe: true }, 2, { lookY: 1.5 }, (p, f) => {
       const sched = tex(512, 340, (g, w, h) => {
         g.fillStyle = "#ece9e1";
         g.fillRect(0, 0, w, h);
@@ -239,8 +226,8 @@ export class SetScene {
         reach(p, "R", W(f, -0.03 + Math.sin(k * 1.6) * 0.02, 1.12, 0.32), W(f, -1, -1, 0).sub(W(f, 0, 0, 0)));
       };
     });
-    // 05 editor: the same editor, yellow tee and headphones, at a desk
-    add("editor", "Editor — cuts it while it's warm", { sex: "m", outfit: "tee", top: 0xf2e300, bottom: 0x121212, hair: "short02", hairColor: 0x2d241d, shoes: "sneakers", headphones: true }, 4, { lookY: 1.2, seated: true }, (p, f) => {
+    // 04 editor: the same editor, yellow tee and headphones, at a desk
+    add("editor", "Editor — cuts it while it's warm", { sex: "m", outfit: "tee", top: 0xf2e300, bottom: 0x121212, hair: "short02", hairColor: 0x2d241d, shoes: "sneakers", headphones: true }, 3, { lookY: 1.2, seated: true }, (p, f) => {
       const desk = new THREE.Mesh(new RoundedBoxGeometry(1.2, 0.04, 0.6, 2, 0.008), m.wood);
       desk.position.set(0, 0.74, 0.62);
       const legsM = m.steel;
@@ -272,65 +259,7 @@ export class SetScene {
         orientHand(p, "R", fwd, this.tmp.set(0, -1, 0));
       };
     });
-    // 06 creative: placing a frame on the storyboard
-    add("creative", "Creative — holds the idea", { sex: "m", outfit: "whitetee", hair: "short01", hairColor: 0x1d1612, shoes: "navy", skin: "skin_m_deep" }, 5, { lookY: 1.5 }, (p, f) => {
-      const board = new THREE.Mesh(new RoundedBoxGeometry(1.5, 0.95, 0.03, 2, 0.006), new THREE.MeshStandardMaterial({ map: T.storyboard, roughness: 0.85 }));
-      board.position.set(0.1, 1.35, 0.72);
-      board.rotation.y = Math.PI;
-      const stand = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.03, 0.03), m.steel);
-      stand.position.set(0.1, 0.85, 0.74);
-      f.add(board, stand);
-      for (const x of [-0.55, 0.75]) {
-        const lg = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.88, 8), m.steel);
-        lg.position.set(x, 0.44, 0.74);
-        f.add(lg);
-      }
-      return (k) => {
-        const up = 0.5 + 0.5 * Math.sin(k * 0.45);
-        applyPose(p, POSES.stand, { head: [-0.05, 0, 0], gripR: 0.2 });
-        reach(p, "R", W(f, -0.3, 1.25 + up * 0.18, 0.66), W(f, -1, -1, 0).sub(W(f, 0, 0, 0)));
-      };
-    });
-    // 07 social: posting from her phone, the numbers on a screen beside her
-    add("social", "Social — posts it, reads the numbers", { sex: "f", outfit: "tee", top: 0x1d1d1d, bottom: 0x253145, hair: "bob01", hairColor: 0x16100c, shoes: "navy", skin: "skin_f", trimFringe: true }, 6, { lookY: 1.5 }, (p, f) => {
-      const dash = tex(512, 300, (g, w, h) => {
-        g.fillStyle = "#0e0e0e";
-        g.fillRect(0, 0, w, h);
-        g.fillStyle = "#8a8882";
-        g.font = '500 15px "IBM Plex Mono", monospace';
-        g.fillText("EP.01 — 48H", 18, 30);
-        ["REACH", "3S VIEWS", "WATCH", "COMPLETION", "SHARES", "SAVES", "PROFILE", "FOLLOWS"].forEach((mm, i) => {
-          const x = 18 + (i % 4) * 124;
-          const y = 70 + Math.floor(i / 4) * 116;
-          g.fillStyle = "#8a8882";
-          g.fillText(mm, x, y);
-          g.fillStyle = i === 1 ? "#f9fe02" : "#eeebe3";
-          g.font = '800 40px "Big Shoulders Display", sans-serif';
-          g.fillText(["24.8K", "61%", "11.2s", "38%", "412", "906", "1.3K", "+218"][i], x, y + 46);
-          g.font = '500 15px "IBM Plex Mono", monospace';
-        });
-      });
-      const screen = monitorStand(m, dash, 1.4);
-      screen.group.position.set(-0.55, 0, 0.7);
-      screen.group.rotation.y = Math.PI + 0.5;
-      f.add(screen.group);
-      const phone = new THREE.Group();
-      const pb = new THREE.Mesh(new RoundedBoxGeometry(0.075, 0.155, 0.009, 2, 0.008), m.black);
-      const ps = new THREE.Mesh(new THREE.PlaneGeometry(0.068, 0.145), new THREE.MeshBasicMaterial({ map: T.reelHero, toneMapped: false }));
-      ps.position.z = -0.0055;
-      ps.rotation.y = Math.PI;
-      phone.add(pb, ps);
-      p.j.wristR.add(phone);
-      phone.position.set(0.0, -0.09, 0.035);
-      phone.rotation.set(-1.4, 0, 0.2);
-      return () => {
-        applyPose(p, POSES.stand, { neck: [0.3, 0, 0], head: [0.15, 0, 0], gripR: 0.6, thumbR: 0.4 });
-        reach(p, "R", W(f, -0.05, 1.18, 0.3), W(f, -1, -1, 0).sub(W(f, 0, 0, 0)));
-        look(p, 0, 0.25);
-      };
-    });
-
-    // 08 talent: in the middle, on a stool, in front of a small cyc, facing the DOP's camera
+    // 05 talent: in the middle, on a stool, in front of a small cyc, facing the DOP's camera
     const dopFrame = this.roles[1];
     const talent = makePerson({ sex: "f", outfit: "tee", top: 0x111111, bottom: 0x2a2626, hair: "bob02", hairColor: 0x2a1d14, shoes: "boots", skin: "skin_f_light", trimFringe: true });
     const tFrame = new THREE.Group();
@@ -377,6 +306,11 @@ export class SetScene {
     csB.position.set(1.6, 0, -0.9);
     csB.rotation.y = Math.PI - 0.6;
     tFrame.add(csA, csB);
+    // her key light: a softbox on a stand beside the cyc, aimed at her (gear, not a station)
+    const sb = proSoftbox(m, { height: 1.85, size: 0.62 });
+    sb.group.position.set(-0.95, 0, 0.75);
+    sb.group.rotation.y = Math.atan2(-0.95, 0.75);
+    tFrame.add(sb.group);
     // the last stop: the turntable keeps turning until the DOP is at the front again
     this.psiEnd = dopFrame.psi + Math.PI * 2;
     this.roles.push({
@@ -443,7 +377,7 @@ export class SetScene {
 
     // camera: one direction only, breathing in and out
     const spot = SPOT_DIR.clone().multiplyScalar(R);
-    const talentLast = i === 7;
+    const talentLast = i === TALENT;
     const focus = talentLast ? this.V.set(0, Y0 + r.lookY, 0).lerp(spot.clone().setY(Y0 + 1.4), 0.25) : spot.clone().setY(Y0 + r.lookY);
     const wideL = new THREE.Vector3(0.2, 0.7, 0.2);
     this.l.copy(wideL).lerp(focus, near);
@@ -457,8 +391,8 @@ export class SetScene {
 
     // whoever is at the front stands in the pool of light, on a yellow ring
     this.roles.forEach((role, k) => {
-      const at = k === 7 ? 0 : 1 - Math.min(1, Math.abs(Math.atan2(Math.sin(psi - role.psi), Math.cos(psi - role.psi))) / (STEP * 0.5));
-      const on = k === i ? Math.max(at, k === 7 ? sm(0.45, 0.6, (w - SET.first - 7 * SET.slot) / SET.slot) : 0) : 0;
+      const at = k === TALENT ? 0 : 1 - Math.min(1, Math.abs(Math.atan2(Math.sin(psi - role.psi), Math.cos(psi - role.psi))) / (STEP * 0.5));
+      const on = k === i ? Math.max(at, k === TALENT ? sm(0.45, 0.6, (w - SET.first - TALENT * SET.slot) / SET.slot) : 0) : 0;
       const mat = role.ring.material as THREE.MeshBasicMaterial;
       mat.opacity += (on * 0.9 - mat.opacity) * 0.15;
       role.pose(clock + k * 2.3);

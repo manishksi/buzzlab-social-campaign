@@ -7,7 +7,7 @@ import { machine as M } from "@/content/strategy";
 import { worldClock } from "@/lib/world-clock";
 import { playClick } from "@/lib/audio";
 
-const ladderAt = (w: number) => (w < 0.22 ? 0 : w < 0.52 ? 1 : w < 0.8 ? 2 : 3);
+const ladderAt = (w: number) => (w < 0.22 ? 0 : w < 0.578 ? 1 : w < 0.8 ? 2 : 3);
 
 /**
  * ACT 07 — Original BuzzLab IP, part one. After the cigarette goes out: black, a yellow dot, a

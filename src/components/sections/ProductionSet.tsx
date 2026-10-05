@@ -9,7 +9,7 @@ import { SET, roleAt } from "@/components/machine/set-time";
 
 /**
  * ACT 09 — the miniature set (machine/set.ts). The camera visits each role in turn: director,
- * DOP, lighting, producer, editor, creative, social, talent. Then it pulls back over the whole
+ * DOP, producer, editor, talent. Then it pulls back over the whole
  * model and says it plainly: this isn't a content plan. It's a media engine.
  */
 export function ProductionSet() {
@@ -66,7 +66,7 @@ export function ProductionSet() {
               {r && (
                 <motion.div key={r.key} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.35 }}>
                   <p className="t-slate mb-4">{S.eyebrow}</p>
-                  <p className="t-label text-buzz">Role {String(role + 1).padStart(2, "0")} / 08</p>
+                  <p className="t-label text-buzz">Role {String(role + 1).padStart(2, "0")} / {String(S.roles.length).padStart(2, "0")}</p>
                   <h3 className="t-big mt-2">{r.role}</h3>
                   <p className="t-lede mt-3">{r.does}</p>
                 </motion.div>

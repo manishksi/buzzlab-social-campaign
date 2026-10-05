@@ -300,8 +300,9 @@ export const light = {
 };
 
 /**
- * The creative machine: after the cigarette goes out, a yellow dot becomes a play button and the
- * whole pipeline plays out as a production world. Each stage is a caption over its shot.
+ * The creative machine: after the cigarette goes out, a yellow dot becomes a play button, the
+ * footage is shot and edited into one Reel, the Reel is posted, and the phone becomes the BuzzLab
+ * page it could be. Each stage is a caption over its shot.
  */
 export const machine = {
   eyebrow: "Act 07 — Original BuzzLab IP",
@@ -309,11 +310,13 @@ export const machine = {
   shots: [
     { at: 0.1, rung: 0, line: "One idea. One click." },
     { at: 0.22, rung: 1, line: "Then a camera. Then a crew." },
-    { at: 0.37, rung: 1, line: "Every cut becomes something." },
-    { at: 0.52, rung: 2, line: "One shoot. A whole feed." },
-    { at: 0.66, rung: 2, line: "Every role. One machine." },
+    { at: 0.4, rung: 1, line: "Then the edit finds it." },
+    { at: 0.548, rung: 1, line: "One finished Reel." },
+    { at: 0.578, rung: 2, line: "Posted." },
+    { at: 0.668, rung: 2, line: "This is what BuzzLab could look like." },
+    { at: 0.756, rung: 2, line: "The post people stop for." },
   ],
-  shotsEnd: 0.775,
+  shotsEnd: 0.8,
   ladder: ["Content", "Creative", "Media", "IP"],
 };
 
@@ -400,11 +403,8 @@ export const set = {
   roles: [
     { key: "director", role: "Director", does: "Calls the shot at the monitor." },
     { key: "dop", role: "DOP", does: "Frames it, lights it, rolls." },
-    { key: "lighting", role: "Lighting", does: "Shapes the light on the talent." },
     { key: "producer", role: "Producer", does: "Keeps the day on schedule." },
     { key: "editor", role: "Editor", does: "Cuts it while it's still warm." },
-    { key: "creative", role: "Creative", does: "Holds the idea on the board." },
-    { key: "social", role: "Social", does: "Posts it, then reads the numbers." },
     { key: "talent", role: "Talent", does: "Makes you stop scrolling." },
   ],
   final: ["This isn't a content plan.", "It's a media engine."],

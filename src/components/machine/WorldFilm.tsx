@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { worldClock, worldSpans, type WorldId } from "@/lib/world-clock";
-import { filmClock } from "@/lib/film-clock";
 import { prefersReducedMotion } from "@/lib/gsap";
 import type { World } from "./worlds";
 
@@ -76,7 +75,6 @@ export function WorldFilm() {
         await document.fonts?.ready;
         w.resize(window.innerWidth, window.innerHeight);
         worlds.set(id, w);
-        if (id === "lighter") filmClock.lighter3d = true;
         smooth[id] = worldClock[id].w; // start where the scroll already is, not from 0
         loading.delete(id);
       });

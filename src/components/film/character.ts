@@ -26,14 +26,14 @@ export const scenePoints = { flame: { x: -1, y: -1 }, ember: { x: -1, y: -1 } };
 // Timeline (film time). The film sits at: 0.46 ACT 04 · 0.5 Spark · 0.6 Flame · 0.76 Light ·
 // 0.94 the last cigarette · 1.08 black.
 // ---------------------------------------------------------------------------------------------
-export const DRAGS: [number, number][] = [
+const DRAGS: [number, number][] = [
   [0.662, 0.68], // the first pull that lights it
   [0.795, 0.81],
   [0.852, 0.868],
   [0.902, 0.916],
   [0.957, 0.974], // the final drag
 ];
-export const EXHALES: [number, number, number][] = [
+const EXHALES: [number, number, number][] = [
   [0.68, 0.73, 1],
   [0.81, 0.845, 0.75],
   [0.868, 0.9, 0.85],
@@ -48,10 +48,10 @@ const BURN: [number, number][] = [
   [1.2, 0.9],
 ];
 // the end of his story: final drag → drop → boot → ember out → black
-export const FINALE_A = 0.94;
-export const FINALE_B = 1.08;
+const FINALE_A = 0.94;
+const FINALE_B = 1.08;
 
-export type P = {
+type P = {
   present: number; // the shot fades up from black
   hand: number; // lighter hand in frame
   pose: number; // 0 rest · 1 spark · 2 flame · 3 at the cigarette
@@ -74,8 +74,8 @@ export type P = {
   lift: number;
   fade: number;
 };
-export const P_KEYS: (keyof P)[] = ["present", "hand", "pose", "lid", "strike", "flame", "lit", "burn", "drag", "lean", "take", "away", "lower", "fall", "tilt", "land", "step", "stub", "out", "lift", "fade"];
-export const blank = (): P => Object.fromEntries(P_KEYS.map((k) => [k, 0])) as P;
+const P_KEYS: (keyof P)[] = ["present", "hand", "pose", "lid", "strike", "flame", "lit", "burn", "drag", "lean", "take", "away", "lower", "fall", "tilt", "land", "step", "stub", "out", "lift", "fade"];
+const blank = (): P => Object.fromEntries(P_KEYS.map((k) => [k, 0])) as P;
 
 function piecewise(pts: [number, number][], t: number) {
   if (t <= pts[0][0]) return pts[0][1];
@@ -91,8 +91,7 @@ const pulse = (a: number, b: number, t: number) => {
   return smooth(a, a + d * 0.35, t) * (1 - smooth(a + d * 0.6, b, t));
 };
 
-/** Every state of his story as a pure function of film time (shared with the 3D version, machine/lighter.ts). */
-export function scrollParams(t: number): P {
+function scrollParams(t: number): P {
   const p = blank();
   p.present = smooth(0.435, 0.468, t);
   p.hand = smooth(0.44, 0.475, t) * (1 - smooth(0.7, 0.735, t));
@@ -120,7 +119,7 @@ export function scrollParams(t: number): P {
   return p;
 }
 
-export function previewParams(kind: Exclude<ScenePreview, null>, s: number): P {
+function previewParams(kind: Exclude<ScenePreview, null>, s: number): P {
   const p = blank();
   p.present = 1;
   p.hand = 1;
@@ -154,8 +153,43 @@ const LIPS = { x: -0.036, y: 0.79 };
 const CIG_ANGLE = Math.PI - 0.2; // pointing left, a little down
 const CIG = { len: 0.36, filter: 0.1, width: 0.034 };
 const EYE = { x: 0.045, y: 0.469 };
+/** how far the filter end sits inside his lips (in head units) */
+const LIP_GRIP = 0.03;
+
+// ---------------------------------------------------------------------------------------------
+// The camera (film time → focal point in head units, zoom). Each move eases in and out, so it
+// settles on every focal point: him in the dark → the lighter and the thumb on the wheel → the
+// flame as it catches → the light finding his face → the profile as the cigarette catches → a
+// slow pull back while it burns. The finale keeps its own move (the tilt down to the floor).
+// ---------------------------------------------------------------------------------------------
+const SHOTS: [number, number, number, number][] = [
+  [0.42, 0.38, 0.5, 1],
+  [0.5, 0.38, 0.5, 1],
+  [0.56, -0.18, 1.36, 1.6],
+  [0.588, -0.2, 1.33, 1.72],
+  [0.606, -0.24, 1.2, 1.85],
+  [0.64, -0.06, 0.96, 1.8],
+  [0.666, -0.13, 0.82, 2.05],
+  [0.69, -0.1, 0.8, 2],
+  [0.745, 0.12, 0.68, 1.45],
+  [0.785, 0.3, 0.58, 1.15],
+  [0.93, 0.36, 0.54, 1.06],
+  [0.95, 0.38, 0.5, 1],
+  [1.2, 0.38, 0.5, 1],
+];
+function cameraAt(t: number) {
+  let i = 0;
+  while (i < SHOTS.length - 2 && t > SHOTS[i + 1][0]) i++;
+  const a = SHOTS[i];
+  const b = SHOTS[i + 1];
+  const u = clamp((t - a[0]) / (b[0] - a[0]));
+  const e = u * u * u * (u * (u * 6 - 15) + 10);
+  return { x: lerp(a[1], b[1], e), y: lerp(a[2], b[2], e), z: lerp(a[3], b[3], e) };
+}
 
 const HEAD_BOX = { x0: -0.24, y0: -0.18, x1: 1.02, y1: 1.5 };
+/** the head is painted this much sharper than it is drawn, so the camera can push in on it */
+const HEAD_RES = 2;
 
 function headPath() {
   const p = new Path2D();
@@ -336,7 +370,7 @@ export class CharacterScene {
   // each frame with a light mask, so the face can be lit by whatever is burning in front of it.
   // ------------------------------------------------------------------------------------------
   private layer() {
-    const k = this.S * this.dpr;
+    const k = this.S * this.dpr * HEAD_RES;
     const c = document.createElement("canvas");
     c.width = Math.ceil((HEAD_BOX.x1 - HEAD_BOX.x0) * k);
     c.height = Math.ceil((HEAD_BOX.y1 - HEAD_BOX.y0) * k);
@@ -723,12 +757,19 @@ export class CharacterScene {
     this.lastFlame = p.flame;
 
     const { w, h, S, dpr } = this;
-    const zoom = 1 + 0.05 * smooth(0.46, 1.0, t);
+    // the camera: slow, eased moves from one focal point to the next (lighter → flame → face),
+    // holding on each; the background moves less than he does, so the frame has depth
+    const shot = cameraAt(t);
+    const zoom = shot.z;
     const SZ = S * zoom;
     const camX = Math.sin(clock * 0.11) * 0.012 + Math.sin(clock * 0.07 + 1) * 0.008 + clamp(velocity * 0.00001, -0.01, 0.01);
     const camY = Math.sin(clock * 0.09 + 2) * 0.01 + p.tilt * 5.95;
-    const ox = this.ax - HEAD_CENTER.x * SZ - camX * SZ;
-    const oy = this.ay - HEAD_CENTER.y * SZ - camY * SZ;
+    const ox = this.ax - shot.x * SZ - camX * SZ;
+    const oy = this.ay - shot.y * SZ - camY * SZ;
+    const BG = 0.3; // how much of the camera move the far background follows
+    const bgZ = S * (1 + (zoom - 1) * BG);
+    const bgX = (shot.x - HEAD_CENTER.x) * BG;
+    const bgY = (shot.y - HEAD_CENTER.y) * BG;
     const toScreen = (x: number, y: number) => ({ x: ox + x * SZ, y: oy + y * SZ });
     const world = () => ctx.setTransform(dpr * SZ, 0, 0, dpr * SZ, dpr * ox, dpr * oy);
 
@@ -815,8 +856,9 @@ export class CharacterScene {
 
     // backdrop: a far-off haze behind his head and a few out-of-focus lights
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const hazeY = this.ay - (0.3 + p.tilt * 5.95 * 0.55) * SZ;
-    const hz = ctx.createRadialGradient(this.ax + 0.35 * SZ, hazeY, 0, this.ax + 0.35 * SZ, hazeY, 2.8 * SZ);
+    const hazeY = this.ay - (0.3 + bgY + p.tilt * 5.95 * 0.55) * bgZ;
+    const hazeX = this.ax + (0.35 - bgX) * bgZ;
+    const hz = ctx.createRadialGradient(hazeX, hazeY, 0, hazeX, hazeY, 2.8 * bgZ);
     hz.addColorStop(0, `rgba(60,58,54,${0.36 * pres})`);
     hz.addColorStop(0.45, `rgba(36,35,32,${0.18 * pres})`);
     hz.addColorStop(1, "rgba(0,0,0,0)");
@@ -824,9 +866,9 @@ export class CharacterScene {
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "lighter";
     for (let i = 0; i < 9; i++) {
-      const bx = this.ax + (0.6 + hash(i + 3) * 2.4 - (this.mobile ? 0.6 : 0)) * SZ - camX * SZ * 0.4 - i * 6;
-      const by = this.ay + (-1.3 + hash(i + 7) * 1.9) * SZ - p.tilt * 5.95 * SZ * 0.35 + Math.sin(clock * 0.2 + i) * 4;
-      const br = (0.07 + hash(i + 13) * 0.14) * SZ;
+      const bx = this.ax + (0.6 + hash(i + 3) * 2.4 - (this.mobile ? 0.6 : 0) - bgX) * bgZ - camX * SZ * 0.4 - i * 6;
+      const by = this.ay + (-1.3 + hash(i + 7) * 1.9 - bgY) * bgZ - p.tilt * 5.95 * bgZ * 0.35 + Math.sin(clock * 0.2 + i) * 4;
+      const br = (0.07 + hash(i + 13) * 0.14) * bgZ;
       ctx.globalAlpha = (0.03 + hash(i + 17) * 0.05) * pres * (0.85 + 0.15 * Math.sin(clock * 0.6 + i * 2));
       ctx.filter = "none";
       const warm = hash(i + 19) > 0.4;
@@ -877,7 +919,7 @@ export class CharacterScene {
       const s = Math.sin(-headA);
       const lx = NECK_PIVOT.x + dx * c - dy * s;
       const ly = NECK_PIVOT.y + dx * s + dy * c;
-      const k = this.S * dpr;
+      const k = this.S * dpr * HEAD_RES;
       const g = this.compCtx;
       g.setTransform(1, 0, 0, 1, 0, 0);
       g.globalCompositeOperation = "source-over";
@@ -916,7 +958,23 @@ export class CharacterScene {
     if (!onFloor) {
       // smoke rising off the ember, then the cigarette itself (in his mouth or his fingers)
       if (p.lit > 0.02) this.drawRibbons(ctx, tip, clock, p.lit * pres * (1 - p.fall), p.tilt);
-      this.drawCigarette(ctx, cig.x, cig.y, cig.a, burnLen, p, light, pres, 0);
+      if (!inHand) {
+        // between his lips: the filter goes in past the lip line and the face covers it, so the
+        // lips close round it (the notch between upper and lower lip holds it)
+        const mouthClip = new Path2D();
+        mouthClip.rect(-40, -40, 80, 80);
+        mouthClip.addPath(
+          this.paths.head,
+          new DOMMatrix()
+            .translate(NECK_PIVOT.x + headDX, NECK_PIVOT.y + headDY)
+            .rotate((headA * 180) / Math.PI)
+            .translate(-NECK_PIVOT.x, -NECK_PIVOT.y),
+        );
+        ctx.save();
+        ctx.clip(mouthClip, "evenodd");
+        this.drawCigarette(ctx, cig.x, cig.y, cig.a, burnLen, p, light, pres, 0, LIP_GRIP);
+        ctx.restore();
+      } else this.drawCigarette(ctx, cig.x, cig.y, cig.a, burnLen, p, light, pres, 0);
       this.drawEmber(ctx, tip, Ie * pres, p, breathEmber);
     }
 
@@ -1022,10 +1080,14 @@ export class CharacterScene {
     ctx.globalAlpha = pres;
   }
 
-  private drawCigarette(ctx: CanvasRenderingContext2D, x: number, y: number, a: number, len: number, p: P, light: { x: number; y: number; r: number; i: number }, pres: number, crush: number) {
+  private drawCigarette(ctx: CanvasRenderingContext2D, x: number, y: number, a: number, len: number, p: P, light: { x: number; y: number; r: number; i: number }, pres: number, crush: number, grip = 0) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(a);
+    // `grip`: how far the filter sits inside his mouth (hidden behind the lips)
+    ctx.translate(-grip, 0);
+    len += grip;
+    const FL = CIG.filter + grip;
     const wd = CIG.width * (1 - crush * 0.35);
     const dl = Math.hypot(light.x - x, light.y - y);
     const lit = clamp(0.14 + light.i * clamp(1.2 - dl / (light.r * 1.1)));
@@ -1036,20 +1098,20 @@ export class CharacterScene {
     fg.addColorStop(0.35, shade(196, 132, 76, lit));
     fg.addColorStop(1, shade(90, 56, 30, lit * 0.6));
     ctx.fillStyle = fg;
-    ctx.fillRect(0, -wd / 2, CIG.filter, wd);
+    ctx.fillRect(0, -wd / 2, FL, wd);
     // paper
-    const paper = Math.max(0, len - CIG.filter - 0.008 * p.lit);
+    const paper = Math.max(0, len - FL - 0.008 * p.lit);
     const pg = ctx.createLinearGradient(0, -wd / 2, 0, wd / 2);
     pg.addColorStop(0, shade(236, 230, 220, lit * 0.95));
     pg.addColorStop(0.35, shade(245, 240, 232, lit));
     pg.addColorStop(1, shade(120, 114, 106, lit * 0.6));
     ctx.fillStyle = pg;
-    ctx.fillRect(CIG.filter, -wd / 2, paper, wd);
+    ctx.fillRect(FL, -wd / 2, paper, wd);
     ctx.fillStyle = shade(160, 120, 80, lit * 0.6);
-    ctx.fillRect(CIG.filter - 0.002, -wd / 2, 0.003, wd);
+    ctx.fillRect(FL - 0.002, -wd / 2, 0.003, wd);
     // ash and ember
     if (p.lit > 0.01) {
-      const ex = CIG.filter + paper;
+      const ex = FL + paper;
       const glow = p.lit * (0.55 + 0.45 * p.drag) * (1 - p.out);
       const ash = 0.012 * p.lit;
       ctx.fillStyle = `rgba(${Math.round(70 + 40 * lit)},${Math.round(66 + 36 * lit)},${Math.round(62 + 32 * lit)},1)`;

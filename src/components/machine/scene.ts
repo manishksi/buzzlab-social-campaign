@@ -1,7 +1,8 @@
 import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { contentTextures, imperfections, reelUI, tileSet } from "./textures";
-import { cinemaCamera, cursor, directorsChair, feedFrame, mats, microphone, playButton, softbox, tile, timeline } from "./props";
+import { cinemaCamera, directorsChair, mats, microphone, playButton, softbox, tile, timeline } from "./props";
+import { PHONE, PROFILE, PROFILE_H, cellAt, footageTextures, phone, postedTag, profileBars, profileTexture } from "./feed";
 
 /**
  * THE CREATIVE MACHINE — a three.js world driven by one number, `w` (0 → 1), from scroll.
@@ -10,11 +11,13 @@ import { cinemaCamera, cursor, directorsChair, feedFrame, mats, microphone, play
  *  .03 the camera closes in: the dot is a giant physical play button
  *  .12 CLICK — content pours out of it
  *  .23 a camera catches the footage: REC ● · more cameras, a production world
- *  .38 the footage becomes a huge edit timeline; every cut throws out a piece of content
- *  .52 reels, posts, thumbnails, memes, ads, stories fly to a giant feed — and multiply
- *  .66 controlled creative chaos (every role is an object)
- *  .78 everything stops; one reel is left
- *  .80 the camera goes to it; the frame and UI fall away; it opens into a world
+ *  .38 the footage lands on a huge edit timeline; the playhead runs, the program monitor cuts
+ *  .545 the edited footage reframes into one finished 9:16 Reel
+ *  .575 it is posted ("Shared to @buzzlab.global") and flies into a phone
+ *  .64 the Reel plays in the phone, then the phone becomes the future BuzzLab Instagram page
+ *  .68 the page scrolls — a few curated posts — and settles on one
+ *  .75 that post opens and fills the phone; everything holds
+ *  .80 the camera goes into it; the phone falls away; the post becomes the world
  *  .88 → 1 the world (the IP reveal plays over it)
  *
  * Everything is a pure function of `w` plus a clock for idle motion, so it scrubs both ways.
@@ -45,12 +48,15 @@ const CAM: Key[] = [
   [0.32, 10.6, 0.9, 3.4, 12.6, 0.3, 0],
   [0.37, 12.6, 3.2, 9.6, 14, 0, -1],
   [0.42, 19, 1.9, 6.2, 22.5, -1.1, 0],
-  [0.5, 34, 2.4, 7.2, 38, -0.9, 0],
-  [0.56, 50, 2.5, 7.8, 56, -0.2, 0],
-  [0.62, 62, 2.2, 12.5, 70, 1.5, -1],
-  [0.7, 63.2, 3.6, 17.5, 70, 1.3, -1],
-  [0.77, 67, 2.2, 14.5, 70, 1.4, 0],
-  [0.8, 69.4, 1.6, 9.8, 70, 1.5, 3],
+  [0.5, 37, 1.9, 7.6, 41, -0.7, 0.4],
+  [0.545, 52.6, 1.9, 7.6, 56.6, -0.5, 0.4],
+  // the edited footage becomes a Reel
+  [0.575, 56.9, 1.4, 5.6, 59.5, 1.05, 0],
+  [0.6, 58.4, 1.5, 6.4, 60.6, 1.15, 0],
+  // it flies into the phone; the phone, right of centre, holds the frame
+  [0.64, 66.8, 1.6, 7.9, 68.8, 1.5, 0],
+  [0.75, 68.8, 1.55, 7.1, 69.0, 1.5, 0],
+  [0.8, 68.95, 1.52, 6.9, 69.1, 1.5, 0],
 ];
 
 function catmull(p0: number, p1: number, p2: number, p3: number, t: number) {
@@ -131,17 +137,26 @@ export class MachineScene {
   private soft!: ReturnType<typeof softbox>;
   private tl!: ReturnType<typeof timeline>;
   private footage: { t: Tile; seed: number }[] = [];
-  private cutTiles: { t: Tile; cut: number; slot: THREE.Vector3; seed: number }[] = [];
-  private feed!: THREE.Group;
-  private swarm: { mesh: THREE.InstancedMesh; seeds: number[] }[] = [];
-  private chaos: Record<string, THREE.Object3D> = {};
-  private pages: THREE.Mesh[] = [];
-  private blade!: THREE.Mesh;
-  private split: { l: THREE.Mesh; r: THREE.Mesh; at: THREE.Vector3 }[] = [];
-  private flash!: THREE.PointLight;
-  private hero!: Tile;
-  private heroWorldMat!: THREE.MeshBasicMaterial;
   private floor!: THREE.Mesh;
+  // the edit → the Reel → the post
+  private cuts: number[] = [];
+  private monitor = new THREE.Group();
+  private mon: Record<"bezel" | "shot" | "reel" | "ui" | "flash", THREE.Mesh> = {} as never;
+  private shots: THREE.Texture[] = [];
+  private posted = new THREE.Group();
+  private postFill!: THREE.Mesh;
+  private postTag!: THREE.Mesh;
+  // the phone and the page
+  private phone = new THREE.Group();
+  private inPhone!: ReturnType<typeof tile>;
+  private page!: THREE.Mesh;
+  private pageTex!: THREE.CanvasTexture;
+  private bars: THREE.Mesh[] = [];
+  private hero = new THREE.Group();
+  private heroFace!: THREE.Mesh;
+  private heroUI!: THREE.Mesh;
+  private heroLine!: THREE.Mesh;
+  private clip = [new THREE.Plane(new THREE.Vector3(0, -1, 0), 0), new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)];
   // world
   private orb!: THREE.Mesh;
   private islands: THREE.Group[] = [];
@@ -248,108 +263,67 @@ export class MachineScene {
       this.footage.push({ t: { ...t, w: d.w, h: d.h, kind: d.kind }, seed: i });
     }
 
-    // 03 · the edit
+    // 03 · the edit: the timeline, and a program monitor riding the playhead
     this.tl = timeline(38);
     this.tl.group.position.set(39, -1.72, 0);
     s.add(this.tl.group);
-    const cuts = this.tl.cuts.map((x) => x + 39).filter((x) => x > 21 && x < 57);
-    const slots: THREE.Vector3[] = [];
-    for (let r = 0; r < 5; r++) for (let c = 0; c < 3; c++) slots.push(new THREE.Vector3(70 - 1.5 + c * 1.5, 1.5 + 3.1 - r * 1.55, -1.95));
-    cuts.slice(0, 15).forEach((cx, i) => {
-      const d = set[i % set.length];
-      const t = tile(d.tex, d.w * 0.8, d.h * 0.8);
-      s.add(t.group);
-      this.cutTiles.push({ t: { ...t, w: d.w, h: d.h, kind: d.kind }, cut: cx, slot: slots[i], seed: i });
-    });
+    this.cuts = this.tl.cuts.map((x) => x + 39).filter((x) => x > 21 && x < 57);
+    this.shots = footageTextures();
+    const plane = (mat: THREE.Material, z: number) => {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+      m.position.z = z;
+      this.monitor.add(m);
+      return m;
+    };
+    this.mon.bezel = plane(new THREE.MeshBasicMaterial({ color: 0x1c1c1c }), -0.01);
+    this.mon.bezel.scale.set(1.04, 1.06, 1);
+    this.mon.shot = plane(new THREE.MeshBasicMaterial({ map: this.shots[0], toneMapped: false, transparent: true }), 0);
+    this.mon.reel = plane(new THREE.MeshBasicMaterial({ map: T.reelHero, toneMapped: false, transparent: true, opacity: 0 }), 0.002);
+    this.mon.ui = plane(new THREE.MeshBasicMaterial({ map: reelUI(), toneMapped: false, transparent: true, opacity: 0, depthWrite: false }), 0.004);
+    this.mon.flash = plane(new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }), 0.006);
+    s.add(this.monitor);
+    // "Shared to @buzzlab.global": a progress bar fills, then the tag
+    const track = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.035), new THREE.MeshBasicMaterial({ color: 0x333333 }));
+    this.postFill = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.035).translate(0.6, 0, 0), new THREE.MeshBasicMaterial({ color: 0xf9fe02, toneMapped: false }));
+    this.postFill.position.set(-0.6, 0, 0.001);
+    this.postTag = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.225), new THREE.MeshBasicMaterial({ map: postedTag(), transparent: true, toneMapped: false, opacity: 0, depthWrite: false }));
+    this.postTag.position.y = -0.22;
+    this.posted.add(track, this.postFill, this.postTag);
+    s.add(this.posted);
 
-    // 04 · the feed, and everything multiplying around it
-    this.feed = feedFrame(4.6, 8);
-    this.feed.position.set(70, 1.5, -2.2);
-    s.add(this.feed);
-    const per = this.low ? 6 : 16;
-    set.forEach((d, k) => {
-      const geo = new THREE.PlaneGeometry(d.w * 0.7, d.h * 0.7);
-      const mat = new THREE.MeshBasicMaterial({ map: d.tex, toneMapped: false, side: THREE.DoubleSide });
-      const mesh = new THREE.InstancedMesh(geo, mat, per);
-      mesh.frustumCulled = false;
-      s.add(mesh);
-      this.swarm.push({ mesh, seeds: Array.from({ length: per }, (_, i) => k * 100 + i) });
-    });
-
-    // 05 · creative chaos — every role is an object
-    const camA = cinemaCamera(T);
-    camA.group.position.set(65.2, 3.4, 2.2);
-    camA.group.rotation.y = Math.PI;
-    camA.legs.visible = false;
-    const camEye = cinemaCamera(T, { eye: true });
-    camEye.group.position.set(74.6, 3.2, 2.0);
-    camEye.legs.visible = false;
-    s.add(camA.group, camEye.group);
-    this.chaos.camA = camA.group;
-    this.chaos.camEye = camEye.group;
-    this.chaos.eye = camEye.eye!;
-    const stage = tile(T.postPortrait, 2.6, 2.6);
-    stage.group.rotation.x = -Math.PI / 2;
-    stage.group.position.set(64.6, -0.4, 4.2);
-    const chair2 = directorsChair(T);
-    chair2.position.set(64.6, -0.39, 4.2);
-    chair2.rotation.y = 0.5;
-    s.add(stage.group, chair2);
-    this.chaos.stage = stage.group;
-    this.chaos.chair = chair2;
-    const mic = microphone();
-    mic.scale.setScalar(1.3);
-    mic.position.set(72.6, 5.4, 1.2);
-    s.add(mic);
-    this.chaos.mic = mic;
-    for (let i = 0; i < (this.low ? 4 : 8); i++) {
-      const p = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.82), new THREE.MeshStandardMaterial({ map: T.script, side: THREE.DoubleSide, roughness: 0.8 }));
-      s.add(p);
-      this.pages.push(p);
-    }
-    const board = new THREE.Group();
-    const bFront = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.6), new THREE.MeshStandardMaterial({ map: T.storyboard, roughness: 0.8 }));
-    const bBack = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.6), new THREE.MeshBasicMaterial({ map: T.thumb, toneMapped: false }));
-    bBack.rotation.y = Math.PI;
-    board.add(bFront, bBack);
-    board.position.set(76.2, 0.1, 2.6);
-    board.rotation.y = -0.5;
-    s.add(board);
-    this.chaos.board = board;
-    const cur = cursor();
-    s.add(cur);
-    this.chaos.cursor = cur;
-    const thrown = tile(T.reelTimer, 0.9, 1.6);
-    s.add(thrown.group);
-    this.chaos.thrown = thrown.group;
-    this.blade = new THREE.Mesh(new THREE.PlaneGeometry(0.06, 9), new THREE.MeshBasicMaterial({ color: 0xf9fe02, transparent: true, toneMapped: false }));
-    s.add(this.blade);
-    // two pieces the playhead slices in half
-    [T.meme, T.ad].forEach((tex, i) => {
-      const half = (side: 0 | 1) => {
-        const geo = new THREE.PlaneGeometry(0.6, 1.2);
-        const uv = geo.attributes.uv as THREE.BufferAttribute;
-        for (let k = 0; k < uv.count; k++) uv.setX(k, uv.getX(k) * 0.5 + side * 0.5);
-        const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, toneMapped: false, side: THREE.DoubleSide }));
-        s.add(m);
-        return m;
-      };
-      this.split.push({ l: half(0), r: half(1), at: new THREE.Vector3(66.8 + i * 5.4, 0.6 + i * 1.6, 3.2 - i * 0.6) });
-    });
-    this.flash = new THREE.PointLight(0xf9fe02, 0, 30, 1.4);
-    this.flash.position.set(70, 4, 6);
-    s.add(this.flash);
-
-    // the one reel that is left — its picture becomes the world
-    this.heroWorldMat = new THREE.MeshBasicMaterial({ map: this.rt.texture, toneMapped: false, transparent: true, opacity: 0 });
-    const hero = tile(T.reelHero, 0.9, 1.6, reelUI());
-    const worldFace = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 1.6), this.heroWorldMat);
-    worldFace.position.z = 0.0015;
-    hero.group.add(worldFace);
-    hero.group.position.set(70, 1.5, 3);
-    s.add(hero.group);
-    this.hero = { ...hero, w: 0.9, h: 1.6, kind: "Reel" };
-    (this.hero as unknown as { worldFace: THREE.Mesh }).worldFace = worldFace;
+    // 04 · the phone: the Reel plays in it, then it becomes the BuzzLab page
+    const { sw, sh } = PHONE;
+    this.phone.add(phone());
+    this.inPhone = tile(T.reelHero, 1, 1, reelUI());
+    this.inPhone.group.position.z = 0.004;
+    (this.inPhone.back.material as THREE.MeshBasicMaterial).transparent = true;
+    this.phone.add(this.inPhone.group);
+    this.pageTex = profileTexture(T);
+    this.pageTex.repeat.set(1, PROFILE.view / PROFILE_H);
+    this.page = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), new THREE.MeshBasicMaterial({ map: this.pageTex, toneMapped: false, transparent: true, opacity: 0 }));
+    this.page.position.z = 0.003;
+    this.phone.add(this.page);
+    const B = profileBars();
+    const topH = (190 / 900) * sw;
+    const navH = (130 / 900) * sw;
+    const top = new THREE.Mesh(new THREE.PlaneGeometry(sw, topH), new THREE.MeshBasicMaterial({ map: B.top, toneMapped: false, transparent: true, opacity: 0 }));
+    top.position.set(0, sh / 2 - topH / 2, 0.007);
+    const nav = new THREE.Mesh(new THREE.PlaneGeometry(sw, navH), new THREE.MeshBasicMaterial({ map: B.nav, toneMapped: false, transparent: true, opacity: 0 }));
+    nav.position.set(0, -sh / 2 + navH / 2, 0.007);
+    this.bars.push(top, nav);
+    this.phone.add(top, nav);
+    // the post it stops on: a live picture of the world it opens into
+    this.heroLine = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0xf9fe02, toneMapped: false, transparent: true, opacity: 0, clippingPlanes: this.clip }));
+    this.heroLine.position.z = -0.001;
+    this.heroFace = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: this.rt.texture, toneMapped: false, clippingPlanes: this.clip }));
+    this.heroUI = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: reelUI(), toneMapped: false, transparent: true, opacity: 0, depthWrite: false, clippingPlanes: this.clip }));
+    this.heroUI.position.z = 0.001;
+    this.hero.add(this.heroLine, this.heroFace, this.heroUI);
+    this.hero.position.z = 0.005;
+    this.phone.add(this.hero);
+    this.phone.position.set(70, 1.5, 0);
+    s.add(this.phone);
+    this.renderer.localClippingEnabled = true;
   }
 
   private buildWorld() {
@@ -469,27 +443,42 @@ export class MachineScene {
   // ------------------------------------------------------------------------------------------
   render(w: number, clock: number, pointer: { x: number; y: number }) {
     const T = clock;
-    const motion = 1 - sm(0.775, 0.79, w); // everything stops
-    const vanish = (seed: number) => 1 - sm(0.782 + (hash(seed) * 0.012), 0.792 + hash(seed) * 0.008, w);
 
     // ---- camera ----
     camAt(Math.min(w, 0.8), this.camState);
     const { p, l } = this.camState;
     p.x += pointer.x * 0.25 * (w > 0.1 ? 1 : 0);
     p.y += pointer.y * 0.15 * (w > 0.1 ? 1 : 0);
-    // after the stop: in to the last reel until it fills the frame
-    const into = sm(0.8, 0.88, w);
-    const hero = this.hero.group;
+    // phones in portrait: the phone comes to the centre and sits back far enough to fit
+    if (this.w / this.h < 1 && w > 0.42) {
+      // the edit: keep the program monitor in the middle of the narrow frame
+      const head = lerp(20.2, 57.5, inv(0.44, 0.545, w)) + 0.7;
+      const ed = sm(0.42, 0.46, w) * (1 - sm(0.545, 0.57, w));
+      l.x = lerp(l.x, head, ed * 0.8);
+      p.x = lerp(p.x, head - 1.5, ed * 0.8);
+      // the finished Reel, centred, a step further back
+      const rl = sm(0.545, 0.57, w) * (1 - sm(0.6, 0.64, w));
+      l.x = lerp(l.x, 59.5, rl);
+      p.x = lerp(p.x, 59.5, rl);
+      p.z += rl * 2.2;
+      const k = sm(0.6, 0.64, w);
+      l.x = lerp(l.x, 70, k);
+      p.x = lerp(p.x, 70, k);
+      p.z = lerp(p.z, 8.6, k);
+    }
+    // after the hold: into the post on the phone until it fills the frame
+    const into = sm(0.8, 0.86, w);
+    const fillD = 1.6 / Math.tan(THREE.MathUtils.degToRad(this.cam.fov / 2));
     if (w > 0.8) {
-      const dist = lerp(6.8, 0.42, into);
-      p.set(lerp(p.x, 70, into), lerp(p.y, 1.5, into), 3 + dist);
-      l.set(70, 1.5, 3);
+      const e = into * into * (3 - 2 * into);
+      p.set(lerp(p.x, 70, e), lerp(p.y, 1.5, e), lerp(p.z, 0.005 + fillD, e));
+      l.set(lerp(l.x, 70, e), lerp(l.y, 1.5, e), lerp(l.z, 0.005, e));
     }
     this.cam.position.copy(p);
     this.cam.lookAt(l);
     this.key.position.set(l.x - 4, l.y + 8, l.z + 6);
     this.key.target.position.copy(l);
-    (this.scene.fog as THREE.FogExp2).density = 0.03 * sm(0.12, 0.2, w);
+    (this.scene.fog as THREE.FogExp2).density = 0.03 * sm(0.12, 0.2, w) * (1 - sm(0.6, 0.66, w));
 
     // ---- 01 the dot / play button ----
     const btn = this.button.group;
@@ -563,155 +552,109 @@ export class MachineScene {
       t.group.scale.setScalar(Math.min(1, s * 10) * (1 - s * 0.4));
     });
 
-    // ---- 03 the edit ----
-    const tlOn = sm(0.4, 0.47, w) * (1 - sm(0.64, 0.7, w));
+    // ---- 03 the edit: the playhead runs, the program monitor cuts ----
+    const tlOn = sm(0.4, 0.47, w) * (1 - sm(0.56, 0.6, w));
     this.tl.group.visible = tlOn > 0.001;
     this.tl.group.scale.set(Math.max(0.0001, tlOn), 1, 1);
     this.tl.group.position.x = 20 + 19 * tlOn;
-    const headX = lerp(20.2, 57.5, inv(0.44, 0.57, w));
+    const run = inv(0.44, 0.545, w);
+    const headX = lerp(20.2, 57.5, run);
     this.tl.playhead.position.x = headX - this.tl.group.position.x;
-    this.cutTiles.forEach(({ t, cut, slot, seed }) => {
-      const born = headX >= cut ? 1 : 0;
-      const tBorn = 0.44 + ((cut - 20.2) / (57.5 - 20.2)) * 0.13;
-      const rise = sm(tBorn, tBorn + 0.025, w) * born;
-      const fly = sm(0.55 + (seed % 5) * 0.006, 0.61 + (seed % 5) * 0.006, w);
-      const v = rise * vanish(seed + 40);
-      t.group.visible = v > 0.001;
-      if (!t.group.visible) return;
-      const up = new THREE.Vector3(cut, -1.6 + rise * (1.5 + (seed % 3) * 0.4), 0.6 + Math.sin(seed * 1.7) * 0.9 + rise * 0.8);
-      t.group.position.lerpVectors(up, slot, fly);
-      t.group.position.y += Math.sin(T * 1.2 + seed) * 0.08 * (1 - fly) * motion;
-      const spin = (1 - fly) * (Math.sin(seed) * 0.6 + Math.sin(T * 0.7 + seed) * 0.15 * motion);
-      t.group.rotation.set(0, spin, (1 - fly) * Math.sin(seed * 2) * 0.25);
-      const sc = lerp(1, slot ? (1.42 / Math.max(t.w * 0.8, t.h * 0.8)) * 0.98 : 1, fly);
-      t.group.scale.setScalar(Math.max(0.0001, rise * sc * v));
-    });
-
-    // ---- 04 the feed, multiplying ----
-    const feedOn = sm(0.54, 0.6, w) * vanish(7);
-    this.feed.visible = feedOn > 0.001;
-    this.feed.scale.setScalar(Math.max(0.0001, lerp(0.85, 1, feedOn)));
-    this.feed.position.y = 1.5 - (1 - feedOn) * 2;
-    const mult = inv(0.61, 0.7, w);
-    const count = Math.floor(Math.pow(2, mult * 7.2));
-    const m4 = new THREE.Matrix4();
-    const q = new THREE.Quaternion();
-    const e = new THREE.Euler();
-    const sc = new THREE.Vector3();
-    let idx = 0;
-    this.swarm.forEach(({ mesh, seeds }) => {
-      seeds.forEach((sd, i) => {
-        const order = (idx++ * 7) % 128;
-        const born = order < count ? 1 : 0;
-        const v = born * vanish(sd) * (w < 0.795 ? 1 : 0);
-        const r = 4.2 + hash(sd) * 9;
-        const a = hash(sd + 1) * Math.PI * 2 + T * 0.05 * motion * (hash(sd + 2) - 0.5);
-        const yy = (hash(sd + 3) - 0.5) * 10;
-        sc.setScalar(Math.max(0.0001, v * (0.7 + hash(sd + 4) * 0.6)));
-        this.tmp.set(70 + Math.cos(a) * r, 1.5 + yy + Math.sin(T * 0.6 + sd) * 0.2 * motion, -2 + Math.sin(a) * r * 0.6 + 1);
-        e.set(Math.sin(sd) * 0.4, Math.cos(sd) * 0.6 + T * 0.1 * motion * (hash(sd + 5) - 0.5), Math.sin(sd * 3) * 0.3);
-        q.setFromEuler(e);
-        m4.compose(this.tmp, q, sc);
-        mesh.setMatrixAt(i, m4);
-      });
-      mesh.instanceMatrix.needsUpdate = true;
-      mesh.visible = w > 0.6 && w < 0.8;
-    });
-
-    // ---- 05 creative chaos ----
-    const ch = sm(0.655, 0.69, w);
-    const show = (o: THREE.Object3D, seed: number, extra = 1) => {
-      const v = ch * vanish(seed) * extra;
-      o.visible = v > 0.001;
-      o.scale.setScalar(Math.max(0.0001, v));
-      return v;
-    };
-    // a camera filming a camera, whose lens is an eye that blinks
-    show(this.chaos.camA, 1);
-    show(this.chaos.camEye, 2);
-    this.chaos.camA.position.y = 3.4 + Math.sin(T * 0.9) * 0.15 * motion;
-    this.chaos.camEye.position.y = 3.2 + Math.sin(T * 0.9 + 2) * 0.15 * motion;
-    const blink = Math.sin(T * 1.7) > 0.96 ? 0.1 : 1;
-    this.chaos.eye.scale.set(1, blink, 1);
-    // the director's chair, sat on a giant post
-    show(this.chaos.stage, 3);
-    show(this.chaos.chair, 4);
-    // a floating microphone
-    show(this.chaos.mic, 5);
-    this.chaos.mic.position.y = 5.4 + Math.sin(T * 1.3) * 0.25 * motion;
-    this.chaos.mic.rotation.z = Math.sin(T * 0.7) * 0.15 * motion;
-    // script pages flying
-    this.pages.forEach((pg, i) => {
-      const v = show(pg, 10 + i);
-      if (v <= 0.001) return;
-      const a = T * 0.45 * motion + i * 0.9;
-      pg.position.set(68 + Math.cos(a) * (3 + i * 0.3), 1.2 + i * 0.5 + Math.sin(a * 1.3) * 0.6, 2 + Math.sin(a) * 2.2);
-      pg.rotation.set(Math.sin(a * 2) * 0.8, a * 1.4, Math.cos(a * 1.7) * 0.6);
-    });
-    // the storyboard turns round and is already a finished frame
-    show(this.chaos.board, 20);
-    this.chaos.board.rotation.y = -0.5 + sm(0.715, 0.74, w) * Math.PI;
-    // the giant cursor grabs a reel and throws it into the feed
-    const grab = inv(0.69, 0.75, w);
-    const cur = this.chaos.cursor;
-    const reel = this.chaos.thrown;
-    show(cur, 21, 1);
-    const curPath = (u: number) => {
-      if (u < 0.35) return new THREE.Vector3(lerp(60, 66, u / 0.35), lerp(8, 2.2, u / 0.35), 4);
-      if (u < 0.6) return new THREE.Vector3(lerp(66, 64.4, (u - 0.35) / 0.25), lerp(2.2, 4.4, (u - 0.35) / 0.25), 4);
-      return new THREE.Vector3(lerp(64.4, 66.5, (u - 0.6) / 0.4), lerp(4.4, 5.6, (u - 0.6) / 0.4), 4);
-    };
-    cur.position.copy(curPath(grab));
-    cur.rotation.set(0, 0, 0.35 - grab * 0.4);
-    const held = grab > 0.35 && grab < 0.6;
-    const thrownT = inv(0.6, 1, grab);
-    const rv = show(reel, 22);
-    if (rv > 0.001) {
-      if (grab <= 0.35) reel.position.set(66.3, 1.2, 3.8);
-      else if (held) reel.position.copy(curPath(grab)).add(new THREE.Vector3(0.2, -1.1, -0.1));
-      else reel.position.set(lerp(64.6, 70.4, thrownT), lerp(3.3, 2.9, thrownT) + Math.sin(thrownT * Math.PI) * 2.2, lerp(3.9, -1.9, thrownT));
-      reel.rotation.set(0, held ? -0.3 : thrownT * Math.PI * 2, held ? 0.2 : 0);
-      reel.scale.setScalar(rv * (1 - sm(0.85, 1, thrownT) * 0.6));
+    let passed = 0;
+    let lastCut = -99;
+    for (const c of this.cuts) if (headX >= c) {
+      passed++;
+      lastCut = c;
     }
-    // the playhead slicing through things
-    const sweep = inv(0.715, 0.75, w);
-    this.blade.visible = sweep > 0 && sweep < 1;
-    this.blade.position.set(lerp(62, 79, sweep), 2.6, 3.4);
-    (this.blade.material as THREE.MeshBasicMaterial).opacity = Math.sin(sweep * Math.PI);
-    this.split.forEach(({ l: L, r: R, at }, i) => {
-      const v = ch * vanish(30 + i);
-      L.visible = R.visible = v > 0.001;
-      if (!L.visible) return;
-      const cut = this.blade.position.x > at.x && sweep > 0 ? sm(0, 1, (this.blade.position.x - at.x) / 1.5) : sweep >= 1 ? 1 : 0;
-      L.position.set(at.x - 0.3 - cut * 0.35, at.y - cut * 0.25, at.z);
-      R.position.set(at.x + 0.3 + cut * 0.35, at.y + cut * 0.2, at.z);
-      L.rotation.z = cut * 0.25;
-      R.rotation.z = -cut * 0.2;
-      L.scale.setScalar(Math.max(0.0001, v));
-      R.scale.setScalar(Math.max(0.0001, v));
-    });
-    // yellow light flashing on the beats
-    const beat = Math.max(0, Math.sin(T * 6.2)) ** 18;
-    this.flash.intensity = ch * motion * (beat * 60 + 4) * (1 - sm(0.775, 0.785, w));
+    // each cut changes the picture; the last stretch is the shot the edit was looking for
+    const shotIdx = run > 0.86 ? 3 : passed % 3;
+    const shotMat = this.mon.shot.material as THREE.MeshBasicMaterial;
+    if (shotMat.map !== this.shots[shotIdx]) shotMat.map = this.shots[shotIdx];
+    (this.mon.flash.material as THREE.MeshBasicMaterial).opacity = run > 0 && run < 1 ? Math.max(0, 1 - (headX - lastCut) / 0.5) * 0.28 : 0;
 
-    // ---- the last reel, then the world inside it ----
-    const heroOn = sm(0.6, 0.66, w);
-    hero.visible = heroOn > 0.001;
-    hero.scale.setScalar(Math.max(0.0001, heroOn));
-    hero.position.y = 1.5 + Math.sin(T * 0.6) * 0.05 * (1 - into);
-    hero.rotation.y = Math.sin(T * 0.4) * 0.12 * (1 - sm(0.8, 0.84, w));
-    const ui = this.hero.ui!.material as THREE.MeshBasicMaterial;
-    ui.opacity = 1 - sm(0.82, 0.85, w);
-    (this.hero.back.material as THREE.MeshBasicMaterial).opacity = 1;
-    this.heroWorldMat.opacity = sm(0.805, 0.835, w);
-    // the frame stretches from 9:16 to the shape of the screen as we go in
+    // ---- the edited footage becomes a 9:16 Reel, then it is posted ----
+    const monOn = sm(0.43, 0.46, w);
+    const toReel = sm(0.545, 0.572, w);
+    const fly = sm(0.6, 0.64, w);
+    this.monitor.visible = monOn > 0.001 && fly < 1;
+    const mw = lerp(2.4, 1.2, toReel);
+    const mh = lerp(1.35, 2.133, toReel);
+    // riding the playhead → over the end of the timeline → into the phone
+    this.phone.updateMatrixWorld(true);
+    const slot = this.phone.localToWorld(this.tmp.set(0, 0, 0.004));
+    const mx = lerp(Math.min(headX + 0.7, 59.5), 59.5, toReel);
+    const my = lerp(-0.25, 1.15, toReel);
+    const mz = lerp(1.7, 0.6, toReel);
+    this.monitor.position.set(lerp(mx, slot.x, fly), lerp(my, slot.y, fly) + Math.sin(fly * Math.PI) * 0.9, lerp(mz, slot.z, fly));
+    this.monitor.rotation.set(0, lerp(0, this.phone.rotation.y, fly), Math.sin(fly * Math.PI) * -0.06);
+    this.monitor.scale.set(Math.max(0.0001, lerp(mw, 1.8, fly) * monOn), Math.max(0.0001, lerp(mh, 3.2, fly) * monOn), 1);
+    (this.mon.shot.material as THREE.MeshBasicMaterial).opacity = 1 - sm(0.548, 0.566, w);
+    (this.mon.reel.material as THREE.MeshBasicMaterial).opacity = sm(0.548, 0.566, w);
+    (this.mon.ui.material as THREE.MeshBasicMaterial).opacity = sm(0.566, 0.578, w);
+    (this.mon.bezel.material as THREE.MeshBasicMaterial).color.setHex(toReel > 0.5 ? 0x000000 : 0x1c1c1c);
+    // "posting…" → "Shared to @buzzlab.global"
+    const post = sm(0.578, 0.584, w) * (1 - sm(0.598, 0.606, w));
+    this.posted.visible = post > 0.001;
+    this.posted.position.set(59.5, 1.15 - 1.2, 0.6);
+    this.posted.scale.setScalar(Math.max(0.0001, post));
+    this.postFill.scale.x = Math.max(0.0001, inv(0.58, 0.592, w));
+    (this.postTag.material as THREE.MeshBasicMaterial).opacity = sm(0.591, 0.596, w);
+
+    // ---- 04 the phone ----
+    const up = sm(0.596, 0.64, w);
+    this.phone.visible = up > 0.001 && w < 0.88;
+    this.phone.position.set(70, lerp(-5.5, 1.5, up), 0);
+    const stable = sm(0.74, 0.78, w);
+    this.phone.rotation.set(lerp(0.45, 0, up), lerp(-0.4, -0.13, up) * (1 - stable), lerp(0.05, 0, up));
+    // the Reel plays in it…
+    const toPage = sm(0.664, 0.682, w);
+    const ip = this.inPhone.group;
+    ip.visible = fly >= 1 && toPage < 1;
+    const c0 = cellAt(0, 0);
+    const px = PHONE.sw / PROFILE.cw;
+    ip.position.set(lerp(0, (c0.x - PROFILE.cw / 2) * px, toPage), lerp(0, PHONE.sh / 2 - c0.y * px, toPage), 0.004);
+    ip.scale.set(lerp(1.8, PROFILE.tileW * px, toPage), lerp(3.2, PROFILE.tileH * px, toPage), 1);
+    (this.inPhone.ui!.material as THREE.MeshBasicMaterial).opacity = 1 - sm(0.664, 0.672, w);
+    // …then the phone is the BuzzLab page, and the page scrolls to one post
+    const pageOn = sm(0.664, 0.68, w);
+    // (when the post opens, the page behind it goes, as it does on the phone)
+    (this.page.material as THREE.MeshBasicMaterial).opacity = pageOn * (1 - sm(0.756, 0.772, w));
+    const barsOn = pageOn * (1 - sm(0.8, 0.83, w));
+    this.bars.forEach((b) => ((b.material as THREE.MeshBasicMaterial).opacity = barsOn));
+    this.page.visible = pageOn > 0.001;
+    const hc = cellAt(PROFILE.hero.row, PROFILE.hero.col);
+    const stopAt = hc.y - PROFILE.view / 2;
+    const sc = inv(0.684, 0.748, w);
+    const scroll = stopAt * (sc * sc * sc * (sc * (sc * 6 - 15) + 10));
+    this.pageTex.offset.y = 1 - this.pageTex.repeat.y - scroll / PROFILE_H;
+    // the post: laid over its cell while the page moves, then it opens and fills the screen
+    const open = sm(0.752, 0.776, w);
+    const hx = (hc.x - PROFILE.cw / 2) * px;
+    const hy = PHONE.sh / 2 - (hc.y - scroll) * px;
+    const hw = lerp(PROFILE.tileW * px, PHONE.sw, open);
+    const hh = lerp(PROFILE.tileH * px, 3.2, open);
+    this.hero.visible = pageOn > 0.5 && w < 0.88;
+    this.hero.position.set(lerp(hx, 0, open), lerp(hy, 0, open), 0.005);
+    this.heroFace.scale.set(hw, hh, 1);
+    this.heroUI.scale.set(hw, hh, 1);
+    (this.heroUI.material as THREE.MeshBasicMaterial).opacity = sm(0.772, 0.784, w) * (1 - sm(0.815, 0.835, w));
+    const pick = sm(0.744, 0.752, w) * (1 - sm(0.768, 0.778, w));
+    this.heroLine.scale.set(hw + 0.05 * pick, hh + 0.05 * pick, 1);
+    (this.heroLine.material as THREE.MeshBasicMaterial).opacity = pick;
+    // keep the post inside the screen while it scrolls
+    this.phone.updateMatrixWorld(true);
+    const topY = this.phone.localToWorld(this.tmp.set(0, PHONE.sh / 2 - (190 / 900) * PHONE.sw, 0)).y;
+    const botY = this.phone.localToWorld(this.tmp.set(0, -PHONE.sh / 2 + (130 / 900) * PHONE.sw, 0)).y;
+    const free = sm(0.776, 0.79, w);
+    this.clip[0].constant = topY + free * 50;
+    this.clip[1].constant = -botY + free * 50;
+    // as the camera arrives, the post widens from 9:16 to the shape of the screen
     const asp = this.w / this.h;
     const grow = sm(0.84, 0.88, w);
-    const viewH = 2 * 0.42 * Math.tan(THREE.MathUtils.degToRad(this.cam.fov / 2));
-    const fitH = viewH / 1.6;
-    const sy = lerp(1, fitH * 1.02, grow);
-    const sx = lerp(1, ((viewH * asp) / 0.9) * 1.02, grow);
-    if (w > 0.8) hero.scale.set(sx * heroOn, sy * heroOn, 1);
+    if (w > 0.8) {
+      this.heroFace.scale.x = lerp(PHONE.sw, 3.2 * asp * 1.02, grow);
+      this.heroFace.scale.y = 3.2 * 1.02;
+    }
 
     // world camera: drifting toward the light
     const wf = inv(0.8, 1, w);
@@ -731,42 +674,15 @@ export class MachineScene {
       r.render(this.world, this.wcam);
       return;
     }
-    if (w > 0.8) {
-      this.wcam.aspect = lerp(0.5625, asp, grow);
+    if (this.hero.visible) {
+      // the post shows the world it opens into, at the post's own shape
+      this.wcam.aspect = this.heroFace.scale.x / this.heroFace.scale.y;
       this.wcam.updateProjectionMatrix();
       r.setRenderTarget(this.rt);
       r.render(this.world, this.wcam);
       r.setRenderTarget(null);
     }
     r.render(this.scene, this.cam);
-  }
-
-  /** Where the role labels sit on screen during the chaos. */
-  labels(w: number): Label[] {
-    const a = sm(0.67, 0.69, w) * (1 - sm(0.772, 0.782, w));
-    if (a <= 0) return [];
-    const at = (o: THREE.Object3D, dy = 0) => {
-      o.getWorldPosition(this.tmp);
-      this.tmp.y += dy;
-      this.tmp.project(this.cam);
-      return { x: (this.tmp.x * 0.5 + 0.5) * this.w, y: (-this.tmp.y * 0.5 + 0.5) * this.h, behind: this.tmp.z > 1 };
-    };
-    const list: [string, string, THREE.Object3D, number][] = [
-      ["dop", "DOP — the camera", this.chaos.camA, 0.7],
-      ["director", "Director — the chair", this.chaos.chair, 1.8],
-      ["editor", "Editor — the playhead", this.blade, 4.2],
-      ["copy", "Copywriter — the script", this.pages[0], 0.6],
-      ["social", "Social — the feed", this.feed, 4.8],
-      ["producer", "Producer — the kit", this.chaos.mic, 0.5],
-      ["cd", "Creative director — the storyboard", this.chaos.board, 1.1],
-      ["designer", "Designer — every frame", this.split[1].r, 0.9],
-    ];
-    return list
-      .map(([id, text, o, dy]) => {
-        const p = at(o, dy);
-        return { id, text, x: p.x, y: p.y, a: o.visible && !p.behind ? a : 0 };
-      })
-      .filter((l) => l.a > 0.01);
   }
 
   dispose() {

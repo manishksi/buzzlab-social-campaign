@@ -2,8 +2,6 @@
 
 import { useEffect, useRef } from "react";
 import { acts } from "@/content/strategy";
-import { filmClock } from "@/lib/film-clock";
-import { worldClock } from "@/lib/world-clock";
 import { film } from "@/content/media";
 import { ScrollTrigger, prefersReducedMotion } from "@/lib/gsap";
 import { store } from "@/lib/store";
@@ -113,7 +111,6 @@ export function ScrollFilm() {
       }
       dim += (dimTarget - dim) * Math.min(1, dt * 3);
       if (wrapRef.current) wrapRef.current.style.opacity = dim.toFixed(3);
-      worldClock.lighter.fade = dim; // the 3D lighter scene breathes down with it
 
       if (document.hidden) return;
       if (video && film.src) {
@@ -123,14 +120,12 @@ export function ScrollFilm() {
         }
         return;
       }
-      filmClock.t = filmT;
-      filmClock.preview = store.get().preview;
       if (!renderer) return;
       // halve the frame rate when nothing is moving and the scene is calm
       frameSkip = (frameSkip + 1) % 2;
       const calm = Math.abs(velocity) < 2 && filmT > 0.34 && filmT < 0.43;
       if (calm && frameSkip) return;
-      const heat = renderer.render({ t: filmT, clock: now / 1000, dt: calm ? dt * 2 : dt, velocity, preview: store.get().preview, characterOff: filmClock.lighter3d, heat: filmClock.heat });
+      const heat = renderer.render({ t: filmT, clock: now / 1000, dt: calm ? dt * 2 : dt, velocity, preview: store.get().preview });
       if (Math.abs(heat - heatShown) > 0.01) {
         heatShown = heat;
         root.style.setProperty("--heat", heat.toFixed(3));

@@ -9,7 +9,7 @@ import { TAN, tanishkaMouth } from "./tanishka-time";
 /**
  * TANISHKA — the last character, and the last joke. She's in the dark: bob, round glasses, a
  * cigarette in the corner of her mouth, a name badge, and a yellow tag that points right at her.
- * She looks at you. Then, very slowly, her jaw drops (the cigarette falls), and everything the
+ * She looks at you. Then, very slowly, her jaw drops (the cigarette stays stuck to her lip), and everything the
  * presentation was made of is pulled into her mouth: cards, cameras, the play button, the
  * playhead, script pages, yellow dots. The camera goes in after them. Black. (The section then
  * loops the page back to its first frame.) Driven by section progress `w` (0 → 1).
@@ -110,11 +110,15 @@ export class TanishkaScene {
     ember.position.y = 0.0885;
     ember.scale.y = 0.45;
     this.cig.add(paper, filter, ash, ember);
-    // the filter sits in the corner of her lips, the cigarette hangs forward and a little down
-    this.cigRest.copy(her.anchors.cornerL).add(new THREE.Vector3(-0.006, -0.003, 0.004));
+    // held between her lips, a little to one side of centre: the filter end sits inside the lip
+    // line and the cigarette points forward and down. It rides on the jaw (the lower lip), so when
+    // her mouth drops open it stays stuck to her lip instead of floating in the air.
+    const m = her.anchors.mouth;
+    const between = new THREE.Vector3(m.x + 0.013, m.y + 0.0012, m.z - 0.011);
+    this.cigRest.copy(between).sub(her.j.jaw.position);
     this.cig.position.copy(this.cigRest);
-    this.cig.rotation.set(Math.PI / 2 + 0.3, 0, -0.45);
-    her.j.head.add(this.cig);
+    this.cig.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0.2, -0.2, 1).normalize());
+    her.j.jaw.add(this.cig);
     const puff = tex(64, 64, (g) => {
       const r = g.createRadialGradient(32, 32, 1, 32, 32, 32);
       r.addColorStop(0, "rgba(255,255,255,.7)");
@@ -266,11 +270,12 @@ export class TanishkaScene {
     // the black behind the mouth only exists once the camera is on its way in
     this.throat.visible = enter > 0.35;
 
-    // the cigarette: smoulders, then falls out when the jaw goes
+    // the cigarette smoulders between her lips; when the jaw drops it stays stuck to the lower lip
+    // and droops with it (undo the jaw's stretch so it keeps its size)
     const fall = sm(TAN.open, TAN.open + 0.08, w);
-    this.cig.position.copy(this.cigRest).add(this.tmp.set(fall * 0.02, -fall * fall * 0.9, fall * 0.05));
-    this.cig.rotation.set(Math.PI / 2 + 0.3 + fall * 2.2, 0, -0.45 - fall * 0.8);
-    this.cig.visible = fall < 0.98;
+    const js = her.j.jaw.scale;
+    this.cig.scale.set(1 / js.x, 1 / js.y, 1 / js.z);
+    this.cig.position.copy(this.cigRest);
     this.ember.color.setRGB(1, 0.62 + Math.sin(clock * 2.2) * 0.08, 0.2).multiplyScalar(0.8 + Math.sin(clock * 1.7) * 0.2);
     const tip = this.tmp;
     this.cig.children[3].getWorldPosition(tip);
