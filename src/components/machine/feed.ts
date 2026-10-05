@@ -3,8 +3,8 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import { BONE, INK, Y } from "./textures";
 
 /**
- * ACT 07's second half: the reference footage on the edit's program monitor and the finished
- * Reel (public/assets/act07), the phone it is posted to, and the BuzzLab Instagram page it lands
+ * ACT 07's second half: the reference footage (public/assets/act07) on the edit's program
+ * monitor, the finished Reel, the phone it is posted to, and the BuzzLab Instagram page it lands
  * on — painted, a curated feed (originals, BTS, people, production, campaigns, experiments).
  */
 
@@ -475,8 +475,7 @@ function picTex(w: number, h: number, src: string, paint: (g: CanvasRenderingCon
   return t;
 }
 
-/** the finished Reel, and the footage the edit cuts through on its way there (with each one's shape) */
-const REEL = "/assets/act07/post-02.jpg";
+/** the footage the edit cuts through (with each one's shape) */
 const FOOTAGE: [string, number][] = [
   ["/assets/act07/post-07.jpg", 735 / 919],
   ["/assets/act07/post-04.jpg", 736 / 946],
@@ -487,9 +486,10 @@ const FOOTAGE: [string, number][] = [
   ["/assets/act07/post-08.jpg", 736 / 1308],
 ];
 
-/** the program monitor (16:9): the vertical footage as the editor sees it, pillarboxed, timecoded */
+/** the program monitor (16:9): the vertical footage as the editor sees it, pillarboxed, timecoded,
+ *  then the shot the edit was looking for — the night run */
 export function footageTextures() {
-  return [...FOOTAGE.map(([src]) => src), REEL].map((src, i) =>
+  const cuts = FOOTAGE.map(([src], i) =>
     picTex(640, 360, src, (g, w, h, img) => {
       const fw = (h * img.width) / img.height;
       g.drawImage(img, (w - fw) / 2, 0, fw, h);
@@ -500,6 +500,14 @@ export function footageTextures() {
       text(g, `01:${String(4 + i * 3).padStart(2, "0")}:${String((i * 17) % 60).padStart(2, "0")}:${String((i * 7) % 24).padStart(2, "0")}`, w - 22, h - 22, 18, "rgba(238,235,227,.75)", 500, MONO, "right");
     }),
   );
+  const night = texOf(
+    canvas(640, 360, (g, w, h) => {
+      STILLS.night(g, w, h);
+      text(g, "A003_C017", 22, h - 22, 18, "rgba(238,235,227,.75)", 500, MONO);
+      text(g, "01:22:30:16", w - 22, h - 22, 18, "rgba(238,235,227,.75)", 500, MONO, "right");
+    }),
+  );
+  return [...cuts, night];
 }
 
 /** the same footage as cards, for the clips that fly out of the camera onto the timeline */
@@ -507,9 +515,23 @@ export function footageTiles() {
   return FOOTAGE.map(([src, a]) => ({ tex: picTex(360, Math.round(360 / a), src, (g, w, h, img) => cover(g, img, 0, 0, w, h)), w: a >= 0.7 ? 1.2 : 0.9, h: a >= 0.7 ? 1.2 / a : 1.6 }));
 }
 
-/** the finished Reel (9:16) */
+/** the finished Reel (9:16): the night run, graded, with a quiet title */
 export function heroReel() {
-  return picTex(540, 960, REEL, (g, w, h, img) => cover(g, img, 0, 0, w, h));
+  return texOf(
+    canvas(540, 960, (g, w, h) => {
+      g.fillStyle = "#050505";
+      g.fillRect(0, 0, w, h);
+      STILLS.night(g, w, h);
+      const top = g.createLinearGradient(0, 0, 0, h * 0.3);
+      top.addColorStop(0, "rgba(0,0,0,.7)");
+      top.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = top;
+      g.fillRect(0, 0, w, h * 0.3);
+      text(g, "NIGHT RUN", 34, 132, 76, BONE);
+      text(g, "A BUZZLAB FILM", 36, 170, 20, Y, 500, MONO);
+      grain(g, w, h, 0.04);
+    }),
+  );
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -668,7 +690,7 @@ const extraTiles: Record<string, Painter> = {
  * The page: header (name, bio, highlights) and a 3-column grid. `T` are the machine's content
  * textures; the hero cell is left dark — the selected post is a live mesh laid over it.
  */
-export function profileTexture(T: Record<string, THREE.CanvasTexture>) {
+export function profileTexture(T: Record<string, THREE.CanvasTexture>, hero?: HTMLCanvasElement) {
   const P = PROFILE;
   const c = canvas(P.cw, PROFILE_H, (g, w) => {
     g.fillStyle = "#000";
@@ -762,7 +784,8 @@ export function profileTexture(T: Record<string, THREE.CanvasTexture>) {
       g.clip();
       g.fillStyle = "#0a0a0a";
       g.fillRect(x, y, P.tileW, P.tileH);
-      if (k && STILLS[k]) {
+      if (k === "heroReel" && hero) cover(g, hero, x, y, P.tileW, P.tileH);
+      else if (k && STILLS[k]) {
         g.translate(x, y);
         STILLS[k](g, P.tileW, P.tileH);
       } else if (k && T[k]) cover(g, img(k), x, y, P.tileW, P.tileH);
@@ -776,15 +799,6 @@ export function profileTexture(T: Record<string, THREE.CanvasTexture>) {
   });
   const t = texOf(c);
   t.wrapT = THREE.ClampToEdgeWrapping;
-  // the Reel just posted, top left, once its picture is in
-  pic(REEL)
-    .then((img) => {
-      const g = c.getContext("2d")!;
-      cover(g, img, 0, PROFILE.header, PROFILE.tileW, PROFILE.tileH);
-      reelMark(g, PROFILE.tileW - 26, PROFILE.header + 28);
-      t.needsUpdate = true;
-    })
-    .catch(() => {});
   return t;
 }
 

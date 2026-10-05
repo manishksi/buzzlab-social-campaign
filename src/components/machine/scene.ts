@@ -300,7 +300,7 @@ export class MachineScene {
     this.inPhone.group.position.z = 0.004;
     (this.inPhone.back.material as THREE.MeshBasicMaterial).transparent = true;
     this.phone.add(this.inPhone.group);
-    this.pageTex = profileTexture(T);
+    this.pageTex = profileTexture(T, reelTex.image as HTMLCanvasElement);
     this.pageTex.repeat.set(1, PROFILE.view / PROFILE_H);
     this.page = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), new THREE.MeshBasicMaterial({ map: this.pageTex, toneMapped: false, transparent: true, opacity: 0 }));
     this.page.position.z = 0.003;
