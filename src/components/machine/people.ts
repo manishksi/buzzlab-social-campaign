@@ -25,9 +25,11 @@ export type PersonOpts = {
   sex: Sex;
   /** an outfit baked for that sex: m — tee, whitetee, jacket, shirt, suit · f — tee, blouse, sport */
   outfit: string;
-  /** m — short02, short04, short01 · f — bob02, bob01, ponytail01 */
+  /** m — short02, short04, short01, short03 · f — bob02, bob01, ponytail01, long01 */
   hair: string;
   shoes?: "sneakers" | "boots" | "navy";
+  /** a colour the shoes are dyed (multiplied over their texture) */
+  shoeColor?: number;
   /** skin texture: skin_m, skin_m_deep, skin_f, skin_f_light */
   skin?: string;
   /** a flat fabric colour for the top / bottom garment instead of its printed texture */
@@ -36,8 +38,18 @@ export type PersonOpts = {
   hairColor?: number;
   /** cut away the strands that fall in front of the eyes (keeps glasses and eyes visible) */
   trimFringe?: boolean;
-  glasses?: boolean;
+  /** round wire frames (true / "round") or thick rectangular ones ("rect") */
+  glasses?: boolean | "round" | "rect";
   headphones?: boolean;
+  /** a colour multiplied over the skin texture, to warm or deepen the tone */
+  skinTint?: number;
+  /** facial hair over the jaw, chin, cheeks and upper lip */
+  beard?: "stubble" | "trim" | "full";
+  beardColor?: number;
+  /** a baseball cap in this colour */
+  cap?: number;
+  /** horizontal stripes of this colour across the top garment */
+  stripes?: number;
 };
 
 export type Person = {
@@ -134,7 +146,7 @@ function loadTex(key: string, color = true) {
   });
 }
 
-const COLOR_TEX = ["skin_m", "skin_m_deep", "skin_f", "skin_f_light", "eye", "brow_m", "brow_f", "lash_m", "lash_f", "teeth", "hair_short02", "hair_short04", "hair_short01", "hair_bob02", "hair_bob01", "hair_ponytail01", "m_tee", "m_whitetee", "m_jacket", "m_shirt", "m_suit", "f_tee", "f_blouse", "f_sport", "shoes_sneakers", "shoes_boots", "shoes_navy"];
+const COLOR_TEX = ["skin_m", "skin_m_deep", "skin_f", "skin_f_light", "eye", "brow_m", "brow_f", "lash_m", "lash_f", "teeth", "hair_short02", "hair_short04", "hair_short01", "hair_short03", "hair_bob02", "hair_bob01", "hair_ponytail01", "hair_long01", "m_tee", "m_whitetee", "m_jacket", "m_shirt", "m_suit", "f_tee", "f_blouse", "f_sport", "shoes_sneakers", "shoes_boots", "shoes_navy"];
 const DATA_TEX = ["hair_short02_n", "m_tee_n", "m_tee_ao", "m_whitetee_n", "m_whitetee_ao", "m_jacket_n", "m_jacket_ao", "m_shirt_n", "m_shirt_ao", "f_tee_n", "f_tee_ao", "f_blouse_n", "f_blouse_ao", "f_sport_n", "f_sport_ao"];
 
 /** Fetch both bodies and every texture once. Safe to call repeatedly. */
@@ -205,6 +217,7 @@ export function makePerson(o: PersonOpts): Person {
   const outfitDeletes = new Set<number>();
   const meshes: THREE.SkinnedMesh[] = [];
   const mats: Person["mats"] = { skin: skinMaterial(tex(o.skin ?? (o.sex === "m" ? "skin_m" : "skin_f"))) };
+  if (o.skinTint !== undefined) mats.skin.color.set(o.skinTint);
   const add = (geo: THREE.BufferGeometry, mat: THREE.Material | THREE.Material[], shadow = true) => {
     const m = new THREE.SkinnedMesh(geo, mat);
     m.castShadow = shadow;
@@ -228,6 +241,7 @@ export function makePerson(o: PersonOpts): Person {
     const textured = fabric({ map: tex(key), normal: tex(key + "_n"), ao: tex(key + "_ao") });
     const top = o.top !== undefined ? fabric({ color: o.top, normal: tex(key + "_n"), ao: tex(key + "_ao"), sheen: 0.8 }) : textured;
     const bottom = o.bottom !== undefined ? fabric({ color: o.bottom, normal: tex(key + "_n"), ao: tex(key + "_ao"), rough: 0.8 }) : textured;
+    if (o.stripes !== undefined && top !== textured) stripe(top as THREE.MeshPhysicalMaterial, o.stripes);
     mats.top = top;
     mats.bottom = bottom;
     add(out.geo, out.reg ? [bottom, top] : textured);
@@ -235,7 +249,7 @@ export function makePerson(o: PersonOpts): Person {
   // shoes
   if (o.shoes && part(o.shoes)) {
     delOf(o.shoes);
-    mats.shoes = new THREE.MeshPhysicalMaterial({ map: tex("shoes_" + o.shoes), roughness: 0.55, clearcoat: o.shoes === "boots" ? 0.3 : 0 });
+    mats.shoes = new THREE.MeshPhysicalMaterial({ map: tex("shoes_" + o.shoes), color: o.shoeColor ?? 0xffffff, roughness: 0.55, clearcoat: o.shoes === "boots" ? 0.3 : 0 });
     add(part(o.shoes).geo, mats.shoes);
   }
   // body, with everything under the clothes removed
@@ -282,10 +296,32 @@ export function makePerson(o: PersonOpts): Person {
     if (hn) hairMat.normalMap = hn;
     mats.hair = hairMat;
     let geo = hair.geo;
+    const head = new THREE.Vector3();
+    byName.head.getWorldPosition(head);
+    if (o.cap !== undefined) {
+      // under a cap only the hair below its band shows: the sides and the nape (see addCap)
+      const band = head.y + lib.anchors.eyeL[1] + CAP.band;
+      const pos = geo.getAttribute("position");
+      const ind = geo.index!.array as ArrayLike<number>;
+      const keep: number[] = [];
+      for (let t = 0; t < ind.length; t += 3) {
+        let y = 0;
+        let z = 0;
+        for (let k = 0; k < 3; k++) {
+          y += pos.getY(ind[t + k]) / 3;
+          z += pos.getZ(ind[t + k]) / 3;
+        }
+        // the band runs higher at the front than at the back
+        if (y > band + (z - head.z - CAP.z) * Math.tan(CAP.tilt) - 0.003) continue;
+        keep.push(ind[t], ind[t + 1], ind[t + 2]);
+      }
+      const g2 = new THREE.BufferGeometry();
+      for (const k of ["position", "normal", "uv", "skinIndex", "skinWeight"]) g2.setAttribute(k, geo.getAttribute(k));
+      g2.setIndex(keep);
+      geo = g2;
+    }
     if (o.trimFringe) {
       // bind space: the head is unrotated, so the eyes sit at the head bone's rest position + anchor
-      const head = new THREE.Vector3();
-      byName.head.getWorldPosition(head);
       const eyeY = head.y + lib.anchors.eyeL[1];
       const eyeZ = head.z + lib.anchors.eyeL[2];
       const pos = geo.getAttribute("position");
@@ -299,11 +335,34 @@ export function makePerson(o: PersonOpts): Person {
         if (c.z > eyeZ - 0.02 && c.y < eyeY + 0.03 && Math.abs(c.x) < 0.07) continue;
         keep.push(ind[t], ind[t + 1], ind[t + 2]);
       }
+      const src = geo;
       geo = new THREE.BufferGeometry();
-      for (const k of ["position", "normal", "uv", "skinIndex", "skinWeight"]) geo.setAttribute(k, hair.geo.getAttribute(k));
+      for (const k of ["position", "normal", "uv", "skinIndex", "skinWeight"]) geo.setAttribute(k, src.getAttribute(k));
       geo.setIndex(keep);
     }
     add(geo, hairMat);
+  }
+
+  // facial hair, lifted off the skin (bind space, like the fringe trim above)
+  if (o.beard) {
+    const head = new THREE.Vector3();
+    byName.head.getWorldPosition(head);
+    const color = o.beardColor ?? o.hairColor ?? 0x15100c;
+    for (const layer of beardLayers(o.beard)) {
+      const geo = beardGeometry(part("body").geo, head, lib.anchors, o.beard, layer.lift, layer.alpha);
+      const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.9, vertexColors: true, polygonOffset: true, polygonOffsetFactor: -1 - layer.lift * 400 });
+      if (layer.strands) {
+        mat.alphaMap = beardStrands();
+        mat.alphaTest = 0.5;
+        mat.side = THREE.DoubleSide;
+      } else {
+        // the shadow of the beard on the skin: a smooth tint, densest in the middle
+        mat.transparent = true;
+        mat.depthWrite = false;
+      }
+      mats["beard" + layer.lift] = mat;
+      add(geo, mat, false);
+    }
   }
 
   // binding is done: rest neutral
@@ -316,8 +375,9 @@ export function makePerson(o: PersonOpts): Person {
   for (const n of Object.keys(byName)) if (/^f\d\d[LR]$/.test(n)) fingers[n] = byName[n];
   const p: Person = { root, sex: o.sex, j, fingers, face: { jaw: j.jaw, eyes: [j.eyeL, j.eyeR], lids: [j.lidL, j.lidR] }, anchors, meshes, mats, hipY: j.hips.position.y };
   curls.set(p, lib.curl);
-  if (o.glasses) addGlasses(p);
+  if (o.glasses) addGlasses(p, o.glasses === "rect" ? "rect" : "round");
   if (o.headphones) addHeadphones(p);
+  if (o.cap !== undefined) addCap(p, o.cap);
   applyPose(p, POSES.stand);
   return p;
 }
@@ -325,31 +385,218 @@ export function makePerson(o: PersonOpts): Person {
 const curls = new WeakMap<Person, Record<string, number[]>>();
 
 // ---------------------------------------------------------------------------------------------
+// facial hair: a shell lifted off the face along its normals, dense in the middle of the beard
+// region and thinning out at its edges (head-local metres; z forward, y up, x to the left ear)
+// ---------------------------------------------------------------------------------------------
+const smooth = (a: number, b: number, v: number) => {
+  const t = Math.min(1, Math.max(0, (v - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};
+
+function beardLayers(kind: "stubble" | "trim" | "full") {
+  if (kind === "stubble") return [{ lift: 0.0007, alpha: 0.5, strands: false }];
+  if (kind === "trim") return [{ lift: 0.0008, alpha: 0.86, strands: false }, { lift: 0.0021, alpha: 1.0, strands: true }];
+  return [{ lift: 0.001, alpha: 0.96, strands: false }, { lift: 0.0032, alpha: 1.2, strands: true }, { lift: 0.005, alpha: 0.9, strands: true }];
+}
+
+/** how much beard grows at a head-local point (0–1) */
+function beardDensity(v: THREE.Vector3, A: Record<string, number[]>, kind: "stubble" | "trim" | "full") {
+  const ax = Math.abs(v.x);
+  const ex = Math.abs(A.earL[0]);
+  const mouthY = A.mouth[1];
+  const nose = A.nose[1];
+  // the cheek line: just under the nose in the middle, up to the sideburns at the ears
+  const rise = smooth(0.03, ex * 0.97, ax);
+  const top = nose - 0.009 + Math.pow(rise, kind === "full" ? 1 : 1.7) * (A.earL[1] - nose + 0.004) - (kind === "full" ? 0 : kind === "trim" ? 0.004 : 0.008);
+  let d = 1 - smooth(top - 0.008, top, v.y);
+  // in front of the ears
+  d *= smooth(A.earL[2] - 0.004, A.earL[2] + 0.006, v.z);
+  // down under the chin onto the throat, but not down the sides of the neck
+  const low = mouthY - (kind === "full" ? 0.092 : kind === "trim" ? 0.074 : 0.068);
+  d *= smooth(low - 0.01, low, v.y);
+  if (v.y < mouthY - 0.045) d *= 1 - smooth(0.045, 0.06, ax + (mouthY - 0.045 - v.y) * 0.6);
+  // the lips stay clear
+  const lx = ax / (Math.abs(A.cornerL[0]) + 0.002);
+  const ly = (v.y - (mouthY - 0.004)) / 0.0135;
+  if (v.z > A.mouth[2] - 0.035) d *= smooth(0.85, 1.15, Math.hypot(lx, ly));
+  // stubble is thinner on the cheeks
+  if (kind === "stubble") d *= 1 - 0.4 * smooth(0.03, 0.06, ax) * smooth(mouthY, top, v.y);
+  return d;
+}
+
+function beardGeometry(body: THREE.BufferGeometry, head: THREE.Vector3, A: Record<string, number[]>, kind: "stubble" | "trim" | "full", lift: number, alpha: number) {
+  const pos = body.getAttribute("position");
+  const nor = body.getAttribute("normal");
+  const n = pos.count;
+  const dens = new Float32Array(n);
+  const v = new THREE.Vector3();
+  const nv = new THREE.Vector3();
+  const centre = new THREE.Vector3(0, A.mouth[1] + 0.02, 0);
+  const out = new THREE.Vector3();
+  for (let i = 0; i < n; i++) {
+    v.fromBufferAttribute(pos, i).sub(head);
+    if (v.y > 0.06 || v.y < -0.16 || v.z < -0.03) continue;
+    // only the outside of the face, not the inside of the mouth
+    nv.fromBufferAttribute(nor, i);
+    if (nv.dot(out.copy(v).sub(centre)) <= 0) continue;
+    dens[i] = beardDensity(v, A, kind);
+  }
+  const ind = body.index!.array as ArrayLike<number>;
+  const keep: number[] = [];
+  for (let t = 0; t < ind.length; t += 3) if (dens[ind[t]] > 0.02 || dens[ind[t + 1]] > 0.02 || dens[ind[t + 2]] > 0.02) keep.push(ind[t], ind[t + 1], ind[t + 2]);
+  const lifted = new Float32Array(n * 3);
+  const col = new Float32Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    nv.fromBufferAttribute(nor, i);
+    v.fromBufferAttribute(pos, i).addScaledVector(nv, lift * Math.sqrt(dens[i]));
+    lifted[i * 3] = v.x;
+    lifted[i * 3 + 1] = v.y;
+    lifted[i * 3 + 2] = v.z;
+    col[i * 4] = col[i * 4 + 1] = col[i * 4 + 2] = 1;
+    col[i * 4 + 3] = Math.min(1, dens[i] * alpha);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(lifted, 3));
+  for (const k of ["normal", "uv", "skinIndex", "skinWeight"]) g.setAttribute(k, body.getAttribute(k));
+  g.setAttribute("color", new THREE.BufferAttribute(col, 4));
+  g.setIndex(keep);
+  return g;
+}
+
+let strands: THREE.Texture | null = null;
+/** short dark hairs, as an alpha map tiled over the face's skin UVs */
+function beardStrands() {
+  if (strands) return strands;
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const g = c.getContext("2d")!;
+  g.fillStyle = "#000";
+  g.fillRect(0, 0, 256, 256);
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  g.lineCap = "round";
+  for (let i = 0; i < 1400; i++) {
+    const x = rnd() * 256;
+    const y = rnd() * 256;
+    const a = Math.PI / 2 + (rnd() - 0.5) * 0.9;
+    const l = 6 + rnd() * 9;
+    const b = 150 + rnd() * 105;
+    g.strokeStyle = `rgb(${b},${b},${b})`;
+    g.lineWidth = 1.2 + rnd() * 1.2;
+    g.beginPath();
+    g.moveTo(x, y);
+    g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l);
+    g.stroke();
+  }
+  strands = new THREE.CanvasTexture(c);
+  strands.wrapS = strands.wrapT = THREE.RepeatWrapping;
+  strands.repeat.set(4, 4);
+  return strands;
+}
+
+/** horizontal stripes across a garment, in the body's rest height (metres) */
+function stripe(m: THREE.MeshPhysicalMaterial, color: number) {
+  const c = new THREE.Color(color);
+  m.onBeforeCompile = (sh) => {
+    sh.uniforms.stripeColor = { value: c };
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying float vRestY;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvRestY = position.y;");
+    sh.fragmentShader = sh.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying float vRestY;\nuniform vec3 stripeColor;")
+      .replace("#include <map_fragment>", "#include <map_fragment>\nfloat stp = fract(vRestY * 24.0);\ndiffuseColor.rgb = mix(diffuseColor.rgb, stripeColor, smoothstep(0.6, 0.64, stp) * (1.0 - smoothstep(0.94, 0.98, stp)));");
+  };
+  m.customProgramCacheKey = () => "buzzlab-stripes";
+}
+
+// ---------------------------------------------------------------------------------------------
 // accessories, built to each head's anchors
 // ---------------------------------------------------------------------------------------------
-function addGlasses(p: Person) {
+/** where a cap sits (head-local): its band's centre height above the eyes, its centre's depth, its tilt back */
+const CAP = { band: 0.022, z: -0.002, tilt: 0.1, depth: 0.116 };
+
+/** a baseball cap: a six-panel crown over the skull and a curved brim, worn straight */
+function addCap(p: Person, color: number) {
+  const a = p.anchors;
+  const ex = Math.abs(a.earL.x);
+  const g = new THREE.Group();
+  const cloth = new THREE.MeshPhysicalMaterial({ color, roughness: 0.85, sheen: 0.6, sheenRoughness: 0.6, sheenColor: new THREE.Color(color).multiplyScalar(0.7) });
+  const band = a.eyeL.y + CAP.band;
+  const rise = a.top.y - band + 0.012;
+  const crown = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 20, 0, Math.PI * 2, 0, Math.PI * 0.5), cloth);
+  crown.scale.set(ex + 0.009, rise, CAP.depth);
+  crown.position.set(0, band, CAP.z);
+  crown.rotation.x = -CAP.tilt;
+  // seams and the button on top
+  const seam = new THREE.MeshStandardMaterial({ color: new THREE.Color(color).multiplyScalar(0.8), roughness: 0.9 });
+  for (let i = 0; i < 3; i++) {
+    const r = new THREE.Mesh(new THREE.TorusGeometry(1, 0.012, 4, 48, Math.PI), seam);
+    r.rotation.set(0, (i / 3) * Math.PI, 0);
+    crown.add(r);
+  }
+  const button = new THREE.Mesh(new THREE.SphereGeometry(0.0065, 12, 8), cloth);
+  button.position.set(0, band + rise * Math.cos(CAP.tilt), CAP.z - rise * Math.sin(CAP.tilt));
+  // the brim: a half ellipse, curved down at the sides
+  const shape = new THREE.Shape();
+  shape.moveTo(-0.082, 0);
+  shape.absellipse(0, 0, 0.082, 0.078, Math.PI, 2 * Math.PI, false, 0);
+  shape.lineTo(-0.082, 0);
+  const brimGeo = new THREE.ExtrudeGeometry(shape, { depth: 0.005, bevelEnabled: true, bevelThickness: 0.0015, bevelSize: 0.0015, bevelSegments: 2, curveSegments: 32 });
+  brimGeo.rotateX(-Math.PI / 2);
+  const bp = brimGeo.getAttribute("position") as THREE.BufferAttribute;
+  for (let i = 0; i < bp.count; i++) bp.setY(i, bp.getY(i) - 3 * bp.getX(i) * bp.getX(i));
+  brimGeo.computeVertexNormals();
+  const brim = new THREE.Mesh(brimGeo, cloth);
+  // on the front of the band (the crown is tipped back, so its front edge sits higher)
+  brim.position.set(0, band + CAP.depth * Math.sin(CAP.tilt) - 0.003, CAP.z + CAP.depth * Math.cos(CAP.tilt) - 0.012);
+  brim.rotation.x = 0.17;
+  g.add(crown, button, brim);
+  g.traverse((n) => ((n as THREE.Mesh).castShadow = true));
+  p.j.head.add(g);
+}
+
+function addGlasses(p: Person, style: "round" | "rect") {
   const a = p.anchors;
   const g = new THREE.Group();
   const frame = new THREE.MeshPhysicalMaterial({ color: 0x141210, roughness: 0.25, clearcoat: 0.8, clearcoatRoughness: 0.15 });
   const lensMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.08, roughness: 0.02, clearcoat: 1, depthWrite: false });
   const r = Math.abs(a.eyeL.x) * 0.78;
+  // thick acetate rectangles: a rounded-rect rim with the lens cut out of it
+  const rim = (w: number, h: number, t: number) => {
+    const rr = (sh: THREE.Shape | THREE.Path, hw: number, hh: number, c: number) => {
+      sh.moveTo(-hw + c, -hh);
+      sh.lineTo(hw - c, -hh);
+      sh.quadraticCurveTo(hw, -hh, hw, -hh + c);
+      sh.lineTo(hw, hh - c);
+      sh.quadraticCurveTo(hw, hh, hw - c, hh);
+      sh.lineTo(-hw + c, hh);
+      sh.quadraticCurveTo(-hw, hh, -hw, hh - c);
+      sh.lineTo(-hw, -hh + c);
+      sh.quadraticCurveTo(-hw, -hh, -hw + c, -hh);
+      return sh;
+    };
+    const outer = rr(new THREE.Shape(), w / 2, h / 2, 0.006) as THREE.Shape;
+    outer.holes.push(rr(new THREE.Path(), w / 2 - t, h / 2 - t, 0.004) as THREE.Path);
+    const geo = new THREE.ExtrudeGeometry(outer, { depth: 0.004, bevelEnabled: false, curveSegments: 6 });
+    geo.translate(0, 0, -0.002);
+    return geo;
+  };
   for (const s of [1, -1]) {
     const c = (s > 0 ? a.eyeL : a.eyeR).clone();
     c.z += 0.022;
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(r, 0.0021, 10, 48), frame);
+    const ring = new THREE.Mesh(style === "rect" ? rim(r * 2.35, r * 1.55, 0.0042) : new THREE.TorusGeometry(r, 0.0021, 10, 48), frame);
     ring.position.copy(c);
-    const lens = new THREE.Mesh(new THREE.CircleGeometry(r, 40), lensMat);
+    if (style === "rect") ring.position.x += s * 0.002;
+    const lens = new THREE.Mesh(style === "rect" ? new THREE.PlaneGeometry(r * 2.3, r * 1.5) : new THREE.CircleGeometry(r, 40), lensMat);
     lens.position.copy(c).add(new THREE.Vector3(0, 0, 0.0005));
     const ear = (s > 0 ? a.earL : a.earR).clone();
-    const from = new THREE.Vector3(c.x + s * r, c.y, c.z - 0.002);
+    const from = new THREE.Vector3(c.x + s * (style === "rect" ? r * 1.2 : r), c.y + (style === "rect" ? r * 0.4 : 0), c.z - 0.002);
     const to = new THREE.Vector3(ear.x - s * 0.004, ear.y + 0.006, ear.z + 0.004);
-    const temple = new THREE.Mesh(new THREE.CylinderGeometry(0.0015, 0.0015, from.distanceTo(to), 6), frame);
+    const temple = new THREE.Mesh(new THREE.CylinderGeometry(style === "rect" ? 0.0024 : 0.0015, style === "rect" ? 0.0024 : 0.0015, from.distanceTo(to), 6), frame);
     temple.position.copy(from).lerp(to, 0.5);
     temple.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), to.clone().sub(from).normalize());
     g.add(ring, lens, temple);
   }
-  const bridge = new THREE.Mesh(new THREE.TorusGeometry(0.008, 0.0017, 8, 16, Math.PI), frame);
-  bridge.position.set(0, a.eyeL.y + 0.004, a.eyeL.z + 0.024);
+  const bridge = style === "rect" ? new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.004, 0.004), frame) : new THREE.Mesh(new THREE.TorusGeometry(0.008, 0.0017, 8, 16, Math.PI), frame);
+  bridge.position.set(0, a.eyeL.y + (style === "rect" ? 0.007 : 0.004), a.eyeL.z + 0.024);
   g.add(bridge);
   p.j.head.add(g);
 }

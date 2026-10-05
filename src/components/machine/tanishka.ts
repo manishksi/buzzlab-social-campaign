@@ -7,7 +7,7 @@ import { contentTextures } from "./textures";
 import { TAN, tanishkaMouth } from "./tanishka-time";
 
 /**
- * TANISHKA — the last character, and the last joke. She's in the dark: bob, round glasses, a
+ * TANISHKA — the last character, and the last joke. She's in the dark: long dark hair, all black, a
  * cigarette in the corner of her mouth, a name badge, and a yellow tag that points right at her.
  * She looks at you. Then, very slowly, her jaw drops (the cigarette stays stuck to her lip), and everything the
  * presentation was made of is pulled into her mouth: cards, cameras, the play button, the
@@ -86,7 +86,8 @@ export class TanishkaScene {
     s.add(this.yellowRim);
 
     // Tanishka
-    const her = makePerson({ sex: "f", outfit: "tee", top: 0x151515, bottom: 0x23232a, hair: "bob02", hairColor: 0x2a2018, shoes: "boots", glasses: true, trimFringe: true, skin: "skin_f" });
+    // from her reference photo: long dark-brown hair, warm skin, all black
+    const her = makePerson({ sex: "f", outfit: "tee", top: 0x151515, bottom: 0x23232a, hair: "long01", hairColor: 0x24170f, shoes: "boots", skin: "skin_f", skinTint: 0xdcb8a0 });
     this.her = her;
     s.add(her.root);
     her.root.updateMatrixWorld(true);

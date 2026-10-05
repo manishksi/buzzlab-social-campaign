@@ -202,8 +202,9 @@ export class SetScene {
       g.stroke();
     });
 
-    // 01 founder: talking to his phone — the founder POV, the yellow jacket
-    add("founder01", "Founder 01", { sex: "m", outfit: "jacket", top: 0xd8b300, bottom: 0x1b2740, hair: "short04", hairColor: 0x15100c, shoes: "sneakers", glasses: true, skin: "skin_m_deep" }, 0, { lookY: 1.5 }, (p, f) => {
+    // the cast follows each person's reference photo: hair, facial hair, glasses, clothes, colouring
+    // 01 founder: talking to his phone — the founder POV (navy overshirt, full beard, black frames)
+    add("founder01", "Founder 01", { sex: "m", outfit: "jacket", top: 0x27344f, bottom: 0x18181c, hair: "short04", hairColor: 0x0d0b0a, beard: "full", glasses: "rect", skin: "skin_m_deep", shoes: "sneakers", shoeColor: 0x2a2a2a }, 0, { lookY: 1.5 }, (p, f) => {
       const phone = new THREE.Group();
       const pb = new THREE.Mesh(new RoundedBoxGeometry(0.075, 0.155, 0.009, 2, 0.008), m.black);
       const ps = new THREE.Mesh(new THREE.PlaneGeometry(0.068, 0.145), new THREE.MeshBasicMaterial({ map: T.reelHero, toneMapped: false }));
@@ -227,8 +228,8 @@ export class SetScene {
         phone.lookAt(this.tmp);
       };
     });
-    // 02 founder: in the armchair at the podcast mic — the conversations
-    add("founder02", "Founder 02", { sex: "f", outfit: "blouse", top: 0xe9e5dc, bottom: 0x161616, hair: "ponytail01", hairColor: 0x1b120c, shoes: "boots", skin: "skin_f" }, 1, { lookY: 1.2, seated: true }, (p, f) => {
+    // 02 founder: in the armchair at the podcast mic — the conversations (the yellow bomber)
+    add("founder02", "Founder 02", { sex: "m", outfit: "jacket", top: 0xd8b300, bottom: 0x1b2740, hair: "short01", hairColor: 0x120e0b, beard: "trim", glasses: true, skin: "skin_m_deep", shoes: "sneakers", shoeColor: 0xe8bc00 }, 1, { lookY: 1.2, seated: true }, (p, f) => {
       const leather = new THREE.MeshStandardMaterial({ color: 0x2a1c14, roughness: 0.55 });
       const chair = new THREE.Group();
       const seat = new THREE.Mesh(new RoundedBoxGeometry(0.7, 0.16, 0.66, 3, 0.05), leather);
@@ -259,8 +260,8 @@ export class SetScene {
         reach(p, "R", W(f, -0.22, 0.95 + Math.sin(k * 1.8) * 0.04, 0.32), W(f, -1, -1, -0.3).sub(W(f, 0, 0, 0)));
       };
     });
-    // 03 director: in the canvas chair, chin on his hand, watching the monitor
-    add("director", "Director", { sex: "m", outfit: "shirt", hair: "short01", hairColor: 0x2a2a2a, shoes: "boots", skin: "skin_m_deep" }, 2, { lookY: 1.25, seated: true }, (p, f) => {
+    // 03 director: in the canvas chair, chin on his hand, watching the monitor (the DOP's look, another outfit)
+    add("director", "Director", { sex: "m", outfit: "jacket", top: 0x1a1a1a, bottom: 0xb9a888, hair: "short01", hairColor: 0x120e0b, beard: "stubble", cap: 0xdcdad4, skin: "skin_m", skinTint: 0xe2c2aa, shoes: "sneakers", shoeColor: 0x2a2a2a }, 2, { lookY: 1.25, seated: true }, (p, f) => {
       const chair = canvasChair(m, tex(512, 200, (g, w, h) => {
         g.fillStyle = "#111";
         g.fillRect(0, 0, w, h);
@@ -280,7 +281,7 @@ export class SetScene {
       };
     });
     // 04 producer: the call sheet and a clipboard
-    add("producer", "Producer", { sex: "f", outfit: "blouse", hair: "bob02", hairColor: 0x2b1a12, shoes: "boots", glasses: true, trimFringe: true }, 3, { lookY: 1.5 }, (p, f) => {
+    add("producer", "Producer", { sex: "f", outfit: "tee", top: 0x121212, bottom: 0x2e3b55, hair: "long01", hairColor: 0x24170f, shoes: "boots", skin: "skin_f", skinTint: 0xdcb8a0 }, 3, { lookY: 1.5 }, (p, f) => {
       const sched = tex(512, 340, (g, w, h) => {
         g.fillStyle = "#ece9e1";
         g.fillRect(0, 0, w, h);
@@ -314,7 +315,7 @@ export class SetScene {
       };
     });
     // 05 DOP: on the camera, pointed at the set in the middle
-    add("dop", "DOP", { sex: "m", outfit: "jacket", hair: "short04", hairColor: 0x1d1612, shoes: "sneakers" }, 4, { lookY: 1.45 }, (p, f) => {
+    add("dop", "DOP", { sex: "m", outfit: "whitetee", top: 0x8ea27a, bottom: 0x121212, hair: "short01", hairColor: 0x120e0b, beard: "stubble", cap: 0xdcdad4, skin: "skin_m", skinTint: 0xe2c2aa, shoes: "sneakers", shoeColor: 0xdddddd }, 4, { lookY: 1.45 }, (p, f) => {
       const rig = proCamera(m, { height: 1.42 });
       f.add(rig.group);
       rig.group.position.set(0, 0, 0.62);
@@ -329,7 +330,7 @@ export class SetScene {
       };
     });
     // 06 strategist: at the insight wall, putting up the next note
-    add("strategist", "Strategist", { sex: "m", outfit: "shirt", top: 0x24344f, bottom: 0x1a1a1a, hair: "short01", hairColor: 0x1b1410, shoes: "navy", glasses: true }, 5, { lookY: 1.5 }, (p, f) => {
+    add("strategist", "Strategist", { sex: "m", outfit: "whitetee", top: 0xe9e6dc, stripes: 0x3a4256, bottom: 0x1d1d22, hair: "short02", hairColor: 0x15100c, beard: "trim", glasses: true, skin: "skin_m_deep", shoes: "navy" }, 5, { lookY: 1.5 }, (p, f) => {
       const wall = new THREE.Mesh(new RoundedBoxGeometry(1.3, 0.82, 0.03, 2, 0.006), new THREE.MeshStandardMaterial({ map: notesTex, roughness: 0.85 }));
       wall.position.set(0.15, 1.38, 0.72);
       wall.rotation.y = Math.PI;
@@ -353,7 +354,7 @@ export class SetScene {
       };
     });
     // 07 editors: two at one long desk, a monitor each
-    add("editors", "Editors", { sex: "m", outfit: "tee", top: 0xf2e300, bottom: 0x121212, hair: "short02", hairColor: 0x2d241d, shoes: "sneakers", headphones: true }, 6, { lookY: 1.2, seated: true, ringR: 0.85 }, (p, f) => {
+    add("editors", "Editors", { sex: "m", outfit: "whitetee", top: 0x111111, bottom: 0x141414, hair: "short04", hairColor: 0x120d0a, skin: "skin_m", skinTint: 0xe2c2aa, shoes: "sneakers", shoeColor: 0x2a2a2a }, 6, { lookY: 1.2, seated: true, ringR: 0.85 }, (p, f) => {
       p.root.position.x = -0.38;
       const desk = new THREE.Mesh(new RoundedBoxGeometry(1.7, 0.04, 0.6, 2, 0.008), m.wood);
       desk.position.set(0, 0.74, 0.62);
@@ -363,7 +364,7 @@ export class SetScene {
         f.add(lg);
       }
       f.add(desk);
-      const second = also({ sex: "f", outfit: "tee", top: 0x1e1e1e, bottom: 0x2b2b30, hair: "bob01", hairColor: 0x17110d, shoes: "navy", skin: "skin_f_light", trimFringe: true }, f, 0.4, 0, 0);
+      const second = also({ sex: "m", outfit: "whitetee", top: 0xf0eee8, bottom: 0x22252b, hair: "short02", hairColor: 0x120d0a, skin: "skin_m", shoes: "sneakers" }, f, 0.4, 0, 0);
       for (const [x, tx] of [[-0.38, T.thumb], [0.4, T.reelCrowd]] as [number, THREE.Texture][]) {
         const mon = new THREE.Mesh(new RoundedBoxGeometry(0.62, 0.36, 0.03, 2, 0.006), m.black);
         mon.position.set(x, 1.1, 0.82);
@@ -393,7 +394,7 @@ export class SetScene {
       };
     });
     // 08 interns: one with the slate, one with the reflector — learning on set
-    add("interns", "Interns", { sex: "m", outfit: "whitetee", hair: "short01", hairColor: 0x1d1612, shoes: "navy", skin: "skin_m_deep" }, 7, { lookY: 1.45, ringR: 0.85 }, (p, f) => {
+    add("interns", "Interns", { sex: "m", outfit: "jacket", top: 0x1c2438, bottom: 0xcdbf9f, hair: "short01", hairColor: 0x120d0a, skin: "skin_m_deep", shoes: "sneakers", shoeColor: 0x2a2a2a }, 7, { lookY: 1.45, ringR: 0.85 }, (p, f) => {
       p.root.position.x = -0.35;
       const slate = new THREE.Group();
       const sb2 = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.2, 0.012), new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.6 }));
@@ -401,7 +402,7 @@ export class SetScene {
       stick.position.y = 0.12;
       slate.add(sb2, stick);
       f.add(slate);
-      const second = also({ sex: "f", outfit: "sport", hair: "ponytail01", hairColor: 0x1c140f, shoes: "sneakers", skin: "skin_f" }, f, 0.42, 0.05, -0.2);
+      const second = also({ sex: "f", outfit: "sport", top: 0x8a6d86, bottom: 0xb4b8bb, hair: "long01", hairColor: 0x1a120d, shoes: "navy", shoeColor: 0x8a6a50, skin: "skin_f", skinTint: 0xdcb8a0 }, f, 0.42, 0.05, -0.2);
       const disc = new THREE.Mesh(new THREE.CircleGeometry(0.32, 40), new THREE.MeshStandardMaterial({ color: 0xd8b04a, metalness: 0.6, roughness: 0.35, side: THREE.DoubleSide }));
       f.add(disc);
       return (k) => {
