@@ -22,7 +22,15 @@ export function FootageSlot({ slot, kind, playing, title }: { slot: string; kind
   return (
     <div className="absolute inset-0 overflow-hidden bg-char">
       {media?.src ? (
-        <video ref={video} className="h-full w-full object-cover" src={media.src} poster={media.poster ?? undefined} muted loop playsInline preload="metadata" />
+        media.fit === "contain" ? (
+          <>
+            {/* a landscape clip in a vertical frame: letterboxed over a blurred, darkened fill */}
+            {media.poster && <img src={media.poster} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-xl" />}
+            <video ref={video} className="relative h-full w-full object-contain" src={media.src} poster={media.poster ?? undefined} muted loop playsInline preload="metadata" />
+          </>
+        ) : (
+          <video ref={video} className="h-full w-full object-cover" src={media.src} poster={media.poster ?? undefined} muted loop playsInline preload="metadata" />
+        )
       ) : (
         <PreviewReel kind={kind} playing={playing} title={title} />
       )}

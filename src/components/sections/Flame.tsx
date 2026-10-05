@@ -6,13 +6,12 @@ import { gsap, useGSAP } from "@/lib/gsap";
 import { flame as F } from "@/content/strategy";
 import { filmKeys } from "@/lib/film-keys";
 import { PhaseHeader } from "./PhaseHeader";
-import { Broadcast } from "./Broadcast";
-import { FootageSlot } from "@/components/ui/FootageSlot";
+import { FormatScene, type FormatKind } from "@/components/ui/FormatScene";
 import { Reveal } from "@/components/ui/Reveal";
-import type { ReelKind } from "@/components/ui/PreviewReel";
 
 /**
- * PHASE 02 — five recurring series, presented as a programme lineup.
+ * PHASE 02 — the lineup: five content formats. Hovering one plays a small scene that shows the
+ * format at a glance (skits, vlogs, talking head, podcast, POV).
  * In the film: the lighter catches as FLAME comes up, he lights the cigarette across the quote,
  * and the lighter is put away as the lineup starts.
  */
@@ -70,7 +69,7 @@ export function Flame() {
         <div className="lg:col-span-6">
           <div className="flex items-baseline justify-between border-b hairline pb-4">
             <span className="t-slate">The lineup</span>
-            <span className="t-slate">Proposed cadence</span>
+            <span className="t-slate">Content formats</span>
           </div>
           <ol>
             {F.series.map((x, i) => {
@@ -79,7 +78,7 @@ export function Flame() {
                 <li data-series key={x.n} className="border-b hairline">
                   <button
                     type="button"
-                    data-cursor="Preview"
+                    data-cursor={x.title}
                     onMouseEnter={() => setSel(i)}
                     onFocus={() => setSel(i)}
                     onClick={() => setSel(i)}
@@ -90,7 +89,7 @@ export function Flame() {
                     <span className={`font-display text-[clamp(1.7rem,3vw,3rem)] font-extrabold uppercase leading-[0.92] transition-all duration-500 ${on ? "translate-x-2 text-bone" : "text-bone/45 group-hover:text-bone/80"}`}>
                       {x.title}
                     </span>
-                    <span className="t-label col-start-2 text-ash md:col-start-auto md:text-right">{x.cadence}</span>
+                    <span className="t-label col-start-2 text-ash md:col-start-auto md:text-right">{x.tag}</span>
                   </button>
                 </li>
               );
@@ -103,30 +102,20 @@ export function Flame() {
             <div className="relative mx-auto aspect-[4/5] w-full max-w-[520px] overflow-hidden border border-bone/10">
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.div
-                  key={s.slot}
+                  key={s.kind}
                   className="absolute inset-0"
                   initial={{ clipPath: "inset(0 0 0 100%)" }}
                   animate={{ clipPath: "inset(0 0 0 0%)" }}
                   exit={{ opacity: 0.4 }}
                   transition={{ duration: 0.7, ease: [0.77, 0, 0.18, 1] }}
                 >
-                  <FootageSlot slot={s.slot} kind={s.style as ReelKind} playing title={s.title} />
+                  <FormatScene kind={s.kind as FormatKind} />
                 </motion.div>
               </AnimatePresence>
-              <span className="t-slate absolute right-3 top-3 z-20 bg-ink/70 px-1.5 py-0.5 text-bone/70">S{s.n}</span>
+              <span className="t-slate absolute right-3 top-3 z-20 bg-ink/70 px-1.5 py-0.5 text-bone/70">{s.n} · {s.title}</span>
             </div>
             <div className="mx-auto mt-6 max-w-[520px]" aria-live="polite">
               <p className="text-[1.1rem] leading-relaxed text-bone/85">{s.logline}</p>
-              <dl className="mt-5 grid grid-cols-2 gap-4 border-t hairline pt-4">
-                <div>
-                  <dt className="t-slate">Format</dt>
-                  <dd className="t-label mt-1">{s.format}</dd>
-                </div>
-                <div>
-                  <dt className="t-slate">Cadence</dt>
-                  <dd className="t-label mt-1 text-buzz-soft">{s.cadence}</dd>
-                </div>
-              </dl>
               <ul className="mt-5 space-y-2 border-t hairline pt-4">
                 {s.episodes.map((e, i) => (
                   <li key={e} className="flex gap-4">
@@ -141,8 +130,6 @@ export function Flame() {
         </div>
       </div>
 
-      {/* recurring formats need a rhythm people can learn */}
-      <Broadcast />
 
       <div data-shift data-dim="0.55" className="gutter mx-auto mt-[22vh] max-w-[1600px] pb-[10vh]">
         <div className="grid items-end gap-8 md:grid-cols-2">

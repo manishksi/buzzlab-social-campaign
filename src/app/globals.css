@@ -307,6 +307,22 @@ body {
   opacity: 0;
   will-change: transform, opacity;
 }
+/* a label that points at its object: the dot sits on it, a leader runs up to the words */
+.machine-label--pin {
+  margin-top: -28px;
+  padding-left: 50px;
+}
+.machine-label--pin::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: calc(50% + 28px);
+  width: 52px;
+  height: 1px;
+  background: var(--color-buzz);
+  transform-origin: 0 0;
+  transform: rotate(-32deg);
+}
 .machine-label::before {
   content: "";
   position: absolute;
@@ -317,6 +333,9 @@ body {
   margin-top: -3px;
   border-radius: 50%;
   background: var(--color-buzz);
+}
+.machine-label--pin::before {
+  top: calc(50% + 28px);
 }
 
 /* Tanishka has eaten everything: no cursor in the black either */

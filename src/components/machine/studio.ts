@@ -4,6 +4,7 @@ import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUnifo
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { anchorWorld, applyPose, blink, breathe, makePerson, orientHand, POSES, reach, type Person } from "./people";
 import { cinemaCamera, directorsChair, mats, microphone, softbox } from "./props";
+import { sonyA7S3 } from "./gear";
 import { contentTextures } from "./textures";
 import type { Label } from "./worlds";
 
@@ -39,7 +40,7 @@ const SHOTS: { t: number; p: V3; l: V3; via?: V3 }[] = [
   { t: 0.0, p: [2.15, 1.72, 3.05], l: [0.0, 1.0, -0.2] },
   { t: 0.1, p: [2.0, 1.68, 2.85], l: [0.0, 1.02, -0.22] },
   { t: 0.26, p: [0.52, 1.45, 1.22], l: [-0.02, 1.12, -0.24] },
-  { t: 0.36, p: [0.98, 1.3, 0.95], l: [0.64, 0.92, -0.08] },
+  { t: 0.36, p: [0.98, 1.16, 0.62], l: [0.6, 0.84, -0.04] },
   { t: 0.5, p: [1.75, 2.15, 2.4], l: [0.2, 0.95, -2.6] },
   { t: 0.64, p: [0.6, 2.8, -0.6], l: [0.3, 0.9, -4.8], via: [1.95, 2.6, 0.9] },
   { t: 0.76, p: [0.05, 3.1, -3.4], l: [0.0, 1.0, -8.6] },
@@ -322,9 +323,9 @@ export class StudioScene {
   private l = new THREE.Vector3();
   private tmp = new THREE.Vector3();
   /** small captions pinned to things in the room, each on screen for a stretch of the move */
-  private marks: { id: string; text: string; o: THREE.Object3D; dy: number; a: number; b: number }[] = [];
-  private mark(id: string, text: string, o: THREE.Object3D, dy: number, a: number, b: number) {
-    this.marks.push({ id, text, o, dy, a, b });
+  private marks: { id: string; text: string; o: THREE.Object3D; dy: number; a: number; b: number; pin?: boolean }[] = [];
+  private mark(id: string, text: string, o: THREE.Object3D, dy: number, a: number, b: number, pin = false) {
+    this.marks.push({ id, text, o, dy, a, b, pin });
   }
 
   constructor(private renderer: THREE.WebGLRenderer, private opts: { lowPower: boolean }) {
@@ -493,16 +494,23 @@ export class StudioScene {
       card.rotation.y = i * 0.4;
       s.add(card);
     }
+    // a spare prime standing on its rear cap beside the camera (real size)
     const lens = new THREE.Group();
-    const lb1 = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.12, 28), new THREE.MeshStandardMaterial({ color: 0x0f0f0f, roughness: 0.4, metalness: 0.3 }));
-    const lr = new THREE.Mesh(new THREE.TorusGeometry(0.046, 0.005, 8, 28), mats.yellow());
-    lr.rotation.x = Math.PI / 2;
-    lr.position.y = 0.03;
-    const lg = new THREE.Mesh(new THREE.CircleGeometry(0.038, 24), mats.glass());
-    lg.rotation.x = -Math.PI / 2;
-    lg.position.y = 0.061;
-    lens.add(lb1, lr, lg);
-    lens.position.set(0.5, 0.825, 0.16);
+    const lensMat = new THREE.MeshStandardMaterial({ color: 0x121213, roughness: 0.45, metalness: 0.4 });
+    const lb1 = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.07, 32), lensMat);
+    lb1.position.y = 0.045;
+    const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.0348, 0.0348, 0.024, 32), new THREE.MeshStandardMaterial({ color: 0x0b0b0c, roughness: 0.9 }));
+    rib.position.y = 0.052;
+    const rearCap = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.01, 32), new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 0.6 }));
+    rearCap.position.y = 0.005;
+    const frontCap = new THREE.Mesh(new THREE.CylinderGeometry(0.0335, 0.0335, 0.006, 32), new THREE.MeshStandardMaterial({ color: 0x0a0a0a, roughness: 0.55 }));
+    frontCap.position.y = 0.083;
+    const badge = new THREE.Mesh(new THREE.CircleGeometry(0.003, 16), new THREE.MeshStandardMaterial({ color: 0xd2452a, roughness: 0.4 }));
+    badge.position.set(0.0342, 0.07, 0);
+    badge.rotation.y = Math.PI / 2;
+    lens.add(lb1, rib, rearCap, frontCap, badge);
+    lens.traverse((n) => ((n as THREE.Mesh).castShadow = true));
+    lens.position.set(0.47, 0.7625, -0.12);
     s.add(lens);
     const nb = new THREE.Mesh(new RoundedBoxGeometry(0.17, 0.018, 0.23, 2, 0.004), new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.8 }));
     nb.position.set(0.58, 0.773, 0.3);
@@ -583,14 +591,12 @@ export class StudioScene {
     this.editor.root.position.set(0.02, 0, 0.62);
     this.editor.root.rotation.y = Math.PI;
     s.add(this.editor.root);
-    // the camera body beside the lamp: where the camera's eye goes after the edit
-    const deskCam = cinemaCamera(T);
-    deskCam.group.scale.setScalar(0.32);
-    deskCam.legs.visible = false;
-    deskCam.group.position.set(0.68, 0.856, -0.06);
-    deskCam.group.rotation.y = 2.5;
-    s.add(deskCam.group);
-    this.mark("gear", "The camera — the shoot comes back here", deskCam.group, 0.22, 0.29, 0.42);
+    // the camera on the desk beside the lamp: a Sony A7S III with a 35 mm prime, at real size
+    const deskCam = sonyA7S3();
+    deskCam.position.set(0.62, 0.7625, -0.02);
+    deskCam.rotation.y = 0.55;
+    s.add(deskCam);
+    this.mark("gear", "Sony A7S III", deskCam, 0.06, 0.27, 0.42, true);
     // a gear shelf behind the desk
     const shelf = new THREE.Group();
     for (let i = 0; i < 3; i++) {
@@ -976,7 +982,7 @@ export class StudioScene {
       const y = (-this.tmp.y * 0.5 + 0.5) * this.h;
       // never on top of the copy: the left columns on wide screens, the bottom on tall ones
       if (this.w >= 768 ? x < this.w * 0.46 : y > this.h * 0.56) continue;
-      out.push({ id: m.id, text: m.text, x, y, a });
+      out.push({ id: m.id, text: m.text, x, y, a, pin: m.pin });
     }
     return out;
   }

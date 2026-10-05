@@ -235,3 +235,110 @@ export function canvasChair(m: M, label: THREE.Texture) {
   shadow(g);
   return g;
 }
+
+function printed(w: number, h: number, draw: (g: CanvasRenderingContext2D, w: number, h: number) => void) {
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  draw(c.getContext("2d")!, w, h);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 8;
+  return t;
+}
+
+/**
+ * A full-frame mirrorless body in the Sony A7S III's proportions (about 129 × 97 × 81 mm with
+ * the grip) with a 35 mm f/1.4 prime: magnesium body, rubber grip, EVF hump, mode dial,
+ * shutter with its power collar, C1/C2, a red REC button, the rear screen and eyecup, a satin
+ * mount ring, ribbed focus ring and coated front glass. Real scale; origin at the middle of the
+ * base, lens along +z, so it can sit on a desk as it is.
+ */
+export function sonyA7S3() {
+  const g = new THREE.Group();
+  const body = new THREE.MeshPhysicalMaterial({ color: 0x18181a, roughness: 0.62, metalness: 0.35, clearcoat: 0.12, clearcoatRoughness: 0.6 });
+  const rubber = new THREE.MeshStandardMaterial({ color: 0x0c0c0d, roughness: 0.95 });
+  const button = new THREE.MeshStandardMaterial({ color: 0x232325, roughness: 0.45, metalness: 0.5 });
+  const satin = new THREE.MeshStandardMaterial({ color: 0xb9bbbf, roughness: 0.3, metalness: 1 });
+  const lensMat = new THREE.MeshStandardMaterial({ color: 0x121213, roughness: 0.42, metalness: 0.45 });
+  const ribs = printed(256, 32, (c, w, h) => {
+    c.fillStyle = "#0e0e0f";
+    c.fillRect(0, 0, w, h);
+    for (let x = 0; x < w; x += 4) {
+      c.fillStyle = "#1e1e20";
+      c.fillRect(x, 0, 2, h);
+    }
+  });
+  ribs.wrapS = THREE.RepeatWrapping;
+  ribs.repeat.set(8, 1);
+  const focus = new THREE.MeshStandardMaterial({ color: 0xffffff, map: ribs, roughness: 0.85 });
+  const glass = new THREE.MeshPhysicalMaterial({ color: 0x0b1020, roughness: 0.03, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.02, iridescence: 0.6, iridescenceIOR: 1.6 });
+  const add = (geo: THREE.BufferGeometry, mat: THREE.Material, x: number, y: number, z: number, rx = 0, ry = 0, rz = 0) => {
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, z);
+    m.rotation.set(rx, ry, rz);
+    g.add(m);
+    return m;
+  };
+  const H = Math.PI / 2;
+  // body, grip (on the left seen from the front), EVF hump
+  add(new RoundedBoxGeometry(0.118, 0.07, 0.042, 3, 0.006), body, 0.005, 0.035, 0);
+  add(new RoundedBoxGeometry(0.036, 0.074, 0.06, 4, 0.012), rubber, -0.046, 0.037, 0.008);
+  add(new RoundedBoxGeometry(0.056, 0.026, 0.05, 3, 0.007), body, 0.007, 0.078, -0.004);
+  add(new RoundedBoxGeometry(0.04, 0.024, 0.014, 3, 0.006), rubber, 0.007, 0.079, -0.032); // eyecup
+  // the wordmark on the hump and the model name on the front
+  const logo = printed(256, 64, (c, w, h) => {
+    c.clearRect(0, 0, w, h);
+    c.fillStyle = "#f2f2f2";
+    c.font = '700 50px "Times New Roman", Georgia, serif';
+    c.textAlign = "center";
+    c.fillText("S O N Y", w / 2, h * 0.76);
+  });
+  add(new THREE.PlaneGeometry(0.03, 0.0075), new THREE.MeshBasicMaterial({ map: logo, transparent: true, toneMapped: false }), 0.007, 0.08, 0.0212);
+  const model = printed(256, 64, (c, w, h) => {
+    c.clearRect(0, 0, w, h);
+    c.fillStyle = "#dcdcdc";
+    c.font = '500 40px "Archivo", Arial, sans-serif';
+    c.fillText("α7SIII", 8, h * 0.72);
+  });
+  add(new THREE.PlaneGeometry(0.022, 0.0055), new THREE.MeshBasicMaterial({ map: model, transparent: true, toneMapped: false }), 0.048, 0.064, 0.0212);
+  // top controls
+  const knurl = printed(128, 16, (c, w, h) => {
+    for (let x = 0; x < w; x += 3) {
+      c.fillStyle = x % 6 ? "#2c2c2e" : "#121214";
+      c.fillRect(x, 0, 3, h);
+    }
+  });
+  knurl.wrapS = THREE.RepeatWrapping;
+  knurl.repeat.set(4, 1);
+  add(new THREE.CylinderGeometry(0.0125, 0.0125, 0.009, 32), new THREE.MeshStandardMaterial({ color: 0xffffff, map: knurl, roughness: 0.5, metalness: 0.4 }), -0.03, 0.0745, -0.006);
+  add(new THREE.CylinderGeometry(0.0085, 0.0085, 0.0022, 24), satin, -0.046, 0.0745, 0.019); // power collar
+  add(new THREE.CylinderGeometry(0.0055, 0.006, 0.0036, 20), button, -0.046, 0.0765, 0.019); // shutter
+  add(new THREE.CylinderGeometry(0.0085, 0.0085, 0.0045, 24), button, -0.046, 0.066, 0.036, H, 0, 0); // front dial
+  add(new THREE.CylinderGeometry(0.0038, 0.0038, 0.0022, 16), button, -0.015, 0.0712, 0.012);
+  add(new THREE.CylinderGeometry(0.0038, 0.0038, 0.0022, 16), button, -0.004, 0.0712, 0.012);
+  add(new THREE.CylinderGeometry(0.0032, 0.0032, 0.0022, 16), new THREE.MeshStandardMaterial({ color: 0xc8261e, roughness: 0.5 }), -0.016, 0.0712, -0.012); // REC
+  add(new THREE.CylinderGeometry(0.0085, 0.0085, 0.005, 24), button, -0.036, 0.066, -0.022); // rear dial
+  // strap lugs
+  for (const x of [-0.064, 0.064]) add(new THREE.BoxGeometry(0.004, 0.008, 0.006), satin, x, 0.062, -0.004);
+  // rear screen
+  add(new THREE.PlaneGeometry(0.074, 0.05), new THREE.MeshPhysicalMaterial({ color: 0x07080a, roughness: 0.08, clearcoat: 1 }), 0.012, 0.036, -0.0215, 0, Math.PI, 0);
+  // the mount and the lens (35 mm f/1.4: ~76 mm across, ~96 mm long)
+  const mx = 0.006;
+  const my = 0.04;
+  add(new THREE.CylinderGeometry(0.03, 0.03, 0.004, 48), satin, mx, my, 0.0225, H, 0, 0);
+  const z0 = 0.0245;
+  const seg = (r: number, len: number, z: number, mat: THREE.Material) => add(new THREE.CylinderGeometry(r, r, len, 48), mat, mx, my, z0 + z + len / 2, H, 0, 0);
+  seg(0.032, 0.012, 0, lensMat);
+  seg(0.0355, 0.011, 0.012, lensMat); // aperture ring
+  seg(0.037, 0.03, 0.023, lensMat);
+  seg(0.0378, 0.03, 0.053, focus); // focus ring
+  seg(0.0375, 0.012, 0.083, lensMat);
+  const front = z0 + 0.0955;
+  add(new THREE.RingGeometry(0.026, 0.0375, 48), lensMat, mx, my, front, 0, 0, 0);
+  add(new THREE.CircleGeometry(0.0262, 48), glass, mx, my, front - 0.003);
+  add(new THREE.CircleGeometry(0.012, 32), new THREE.MeshPhysicalMaterial({ color: 0x050608, roughness: 0.02, clearcoat: 1 }), mx, my, front - 0.008);
+  // the GM badge on the barrel
+  add(new THREE.CircleGeometry(0.0035, 20), new THREE.MeshStandardMaterial({ color: 0xd2452a, roughness: 0.4 }), mx + 0.0371, my, z0 + 0.04, 0, H, 0);
+  return shadow(g);
+}

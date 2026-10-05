@@ -38,8 +38,9 @@ ffmpeg commands that keep scroll-scrubbing smooth.
 - **Motion** (Framer Motion) for the index menu, act indicator and preview swaps
 - **Background film**: `src/components/film/renderer.ts` draws the opening on a 2D canvas as a pure
   function of scroll position (dead feed, camera power-on, edit timeline). From ACT 04 it hands over
-  to `src/components/film/character.ts`: one continuous, painted shot of an original noir figure on
-  the right of frame, with the cigarette held between his lips. The lighter is sparked, catches,
+  to `src/components/film/character.ts`: one continuous, painted shot of the man with the lighter
+  (short spiky hair, a trimmed beard, glasses, a yellow bomber) on the right of frame, with the
+  cigarette held between his lips. The lighter is sparked, catches,
   lights his cigarette, the cigarette burns down through Phase 03 and ends on the floor under his
   boot. A scroll-driven camera pushes in from the lighter to the flame to his face and pulls back,
   with the background moving less than he does for depth. Hovering a phase in ACT 04 plays that
@@ -49,28 +50,36 @@ ffmpeg commands that keep scroll-scrubbing smooth.
   the world holding the middle of the screen renders. Pinned sections write each world's scroll time
   into `src/lib/world-clock.ts`.
   - **The studio** (`studio.ts`, ACT 02–03, `sections/Workstation.tsx` + `sections/Studio.tsx`): one
-    camera move from an editor at his desk (yellow tee, studio headphones) round the workstation and
+    camera move from an editor at his desk (yellow tee, studio headphones, a Sony A7S III beside the
+    lamp, `gear.ts`) round the workstation and
     past the monitor into the rest of the studio: a second edit bay, the storyboard wall, the
     production table, the set with camera, DOP, lights, talent, director and producer. Then the
     lights go out and ACT 04 starts in the dark.
   - **The creative machine** (`scene.ts`, ACT 07, `sections/Machine.tsx` + `sections/OriginalIP.tsx`):
     a yellow dot becomes a play button, content pours out, cameras catch it, and it is cut on a giant
     timeline under a program monitor. The edit becomes one finished 9:16 Reel, the Reel is posted
-    into a phone, and the phone becomes the BuzzLab Instagram page it could be (`feed.ts`). The page
-    scrolls, stops on one post, the post opens, and the camera goes into it: it becomes a world —
-    ORIGINAL BUZZLAB IP.
+    into a phone, and the phone becomes the BuzzLab Instagram page it could be (`feed.ts`: an
+    agency's media property — brand films, automotive, commercials, BTS). The page scrolls, stops
+    on one post, the post opens, and the camera goes into it: it becomes a world — ORIGINAL
+    BUZZLAB IP, with the people behind it (founder, director, producer, DOP, strategist, editors,
+    interns).
   - **The pipeline** (`pipeline.ts`, ACT 08, `sections/Pipeline.tsx`): a yellow piece of content travels
     a closed track through nine stations, from idea to iterate, with the eight signals at Analyse.
     Then it runs the loop again from above: post, measure, learn, improve, new idea, post again.
-  - **The set** (`set.ts`, ACT 09, `sections/ProductionSet.tsx`): a miniature production on a
-    turntable; it turns slowly to bring the director, DOP, producer, editor and talent to the camera
-    one by one.
+  - **BuzzLab IP** (`set.ts`, ACT 09, `sections/ProductionSet.tsx`): the miniature studio on a
+    turntable; it turns slowly to bring each person to the camera — two founders, director,
+    producer, DOP, strategist, editors, interns — with the series that could be built around them.
+    People → personality → formats → original IP.
   - **Tanishka** (`tanishka.ts`, `sections/Tanishka.tsx`) opens her mouth and eats the presentation;
     the camera goes in after it, and the page loops back to the top under a black veil — no reload.
   - Everyone is built by one character builder (`people.ts`): realistic, rigged human bodies, faces,
     hair, eyes and clothes baked from the CC0 MakeHuman asset library (`public/assets/people/`, see
     its README), posed per scene. The crew, the editor and Tanishka share it.
-- **The weekly rhythm** sits inside Flame as a broadcast schedule (`sections/Broadcast.tsx`).
+- **Phase 01** (`sections/Spark.tsx`) plays the phase's five real videos full screen, one after
+  another as you scroll (`public/assets/video/phase01-0N.mp4`, set in `content/media.ts`): wide
+  clips fill the screen, vertical ones play full height over a blurred copy of themselves.
+- **Phase 02**'s lineup is five content formats — skits, vlogs, talking head, podcast, POV — and
+  hovering each plays a small scene of that format (`ui/FormatScene.tsx`).
 - Sound effects are synthesised with Web Audio, so there are no audio files.
 
 ```

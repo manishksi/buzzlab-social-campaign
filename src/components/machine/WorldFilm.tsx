@@ -119,7 +119,7 @@ export function WorldFilm() {
         let s = spans.get(key);
         if (!s) {
           s = document.createElement("span");
-          s.className = "machine-label";
+          s.className = l.pin ? "machine-label machine-label--pin" : "machine-label";
           s.textContent = l.text;
           box.appendChild(s);
           spans.set(key, s);

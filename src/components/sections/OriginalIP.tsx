@@ -7,9 +7,9 @@ import { worldClock } from "@/lib/world-clock";
 import { playSwell } from "@/lib/audio";
 
 /**
- * ACT 07 — Original BuzzLab IP, part two. The last reel opens into a world (machine/scene.ts), and
- * over it: WHAT IF WE DIDN'T JUST MAKE CONTENT? / WHAT IF WE MADE WORLDS? / ORIGINAL BUZZLAB IP.
- * Then what that could be, and the world fades to black.
+ * ACT 07 — Original BuzzLab IP, part two. The post opens into a world (machine/scene.ts), and
+ * over it one reveal: ORIGINAL BUZZLAB IP. Under it, the people behind the IP engine — founder,
+ * director, producer, DOP, strategist, editors, interns. Then the world fades to black.
  */
 export function OriginalIP() {
   const root = useRef<HTMLElement>(null);
@@ -18,7 +18,7 @@ export function OriginalIP() {
     () => {
       const el = root.current!;
       const q = (s: string) => el.querySelectorAll(s);
-      gsap.set([q("[data-b]"), q("[data-r]"), q("[data-poss] li"), q("[data-nl]")], { autoAlpha: 0 });
+      gsap.set([q("[data-r]"), q("[data-team] li"), q("[data-tl]"), q("[data-wire]")], { autoAlpha: 0 });
       let swelled = false;
       const tl = gsap.timeline({
         defaults: { ease: "power2.out" },
@@ -32,28 +32,24 @@ export function OriginalIP() {
             const p = self.progress;
             worldClock.machine.w = 0.8 + Math.min(1, p / 0.97) * 0.2;
             worldClock.machine.fade = 1 - gsap.utils.clamp(0, 1, (p - 0.965) / 0.03);
-            const now = p > 0.7;
+            const now = p > 0.44;
             if (now && !swelled && self.direction > 0) playSwell();
             swelled = now;
           },
         },
       });
-      const [b1, b2] = q("[data-b]");
-      // silence while the reel opens into the world, then the two questions
-      tl.to({}, { duration: 0.4 })
-        .fromTo(b1, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.05 }, 0.42)
-        .to(b1, { autoAlpha: 0, y: -30, filter: "blur(8px)", duration: 0.04 }, 0.52)
-        .fromTo(b2, { autoAlpha: 0, scale: 1.12, filter: "blur(16px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: 0.06 }, 0.57)
-        .to(b2, { autoAlpha: 0, scale: 0.94, duration: 0.04 }, 0.66)
-        // the reveal
-        .fromTo("[data-r1]", { autoAlpha: 0, yPercent: 60, letterSpacing: "0.4em" }, { autoAlpha: 1, yPercent: 0, letterSpacing: "0.02em", duration: 0.05 }, 0.7)
-        .fromTo("[data-r2]", { autoAlpha: 0, scale: 0.7, filter: "blur(30px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: 0.07 }, 0.72)
-        .set(q("[data-r]"), { autoAlpha: 1 }, 0.7)
-        .to("[data-reveal]", { y: () => -window.innerHeight * 0.16, scale: 0.7, duration: 0.05, ease: "power2.inOut" }, 0.8)
-        .fromTo(q("[data-poss] li"), { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.025, stagger: 0.004 }, 0.81)
-        .fromTo(q("[data-nl]"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.02 }, 0.85)
+      // silence while the post opens into the world, then the reveal
+      tl.to({}, { duration: 0.42 })
+        .fromTo("[data-r1]", { autoAlpha: 0, yPercent: 60, letterSpacing: "0.4em" }, { autoAlpha: 1, yPercent: 0, letterSpacing: "0.02em", duration: 0.05 }, 0.44)
+        .fromTo("[data-r2]", { autoAlpha: 0, scale: 0.7, filter: "blur(30px)" }, { autoAlpha: 1, scale: 1, filter: "blur(0px)", duration: 0.07 }, 0.46)
+        .set(q("[data-r]"), { autoAlpha: 1 }, 0.44)
+        .to("[data-reveal]", { y: () => -window.innerHeight * 0.16, scale: 0.7, duration: 0.05, ease: "power2.inOut" }, 0.6)
+        // the people behind it, one at a time, joined by one line
+        .fromTo(q("[data-tl]"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.02 }, 0.62)
+        .fromTo(q("[data-wire]"), { autoAlpha: 1, scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "none" }, 0.63)
+        .fromTo(q("[data-team] li"), { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.03, stagger: 0.016 }, 0.63)
         // hold, then everything leaves before the world goes dark (the pipeline is next)
-        .to(["[data-reveal]", q("[data-poss] li"), q("[data-nl]")], { autoAlpha: 0, duration: 0.03 }, 0.93)
+        .to(["[data-reveal]", q("[data-team] li"), q("[data-tl]"), q("[data-wire]")], { autoAlpha: 0, duration: 0.03 }, 0.93)
         .to({}, { duration: 0.01 }, 0.99);
     },
     { scope: root },
@@ -66,13 +62,6 @@ export function OriginalIP() {
       <p className="t-slate gutter absolute inset-x-0 top-[calc(env(safe-area-inset-top,0px)+5.5rem)]">{I.eyebrow}</p>
 
       <div className="gutter absolute inset-0 flex items-center justify-center text-center">
-        <p data-b className="t-big absolute max-w-[16ch] balance">
-          {I.beats[0]}
-        </p>
-        <p data-b className="t-huge absolute max-w-[14ch] balance">
-          What if we made <span className="text-buzz">worlds?</span>
-        </p>
-
         <div data-reveal className="absolute flex flex-col items-center">
           <h2>
             <span data-r data-r1 className="t-serif block text-[clamp(1.8rem,3.4vw,3.4rem)] leading-none text-buzz">
@@ -84,19 +73,23 @@ export function OriginalIP() {
           </h2>
         </div>
 
-        <div className="absolute inset-x-0 bottom-[10vh] mx-auto max-w-[56rem] px-[var(--gutter)]">
-          <ul data-poss className="grid grid-cols-2 gap-x-8 gap-y-1.5 text-left md:grid-cols-3 md:gap-y-2">
-            {I.possibilities.map((p) => (
-              <li key={p} className="font-serif text-[0.95rem] italic leading-snug text-bone/85 md:text-[clamp(1rem,1.25vw,1.2rem)]">
-                {p}
-              </li>
-            ))}
-          </ul>
-          <p data-nl className="t-label mt-6 text-left text-buzz">
-            {I.notLocked}
+        <div className="absolute inset-x-0 bottom-[11vh] mx-auto max-w-[1400px] px-[var(--gutter)]">
+          <p data-tl className="t-slate mb-5 text-center text-buzz">
+            {I.teamLabel}
           </p>
+          <div className="relative">
+            <span data-wire aria-hidden className="absolute inset-x-[4%] top-[7px] hidden h-px origin-left bg-gradient-to-r from-bone/10 via-buzz to-bone/10 md:block" />
+            <ol data-team className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-4 md:flex md:justify-between md:gap-0">
+              {I.team.map((t, i) => (
+                <li key={t} className="relative flex flex-col items-center gap-2 text-center">
+                  <span aria-hidden className={`hidden h-[15px] w-[15px] rounded-full border md:block ${i === 0 ? "border-buzz bg-buzz shadow-[0_0_24px_rgba(249,254,2,.7)]" : "border-bone/60 bg-ink"}`} />
+                  <span className="t-slate">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="font-display text-[clamp(1.35rem,2.1vw,2.4rem)] font-extrabold uppercase leading-none">{t}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
-
       </div>
     </section>
   );

@@ -8,9 +8,10 @@ import { worldClock } from "@/lib/world-clock";
 import { SET, roleAt } from "@/components/machine/set-time";
 
 /**
- * ACT 09 — the miniature set (machine/set.ts). The camera visits each role in turn: director,
- * DOP, producer, editor, talent. Then it pulls back over the whole
- * model and says it plainly: this isn't a content plan. It's a media engine.
+ * ACT 09 — BuzzLab IP (machine/set.ts). The miniature studio turns to bring each person into the
+ * light in turn — two founders, director, producer, DOP, strategist, editors, interns — with one
+ * line on the series that could be built around them. Then it pulls back for the idea itself:
+ * people → personality → formats → original IP.
  */
 export function ProductionSet() {
   const root = useRef<HTMLElement>(null);
@@ -66,9 +67,10 @@ export function ProductionSet() {
               {r && (
                 <motion.div key={r.key} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.35 }}>
                   <p className="t-slate mb-4">{S.eyebrow}</p>
-                  <p className="t-label text-buzz">Role {String(role + 1).padStart(2, "0")} / {String(S.roles.length).padStart(2, "0")}</p>
+                  <p className="t-label text-buzz">{String(role + 1).padStart(2, "0")} / {String(S.roles.length).padStart(2, "0")}</p>
                   <h3 className="t-big mt-2">{r.role}</h3>
-                  <p className="t-lede mt-3">{r.does}</p>
+                  <p className="t-slate mt-5">The series around them</p>
+                  <p className="t-lede mt-2 max-w-[30rem]">{r.does}</p>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -85,11 +87,9 @@ export function ProductionSet() {
       {/* the line the whole deck has been building to */}
       <div data-final className="gutter pointer-events-none absolute inset-x-0 bottom-[14vh] mx-auto max-w-[1600px]">
         <p data-l className="t-big text-bone/70">
-          {S.final[0]}
+          {S.chain.join(" → ")} →
         </p>
-        <p data-l className="t-mega mt-2">
-          It&apos;s a <span className="text-buzz">media engine.</span>
-        </p>
+        <p data-l className="t-mega mt-2 text-buzz">{S.final}</p>
       </div>
     </section>
   );

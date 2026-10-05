@@ -1,0 +1,69 @@
+/* PHASE 02 format scenes (FormatScene.tsx) */
+.fs { position: absolute; inset: 0; overflow: hidden; background: #0b0b0b; }
+.fs svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.fs svg * { transform-box: fill-box; }
+.fs__mono { font: 500 15px var(--font-mono, "IBM Plex Mono", monospace); letter-spacing: 0.08em; }
+.fs__display { font: 800 24px var(--font-display, "Big Shoulders Display", sans-serif); letter-spacing: 0.01em; }
+.fs__grain {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0.18; mix-blend-mode: overlay;
+  background-image: repeating-radial-gradient(circle at 17% 32%, rgba(255,255,255,.12) 0 1px, transparent 1px 3px);
+}
+.fs .fs-rec { animation: fsBlink 1s steps(2, start) infinite; }
+@keyframes fsBlink { to { opacity: 0.15; } }
+
+/* skits: the line, a double take, "!", a whip to the reaction close-up */
+.fs .fs-skit-cam { transform-box: view-box; transform-origin: 292px 205px; animation: fsSkitCam 4.4s infinite cubic-bezier(.7,0,.2,1); }
+@keyframes fsSkitCam { 0%, 60% { transform: scale(1); } 63%, 92% { transform: scale(2.3); } 95%, 100% { transform: scale(1); } }
+.fs .fs-skit-bubble { transform-origin: 30% 100%; animation: fsSkitBubble 4.4s infinite; }
+@keyframes fsSkitBubble { 0%, 6% { opacity: 0; transform: scale(.6); } 12%, 50% { opacity: 1; transform: scale(1); } 56%, 100% { opacity: 0; transform: scale(.9); } }
+.fs .fs-skit-head { transform-origin: 50% 100%; animation: fsSkitHead 4.4s infinite; }
+@keyframes fsSkitHead { 0%, 26% { transform: rotate(0); } 30% { transform: rotate(-16deg); } 34% { transform: rotate(10deg); } 38%, 100% { transform: rotate(0); } }
+.fs .fs-skit-bang { transform-origin: 50% 100%; animation: fsSkitBang 4.4s infinite; }
+@keyframes fsSkitBang { 0%, 36% { opacity: 0; transform: scale(0); } 41% { opacity: 1; transform: scale(1.25); } 45%, 56% { opacity: 1; transform: scale(1); } 60%, 100% { opacity: 0; transform: scale(1); } }
+.fs .fs-skit-whip { transform-box: view-box; animation: fsWhip 4.4s infinite; }
+@keyframes fsWhip { 0%, 58% { transform: translateX(0); opacity: 0; } 59% { opacity: 1; } 64% { transform: translateX(800px); opacity: 1; } 65%, 100% { opacity: 0; transform: translateX(800px); } }
+
+/* vlogs: handheld, the room sliding by, someone walking ahead */
+.fs .fs-vlog-shake { transform-box: view-box; transform-origin: 200px 250px; animation: fsShake 1.6s infinite ease-in-out; }
+@keyframes fsShake { 0% { transform: translate(0,0) rotate(0); } 25% { transform: translate(-4px,3px) rotate(-.6deg); } 50% { transform: translate(3px,-2px) rotate(.4deg); } 75% { transform: translate(-2px,4px) rotate(-.3deg); } 100% { transform: translate(0,0) rotate(0); } }
+.fs .fs-vlog-bg { transform-box: view-box; animation: fsSlide 5s linear infinite; }
+@keyframes fsSlide { to { transform: translateX(-400px); } }
+.fs .fs-vlog-lines { transform-box: view-box; animation: fsLines 0.8s linear infinite; }
+@keyframes fsLines { to { transform: translateX(-70px); } }
+.fs .fs-vlog-walk { transform-box: view-box; animation: fsWalk 0.55s infinite ease-in-out alternate; }
+@keyframes fsWalk { to { transform: translateY(-7px); } }
+
+/* talking head: a slow push, the focus box, the lower third, the levels */
+.fs .fs-th-push { transform-box: view-box; transform-origin: 200px 260px; animation: fsPush 6s infinite alternate ease-in-out; }
+@keyframes fsPush { to { transform: scale(1.08); } }
+.fs .fs-th-focus { animation: fsFocus 2.2s infinite; }
+@keyframes fsFocus { 0%, 100% { opacity: .9; } 50% { opacity: .35; } }
+.fs .fs-th-third { animation: fsThird 6s infinite; }
+@keyframes fsThird { 0%, 12% { opacity: 0; transform: translateX(-30px); } 20%, 82% { opacity: 1; transform: translateX(0); } 90%, 100% { opacity: 0; transform: translateX(0); } }
+.fs .fs-meter rect { transform-origin: 50% 100%; animation: fsMeter 0.42s infinite alternate ease-in-out; }
+@keyframes fsMeter { from { transform: scaleY(.2); } to { transform: scaleY(1); } }
+
+/* podcast: on air, one speaks then the other */
+.fs .fs-onair { animation: fsOnAir 2s infinite; }
+@keyframes fsOnAir { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+.fs .fs-wave rect { transform-origin: 50% 50%; }
+.fs .fs-wave--a { animation: fsTalkA 3.6s infinite; }
+.fs .fs-wave--b { animation: fsTalkB 3.6s infinite; }
+@keyframes fsTalkA { 0%, 48% { transform: scaleY(1); animation-timing-function: steps(6); } 10% { transform: scaleY(.3); } 20% { transform: scaleY(.9); } 30% { transform: scaleY(.4); } 40% { transform: scaleY(1); } 52%, 100% { transform: scaleY(.12); } }
+@keyframes fsTalkB { 0%, 48% { transform: scaleY(.12); } 55% { transform: scaleY(1); } 65% { transform: scaleY(.35); } 75% { transform: scaleY(.95); } 85% { transform: scaleY(.4); } 95%, 100% { transform: scaleY(.9); } }
+.fs .fs-mic--a { animation: fsMicA 3.6s infinite; }
+.fs .fs-mic--b { animation: fsMicB 3.6s infinite; }
+@keyframes fsMicA { 0%, 48% { fill: #f9fe02; } 52%, 100% { fill: #1b1b1b; } }
+@keyframes fsMicB { 0%, 48% { fill: #1b1b1b; } 52%, 100% { fill: #f9fe02; } }
+
+/* POV: walking forward, through the door */
+.fs .fs-pov-bob { transform-box: view-box; transform-origin: 200px 250px; animation: fsBob 0.6s infinite alternate ease-in-out; }
+@keyframes fsBob { to { transform: translateY(5px) rotate(.4deg); } }
+.fs .fs-pov-ring { transform-origin: 50% 50%; animation: fsRush 2.7s infinite linear; opacity: 0; }
+@keyframes fsRush { 0% { transform: scale(.4); opacity: 0; } 15% { opacity: 1; } 100% { transform: scale(7); opacity: 0; } }
+.fs .fs-pov-door { transform-origin: 50% 50%; animation: fsDoor 2.7s infinite ease-in; }
+@keyframes fsDoor { 0% { transform: scale(1); } 100% { transform: scale(1.5); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fs * { animation: none !important; }
+}

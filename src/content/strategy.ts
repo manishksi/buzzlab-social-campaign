@@ -18,7 +18,7 @@ export const acts = [
   { id: "problem", act: "01", label: "Where we are", film: 0.32 },
   { id: "system", act: "02", label: "Worth noticing", film: 0.36 },
   { id: "engine", act: "03", label: "The studio", film: 0.4 },
-  { id: "phases", act: "04", label: "The lighter", film: 0.46 },
+  { id: "phases", act: "04", label: "The plan", film: 0.46 },
   { id: "spark", act: "04", label: "Phase 01 — Spark", film: 0.5 },
   { id: "flame", act: "05", label: "Phase 02 — Flame", film: 0.6 },
   { id: "light", act: "06", label: "Phase 03 — Light", film: 0.76 },
@@ -37,9 +37,9 @@ export const menu = [
   { label: "Spark", target: "spark", note: "2 months" },
   { label: "Flame", target: "flame", note: "4 months" },
   { label: "Light", target: "light", note: "6 months" },
-  { label: "Original IP", target: "machine", note: "What if we made worlds?" },
+  { label: "Original IP", target: "machine", note: "The people behind it" },
   { label: "The pipeline", target: "pipeline", note: "Post, measure, learn, improve" },
-  { label: "The set", target: "set", note: "Everyone, doing their job" },
+  { label: "The people", target: "set", note: "Every person can become the IP" },
 ];
 
 export const hero = {
@@ -55,8 +55,8 @@ export const whereWeAre = {
   intro:
     "The talent is here. The work is good. The feed just doesn't show it, because nothing makes it happen on a schedule.",
   diagnostics: [
-    { label: "Content", status: "Inconsistent", glyph: "flat" },
-    { label: "Posting", status: "Unpredictable", glyph: "gaps" },
+    { label: "Content", status: "Unpredictable", glyph: "flat" },
+    { label: "Posting", status: "Inconsistent", glyph: "gaps" },
     { label: "Identity", status: "Unclear", glyph: "blur" },
     { label: "Reach", status: "↓", glyph: "down" },
     { label: "Engagement", status: "↓", glyph: "down" },
@@ -79,7 +79,7 @@ export const objective = {
   /** MAKE / BUZZLAB / WORTH / NOTICING. — one word at a time, the last one carries the weight. */
   statement: ["Make", "BuzzLab", "worth", "noticing."],
   /** what that sentence sets off */
-  chain: ["Content", "Formats", "Media", "Attention", "Identity", "Community", "Original IP"],
+  chain: ["Content", "Formats", "Identity", "Original IP"],
 };
 
 /** ACT 02 → 03: the editor at his desk, then the room keeps going (machine/studio.ts). */
@@ -88,18 +88,18 @@ export const studio = {
     eyebrow: "Act 02 — Worth noticing",
     title: ["The page isn't just inactive.", "It's invisible."],
     sub: "We don't need more content. We need something people actually want to notice.",
-    hand: "Hours in. Still cutting.",
-    handNote: "It starts with someone who cares about every frame.",
   },
   act3: {
     eyebrow: "Act 03 — The studio",
     ladder: ["Editing", "Creative", "Production"],
-    title: ["Content doesn't become a media brand", "because you post more."],
-    titleB: ["It becomes one when people", "want to come back."],
+    title: ["Content doesn't mean", "posting more."],
+    titleB: ["Attention follows", "quality, not quantity."],
+    /** 4 layers, 1 engine */
     layers: [
-      { n: "01", name: "Attention", job: "Stop the scroll." },
-      { n: "02", name: "Identity", job: "Make people understand BuzzLab." },
-      { n: "03", name: "IP", job: "Make them come back." },
+      { n: "01", name: "Content", job: "What we make." },
+      { n: "02", name: "Formats", job: "How we package it." },
+      { n: "03", name: "Identity", job: "What makes it recognisable." },
+      { n: "04", name: "IP", job: "What makes people come back." },
     ],
   },
 };
@@ -122,8 +122,8 @@ export const phases: {
     name: "Spark",
     months: "Month 01–02",
     duration: "2 months",
-    objective: "Establish BuzzLab's voice.",
-    preview: ["5 hero pieces", "Prove people want to watch", "Week 01 → Week 08"],
+    objective: "Establish BuzzLab's presence.",
+    preview: ["5 videos", "8 weeks", "Prove people want to watch"],
     heat: 0.35,
   },
   {
@@ -149,8 +149,8 @@ export const phases: {
 ];
 
 export const lighterSection = {
-  eyebrow: "Act 04 — The plan",
-  title: ["One lighter.", "Three moments."],
+  eyebrow: "Act 04",
+  title: ["The plan"],
   sub: "Six months of committed work, and the horizon it opens up. Hover a phase to watch it play out, click to go there.",
   hint: "Hover · click to go there",
 };
@@ -159,64 +159,17 @@ export const spark = {
   n: "01",
   name: "Spark",
   months: "Month 01–02",
-  objective: "Establish BuzzLab's voice.",
-  line: "Prove that BuzzLab can make content people actually want to watch. Five hero pieces, one every two weeks or so, each with one job.",
+  objective: "Establish BuzzLab's presence.",
+  line: "The first 8 weeks prove one thing: BuzzLab can consistently make content people want to watch.",
+  /** 5 videos · 8 weeks */
+  count: ["5 videos.", "8 weeks."],
+  /** the five Phase 01 videos (the real clips are in content/media.ts, spark-01 … spark-05) */
   pieces: [
-    {
-      week: "Week 01",
-      slot: "spark-01",
-      title: "The BuzzLab Intro",
-      length: "45–60 sec",
-      format: "Brand / personality",
-      objective: "First impression",
-      hook: "Behind every scroll-stopping piece of content is a bunch of people losing their minds.",
-      shows: ["Cameras", "Editors", "Shoots", "BTS", "Chaos", "Final output"],
-      reel: "intro",
-    },
-    {
-      week: "Week 03",
-      slot: "spark-02",
-      title: "Meet the People",
-      length: "5 × 20–30 sec",
-      format: "People / culture",
-      objective: "Connection",
-      hook: "Team members introduced as characters, not job titles.",
-      shows: ["The Director", "The Editor", "The “one more take” guy", "The Camera Guy", "The Designer"],
-      reel: "cast",
-    },
-    {
-      week: "Week 05",
-      slot: "spark-03",
-      title: "How It's Made",
-      length: "30–40 sec",
-      format: "Process / proof",
-      objective: "Saves & shares",
-      hook: "One real project, fast and satisfying: idea, shoot, edit, final.",
-      shows: ["Idea", "Shoot", "Edit", "Final"],
-      reel: "process",
-    },
-    {
-      week: "Week 07",
-      slot: "spark-04",
-      title: "The BuzzLab Brain",
-      length: "30–45 sec",
-      format: "Entertainment / brand",
-      objective: "Reach",
-      hook: "What happens when you give our creatives too much freedom?",
-      shows: ["AI", "VFX", "Editing", "Camera tricks", "Motion graphics", "Experiments"],
-      reel: "brain",
-    },
-    {
-      week: "Week 08",
-      slot: "spark-05",
-      title: "BuzzLab After Dark",
-      length: "15–30 sec + Stories",
-      format: "Culture / BTS",
-      objective: "Community",
-      hook: "Late-night edits, failed takes, shoot days. The people behind the work.",
-      shows: ["Late-night edits", "Shoot days", "Failed takes", "Funny moments", "Creative chaos"],
-      reel: "afterdark",
-    },
+    { week: "Week 01", slot: "spark-01", title: "Police or politician?", format: "Hook / idea", objective: "Stop the scroll", reel: "intro" },
+    { week: "Week 03", slot: "spark-02", title: "The creative mind", format: "People / story", objective: "Connection", reel: "cast" },
+    { week: "Week 05", slot: "spark-03", title: "Out of the screen", format: "VFX / craft", objective: "Shares", reel: "process" },
+    { week: "Week 07", slot: "spark-04", title: "Creative block", format: "Shot on iPhone", objective: "Saves", reel: "brain" },
+    { week: "Week 08", slot: "spark-05", title: "You've got three seconds", format: "Studio / POV", objective: "Reach", reel: "afterdark" },
   ],
 };
 
@@ -226,56 +179,47 @@ export const flame = {
   months: "Month 03–06",
   objective: "Move from random content to recurring formats.",
   quote: ["People don't just follow brands.", "They follow things they recognise and want to return to."],
+  /** the lineup: five content formats (hover each one for its scene) */
   series: [
     {
       n: "01",
-      slot: "flame-01",
-      title: "Who's Behind the Camera?",
-      logline: "One person, one camera, everything you didn't know about the people making the work.",
-      cadence: "Every 2 weeks",
-      format: "30–45 sec reel",
-      episodes: ["The one who storyboards on napkins", "The editor who hears music in silence", "The one who always says “one more take”"],
-      style: "portrait",
+      kind: "skits",
+      title: "Skits",
+      tag: "Scripted comedy",
+      logline: "Short, scripted, character-led. The agency life everyone recognises, played for laughs.",
+      episodes: ["The client who wants the logo bigger", "The editor's 3 a.m. export", "“One more take”"],
     },
     {
       n: "02",
-      slot: "flame-02",
-      title: "BuzzLab Breakdown",
-      logline: "A finished campaign taken apart frame by frame: the decisions, the cuts, why it worked.",
-      cadence: "Monthly",
-      format: "60 sec reel + carousel",
-      episodes: ["Why we cut this in 0.8 seconds", "The shot we almost didn't get", "Three versions of one hook"],
-      style: "grid",
+      kind: "vlogs",
+      title: "Vlogs",
+      tag: "Handheld · BTS",
+      logline: "Handheld, behind the scenes, in the room. A shoot day, an edit night, the people in between.",
+      episodes: ["A shoot day, start to wrap", "Inside the edit bay", "The week of a big launch"],
     },
     {
       n: "03",
-      slot: "flame-03",
-      title: "1 Idea / 1 Hour",
-      logline: "A ridiculous brief and a 60-minute timer. Whatever exists when it hits zero gets posted.",
-      cadence: "Monthly",
-      format: "45–60 sec reel",
-      episodes: ["Sell a stapler like a sports car", "A trailer for a Monday", "An ad for silence"],
-      style: "timer",
+      kind: "talking",
+      title: "Talking head",
+      tag: "Direct to camera",
+      logline: "One person, straight to camera, one sharp point of view. Expertise people can save and share.",
+      episodes: ["Why most hooks fail", "What we'd change about this ad", "The edit rule we never break"],
     },
     {
       n: "04",
-      slot: "flame-04",
-      title: "Creative War Room",
-      logline: "Two creatives pitch competing ideas for the same brief. The comments pick the winner.",
-      cadence: "Monthly",
-      format: "Reel + Story poll",
-      episodes: ["Funny vs. emotional", "One take vs. 100 cuts", "Real vs. AI"],
-      style: "versus",
+      kind: "podcast",
+      title: "Podcast",
+      tag: "Conversation",
+      logline: "Two mics, a real conversation about the work. Long form, cut into the moments worth clipping.",
+      episodes: ["Founders on the first big client", "Director vs. editor: whose cut?", "What creative really costs"],
     },
     {
       n: "05",
-      slot: "flame-05",
-      title: "Client Brief → Final Film",
-      logline: "The whole journey of one project, from the first email to the final cut.",
-      cadence: "Per major project",
-      format: "60–90 sec mini-doc",
-      episodes: ["Day 0: the brief", "Day 6: the pivot", "Day 14: the final film"],
-      style: "doc",
+      kind: "pov",
+      title: "POV",
+      tag: "First person",
+      logline: "You are on set, behind the camera, in the edit. The work, seen through the eyes of the person doing it.",
+      episodes: ["POV: you're the DOP on a car shoot", "POV: your first day at BuzzLab", "POV: the cut that saved the film"],
     },
   ],
   shift: { from: "Content", to: "Formats", note: "A random post starts from zero every time. A format compounds: every episode makes the next one easier to recognise." },
@@ -286,7 +230,7 @@ export const light = {
   name: "Light",
   months: "Month 07–12",
   objective: "Build original BuzzLab IP.",
-  notLockedLede: "We don't lock the IP today. The first six months tell us what the audience wants more of; the IP grows out of that.",
+  notLockedLede: "The system now starts creating its own identity.",
   howWeChoose: [
     { phase: "Phase 01", learn: "shows us what people will watch." },
     { phase: "Phase 02", learn: "shows us what people come back for." },
@@ -323,21 +267,10 @@ export const machine = {
 /** ORIGINAL BUZZLAB IP — the reveal that closes the machine. */
 export const ip = {
   eyebrow: "Act 07 — Original BuzzLab IP",
-  beats: ["What if we didn't just make content?", "What if we made worlds?"],
   reveal: ["Original", "BuzzLab IP"],
-  possibilities: [
-    "A character",
-    "An animated universe",
-    "A short-form show",
-    "A fictional creative-agency universe",
-    "A recurring comedy series",
-    "An automotive series",
-    "A creative competition",
-    "A documentary format",
-    "Fictional characters",
-    "An original entertainment property",
-  ],
-  notLocked: "Not locked. On purpose.",
+  /** the people behind the IP engine */
+  teamLabel: "The people behind it",
+  team: ["Founder", "Director", "Producer", "DOP", "Strategist", "Editors", "Interns"],
 };
 
 export const pipeline = {
@@ -375,39 +308,23 @@ export const measure = {
   cadence: "48-hour check · 7-day review · monthly deep dive",
 };
 
-/** The weekly broadcast schedule and the monthly output it adds up to. */
-export const rhythm = {
-  label: "The broadcast schedule",
-  title: "A rhythm the audience can learn.",
-  week: [
-    { day: "Mon", slot: "Hero / entertainment", note: "The week's big swing." },
-    { day: "Tue", slot: null, note: "Stories" },
-    { day: "Wed", slot: "BTS / process", note: "How the work gets made." },
-    { day: "Thu", slot: null, note: "Stories" },
-    { day: "Fri", slot: "People / culture", note: "The faces of BuzzLab." },
-    { day: "Sat", slot: null, note: "Stories" },
-    { day: "Sun", slot: "Creative / experiment", note: "Where new formats start." },
-  ],
-  month: [
-    { display: "1", label: "Hero piece" },
-    { display: "4–8", label: "Supporting pieces" },
-    { display: "8–15", label: "Stories" },
-  ],
-  footnote: "Targets, not promises. Volume follows quality.",
-};
-
-/** ACT 09 — the miniature set: everyone on the job, in the order the camera visits them. */
+/** ACT 09 — the people are the IP: everyone in the studio, in the order the camera meets them, and the series each of them could carry. */
 export const set = {
-  eyebrow: "Act 09 — The set",
-  title: ["Everyone has a job.", "Every job makes the work."],
+  eyebrow: "Act 09 — BuzzLab IP",
+  title: ["The people are the IP.", "Every one of them is a series."],
   roles: [
-    { key: "director", role: "Director", does: "Calls the shot at the monitor." },
-    { key: "dop", role: "DOP", does: "Frames it, lights it, rolls." },
-    { key: "producer", role: "Producer", does: "Keeps the day on schedule." },
-    { key: "editor", role: "Editor", does: "Cuts it while it's still warm." },
-    { key: "talent", role: "Talent", does: "Makes you stop scrolling." },
+    { key: "founder01", role: "Founder 01", does: "Founder POVs, business stories, lessons and the reality behind building BuzzLab." },
+    { key: "founder02", role: "Founder 02", does: "Founder conversations, culture, decisions and the stories behind the work." },
+    { key: "director", role: "Director", does: "Creative breakdowns, directing stories, visual decisions, behind-the-scenes filmmaking." },
+    { key: "producer", role: "Producer", does: "Production stories, impossible deadlines, shoot days, how ideas become real." },
+    { key: "dop", role: "DOP", does: "Camera craft, lighting, lenses, visual breakdowns and filmmaking experiments." },
+    { key: "strategist", role: "Strategist", does: "Campaign thinking, audience insights and why ideas work." },
+    { key: "editors", role: "Editors", does: "Edit breakdowns, before-and-afters, timelines, VFX and post." },
+    { key: "interns", role: "Interns", does: "First projects, learning curves, experiments, the next generation of creatives." },
   ],
-  final: ["This isn't a content plan.", "It's a media engine."],
+  /** People → Personality → Formats → Original IP */
+  chain: ["People", "Personality", "Formats"],
+  final: "Original IP.",
 };
 
 /** The last character. Tanishka stares, opens wide, and eats the whole presentation. */

@@ -5,7 +5,8 @@ import type { WorldId } from "@/lib/world-clock";
  * Everything three.js-side of the WebGL host: one renderer for every world, and a lazy loader per
  * world so each scene's code only downloads when the reader is about to reach it.
  */
-export type Label = { id: string; text: string; x: number; y: number; a: number };
+/** `pin`: the label's dot sits on the object itself and a short leader line runs up to the text */
+export type Label = { id: string; text: string; x: number; y: number; a: number; pin?: boolean };
 export type World = {
   render(w: number, clock: number, pointer: { x: number; y: number }): void;
   resize(w: number, h: number): void;

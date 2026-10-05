@@ -52,8 +52,7 @@ export function Workstation() {
           .set(b, { autoAlpha: 0 }, z + 0.06);
       };
       show(beats[0], 0.04, 0.3);
-      show(beats[1], 0.42, 0.62);
-      show(beats[2], 0.76, 0.95);
+      show(beats[1], 0.76, 0.95);
       return () => {
         clock.kill();
         fade.kill();
@@ -83,18 +82,6 @@ export function Workstation() {
               </h2>
               <p data-l className="t-lede mt-6 max-w-[30rem]">
                 {C.sub}
-              </p>
-            </div>
-
-            <div data-beat className="studio-beat">
-              <p data-l className="t-slate mb-4">
-                02:47 · Timeline v07
-              </p>
-              <p data-l className="t-serif text-[clamp(2rem,3.4vw,3.4rem)] leading-[1.02] text-bone">
-                {C.hand}
-              </p>
-              <p data-l className="t-lede mt-4 max-w-[26rem]">
-                {C.handNote}
               </p>
             </div>
 

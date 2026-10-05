@@ -21,6 +21,12 @@ export type MediaSlot = {
   poster: string | null;
   /** Recommended file name and what to shoot. */
   file: string;
+  /** Optional link to the original post (shown as "Watch on Instagram"). */
+  href?: string | null;
+  /** "contain": a landscape clip in a vertical frame, letterboxed over a blurred fill (nothing cropped). */
+  fit?: "cover" | "contain";
+  /** the clip's own shape (width / height), so a full-screen player can decide how to fill the screen */
+  aspect?: number;
   brief: string;
 };
 
@@ -40,37 +46,52 @@ export const film: MediaSlot = {
 export const slots: Record<string, MediaSlot> = {
   "spark-01": {
     id: "spark-01",
-    src: null,
-    poster: null,
-    file: "/assets/video/spark-01-intro.mp4",
+    src: "/assets/video/phase01-01.mp4",
+    poster: "/assets/video/phase01-01.jpg",
+    aspect: 4 / 3,
+    fit: "contain",
+    file: "/assets/video/phase01-01.mp4",
+    href: null,
     brief: "Vertical 9:16 preview of The BuzzLab Intro. Fast cuts: cameras, editors, shoots, chaos, final output.",
   },
   "spark-02": {
     id: "spark-02",
-    src: null,
-    poster: null,
-    file: "/assets/video/spark-02-meet-the-people.mp4",
+    src: "/assets/video/phase01-02.mp4",
+    poster: "/assets/video/phase01-02.jpg",
+    aspect: 9 / 16,
+    fit: "cover",
+    file: "/assets/video/phase01-02.mp4",
+    href: null,
     brief: "Vertical 9:16. Each team member framed as a character with a title card.",
   },
   "spark-03": {
     id: "spark-03",
-    src: null,
-    poster: null,
-    file: "/assets/video/spark-03-how-its-made.mp4",
+    src: "/assets/video/phase01-03.mp4",
+    poster: "/assets/video/phase01-03.jpg",
+    aspect: 16 / 9,
+    fit: "contain",
+    file: "/assets/video/phase01-03.mp4",
+    href: null,
     brief: "Vertical 9:16. One project: idea → shoot → edit → final, satisfying match cuts.",
   },
   "spark-04": {
     id: "spark-04",
-    src: null,
-    poster: null,
-    file: "/assets/video/spark-04-brain.mp4",
+    src: "/assets/video/phase01-04.mp4",
+    poster: "/assets/video/phase01-04.jpg",
+    aspect: 16 / 9,
+    fit: "contain",
+    file: "/assets/video/phase01-04.mp4",
+    href: null,
     brief: "Vertical 9:16. AI, VFX, camera tricks, motion graphics. The weirdest experiments.",
   },
   "spark-05": {
     id: "spark-05",
-    src: null,
-    poster: null,
-    file: "/assets/video/spark-05-after-dark.mp4",
+    src: "/assets/video/phase01-05.mp4",
+    poster: "/assets/video/phase01-05.jpg",
+    aspect: 9 / 16,
+    fit: "cover",
+    file: "/assets/video/phase01-05.mp4",
+    href: null,
     brief: "Vertical 9:16. Late-night edits, failed takes, shoot-day chaos.",
   },
   "flame-01": {

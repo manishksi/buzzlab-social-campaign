@@ -9,7 +9,7 @@ import { store, useStore } from "@/lib/store";
 import { scenePoints } from "@/components/film/character";
 
 /**
- * ACT 04 — the plan, and the first time we meet him.
+ * ACT 04 — THE PLAN, and the first time we meet him.
  * The figure on the right lives in the background film; hovering a phase plays it out on him:
  *   Spark — his thumb rolls the wheel, a few sparks, no flame
  *   Flame — the lighter catches and the light finds his face
@@ -64,8 +64,11 @@ export function LighterSelector() {
         <div className="lg:col-span-6 xl:col-span-5">
           <p className="t-slate mb-6">{L.eyebrow}</p>
           <Reveal as="h2" by="chars" className="t-big">
-            <span className="block">{L.title[0]}</span>
-            <span className="block">{L.title[1]}</span>
+            {L.title.map((t) => (
+              <span key={t} className="block">
+                {t}
+              </span>
+            ))}
           </Reveal>
           <p className="t-lede mt-6 max-w-[30em]">{L.sub}</p>
 

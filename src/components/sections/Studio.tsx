@@ -91,21 +91,21 @@ export function Studio() {
                   {C.titleB[0]}
                 </span>
                 <span data-l className="block">
-                  want to <span className="text-buzz">come back.</span>
+                  <span className="text-buzz">quality,</span> not quantity.
                 </span>
               </h2>
             </div>
 
             <div data-beat className="studio-beat">
               <p data-l className="t-slate mb-6">
-                Three layers, one engine
+                4 layers. 1 engine.
               </p>
-              <ol className="grid grid-cols-3 gap-x-5 border-t hairline">
+              <ol className="border-b hairline">
                 {C.layers.map((l, i) => (
-                  <li data-l key={l.n} className="pt-4">
+                  <li data-l key={l.n} className="grid grid-cols-[3rem_1fr] items-baseline gap-x-4 border-t hairline py-3.5 md:grid-cols-[3.5rem_minmax(0,12rem)_1fr]">
                     <span className="t-slate">{l.n}</span>
-                    <span className={`mt-2 block font-display text-[clamp(1.5rem,2.2vw,2.4rem)] font-extrabold uppercase leading-none ${i === 2 ? "text-buzz" : ""}`}>{l.name}</span>
-                    <span className="t-label mt-3 block text-ash">{l.job}</span>
+                    <span className={`font-display text-[clamp(1.6rem,2.4vw,2.6rem)] font-extrabold uppercase leading-none ${i === C.layers.length - 1 ? "text-buzz" : ""}`}>{l.name}</span>
+                    <span className="t-label col-start-2 mt-1 block text-ash md:col-start-auto md:mt-0">{l.job}</span>
                   </li>
                 ))}
               </ol>

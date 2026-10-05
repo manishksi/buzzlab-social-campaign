@@ -188,16 +188,53 @@ function cameraAt(t: number) {
 }
 
 const HEAD_BOX = { x0: -0.24, y0: -0.18, x1: 1.02, y1: 1.5 };
+/** what he wears: a yellow bomber (dark mustard in the dark, yellow where the flame finds it) over a white tee, dark jeans, yellow sneakers */
+const JACKET = { base: "#110e03", lit: [214, 188, 32] as [number, number, number] };
+const RIB = { base: "#0d0b02", lit: [180, 158, 28] as [number, number, number] };
 /** the head is painted this much sharper than it is drawn, so the camera can push in on it */
 const HEAD_RES = 2;
 
+/** Short spiky hair: the line of the skull from the hairline to the back of the crown, with
+ * spikes standing up out of it — tallest at the front and top, cropped short toward the back. */
+function crown(p: Path2D) {
+  const segs: [number, number][][] = [
+    [[-0.012, 0.012], [0.02, -0.06], [0.15, -0.105], [0.33, -0.105]],
+    [[0.33, -0.105], [0.55, -0.1], [0.74, -0.035], [0.845, 0.075]],
+  ];
+  const bez = (s: [number, number][], t: number, k: 0 | 1) => {
+    const u = 1 - t;
+    return u * u * u * s[0][k] + 3 * u * u * t * s[1][k] + 3 * u * t * t * s[2][k] + t * t * t * s[3][k];
+  };
+  // irregular tufts: uneven spacing, height and lean, so it reads as styled hair, not a saw
+  segs.forEach((s, si) => {
+    let t = 0;
+    let k = 0;
+    while (t < 1) {
+      const step = 0.035 + hash(k * 3.7 + si * 11) * 0.05;
+      const tip = Math.min(1, t + step * (0.35 + hash(k * 5.1 + si) * 0.3));
+      t = Math.min(1, t + step);
+      const along = (si + tip) / 2; // 0 at the hairline → 1 at the back
+      const x = bez(s, tip, 0);
+      const y = bez(s, tip, 1);
+      const dx = bez(s, Math.min(1, tip + 0.01), 0) - bez(s, Math.max(0, tip - 0.01), 0);
+      const dy = bez(s, Math.min(1, tip + 0.01), 1) - bez(s, Math.max(0, tip - 0.01), 1);
+      const l = Math.hypot(dx, dy) || 1;
+      const h = (0.006 + 0.032 * Math.sin(Math.min(1, along * 1.7) * Math.PI * 0.85)) * (0.45 + 0.75 * hash(k * 9.3 + si * 5));
+      const lean = -0.004 - hash(k * 2.9 + si) * 0.012;
+      p.lineTo(x + (dy / l) * h + lean, y - (dx / l) * h);
+      p.lineTo(bez(s, t, 0), bez(s, t, 1));
+      k++;
+    }
+  });
+}
+
 function headPath() {
   const p = new Path2D();
-  p.moveTo(0.17, 1.5);
-  p.bezierCurveTo(0.15, 1.32, 0.14, 1.17, 0.11, 1.07); // throat
-  p.bezierCurveTo(0.08, 1.02, 0.03, 0.995, -0.005, 0.985); // under the chin
-  p.bezierCurveTo(-0.035, 0.977, -0.052, 0.945, -0.05, 0.905); // chin
-  p.bezierCurveTo(-0.048, 0.878, -0.032, 0.864, -0.016, 0.857); // into the fold under the lip
+  p.moveTo(0.18, 1.5);
+  p.bezierCurveTo(0.155, 1.33, 0.145, 1.18, 0.12, 1.085); // throat, under the beard
+  p.bezierCurveTo(0.085, 1.035, 0.03, 1.008, -0.01, 0.998); // the trimmed beard under the chin
+  p.bezierCurveTo(-0.045, 0.99, -0.062, 0.95, -0.058, 0.906); // the beard at the chin
+  p.bezierCurveTo(-0.064, 0.878, -0.04, 0.864, -0.016, 0.857); // into the fold under the lip
   p.bezierCurveTo(-0.03, 0.846, -0.051, 0.83, -0.051, 0.813); // lower lip
   p.bezierCurveTo(-0.051, 0.8, -0.041, 0.792, -0.032, 0.789);
   p.bezierCurveTo(-0.046, 0.783, -0.055, 0.77, -0.051, 0.756); // upper lip
@@ -208,9 +245,8 @@ function headPath() {
   p.bezierCurveTo(-0.037, 0.461, -0.031, 0.451, -0.035, 0.436); // nasion
   p.bezierCurveTo(-0.043, 0.419, -0.046, 0.396, -0.04, 0.372); // brow ridge
   p.bezierCurveTo(-0.031, 0.31, -0.02, 0.22, 0.012, 0.15); // forehead
-  p.bezierCurveTo(-0.012, 0.118, -0.024, 0.07, -0.004, 0.03); // the front of the hair
-  p.bezierCurveTo(0.03, -0.045, 0.16, -0.095, 0.34, -0.095);
-  p.bezierCurveTo(0.56, -0.095, 0.74, -0.035, 0.845, 0.075);
+  p.bezierCurveTo(-0.014, 0.118, -0.03, 0.06, -0.012, 0.012); // the front of the hair
+  crown(p); // short, spiky
   p.bezierCurveTo(0.935, 0.18, 0.955, 0.36, 0.935, 0.5); // back of the skull
   p.bezierCurveTo(0.915, 0.66, 0.855, 0.78, 0.795, 0.88);
   p.bezierCurveTo(0.762, 0.95, 0.742, 1.1, 0.752, 1.25); // back of the neck
@@ -222,9 +258,8 @@ function headPath() {
 function hairPath() {
   const p = new Path2D();
   p.moveTo(0.012, 0.15);
-  p.bezierCurveTo(-0.012, 0.118, -0.024, 0.07, -0.004, 0.03);
-  p.bezierCurveTo(0.03, -0.045, 0.16, -0.095, 0.34, -0.095);
-  p.bezierCurveTo(0.56, -0.095, 0.74, -0.035, 0.845, 0.075);
+  p.bezierCurveTo(-0.014, 0.118, -0.03, 0.06, -0.012, 0.012);
+  crown(p);
   p.bezierCurveTo(0.935, 0.18, 0.955, 0.36, 0.935, 0.5);
   p.bezierCurveTo(0.915, 0.66, 0.855, 0.78, 0.795, 0.88);
   p.bezierCurveTo(0.76, 0.84, 0.7, 0.74, 0.655, 0.66); // nape, behind the ear
@@ -268,32 +303,48 @@ function torsoPath() {
   return p;
 }
 
-/** The turned-up collar wrapping the neck, drawn in front of it. */
+/** The bomber's ribbed collar round the base of the neck, drawn in front of it. */
 function collarPath() {
   const p = new Path2D();
-  p.moveTo(0.93, 0.95);
-  p.bezierCurveTo(0.8, 0.99, 0.58, 1.06, 0.4, 1.14);
-  p.bezierCurveTo(0.27, 1.2, 0.17, 1.27, 0.11, 1.34);
-  p.bezierCurveTo(0.07, 1.42, 0.02, 1.52, -0.06, 1.64);
-  p.bezierCurveTo(-0.1, 1.7, -0.13, 1.74, -0.16, 1.78);
-  p.bezierCurveTo(0.0, 1.7, 0.2, 1.56, 0.42, 1.42);
-  p.bezierCurveTo(0.62, 1.3, 0.82, 1.22, 1.02, 1.17);
-  p.bezierCurveTo(1.0, 1.08, 0.97, 1.0, 0.93, 0.95);
+  p.moveTo(0.98, 1.06);
+  p.bezierCurveTo(0.82, 1.12, 0.58, 1.19, 0.38, 1.26);
+  p.bezierCurveTo(0.25, 1.31, 0.15, 1.37, 0.09, 1.44);
+  p.lineTo(0.05, 1.53);
+  p.bezierCurveTo(0.14, 1.46, 0.27, 1.4, 0.42, 1.35);
+  p.bezierCurveTo(0.62, 1.29, 0.84, 1.24, 1.04, 1.18);
   p.closePath();
   return p;
 }
 
-/** Chelsea boot pointing left, origin at the ball of the foot on the ground. */
-function bootPath() {
+/** The white tee's crew neck, just visible under the beard, inside the collar. */
+function teePath() {
   const p = new Path2D();
-  p.moveTo(-0.3, 0);
-  p.bezierCurveTo(-0.36, -0.01, -0.37, -0.06, -0.33, -0.09);
-  p.bezierCurveTo(-0.28, -0.13, -0.15, -0.16, -0.02, -0.2);
-  p.bezierCurveTo(0.12, -0.24, 0.22, -0.3, 0.3, -0.38);
-  p.lineTo(0.34, -0.55);
-  p.lineTo(0.84, -0.55);
-  p.bezierCurveTo(0.86, -0.4, 0.88, -0.25, 0.87, -0.1);
-  p.lineTo(0.86, 0);
+  p.moveTo(0.1, 1.42);
+  p.bezierCurveTo(0.15, 1.36, 0.22, 1.33, 0.3, 1.31);
+  p.lineTo(0.33, 1.345);
+  p.bezierCurveTo(0.25, 1.36, 0.18, 1.39, 0.13, 1.45);
+  p.closePath();
+  return p;
+}
+
+/** Low-top sneaker pointing left (the upper; the sole is separate), origin at the ball of the foot. */
+function sneakerPath() {
+  const p = new Path2D();
+  p.moveTo(-0.35, -0.07);
+  p.bezierCurveTo(-0.37, -0.15, -0.28, -0.2, -0.12, -0.24);
+  p.bezierCurveTo(0.0, -0.27, 0.14, -0.32, 0.26, -0.36);
+  p.lineTo(0.36, -0.44);
+  p.lineTo(0.84, -0.44);
+  p.bezierCurveTo(0.87, -0.32, 0.88, -0.18, 0.86, -0.07);
+  p.closePath();
+  return p;
+}
+function solePath() {
+  const p = new Path2D();
+  p.moveTo(-0.36, 0);
+  p.bezierCurveTo(-0.41, -0.01, -0.41, -0.07, -0.36, -0.085);
+  p.lineTo(0.87, -0.085);
+  p.bezierCurveTo(0.9, -0.07, 0.9, -0.01, 0.87, 0);
   p.closePath();
   return p;
 }
@@ -330,7 +381,7 @@ export class CharacterScene {
   private glow: HTMLCanvasElement;
   private bokeh: HTMLCanvasElement;
   private sparks: Spark[] = [];
-  private paths = { head: headPath(), hair: hairPath(), ear: earPath(), torso: torsoPath(), collar: collarPath(), boot: bootPath() };
+  private paths = { head: headPath(), hair: hairPath(), ear: earPath(), torso: torsoPath(), collar: collarPath(), tee: teePath(), boot: sneakerPath(), sole: solePath() };
 
   // preview blending and discrete events
   private kind: ScenePreview = null;
@@ -401,10 +452,10 @@ export class CharacterScene {
     g.save();
     g.clip(head);
     const sk = g.createLinearGradient(-0.14, 0, 0.95, 0);
-    sk.addColorStop(0, "#e2a37a");
-    sk.addColorStop(0.08, "#bf7a4f");
-    sk.addColorStop(0.17, "#7a4127");
-    sk.addColorStop(0.3, "#361b0d");
+    sk.addColorStop(0, "#d4925f");
+    sk.addColorStop(0.08, "#ad6b3f");
+    sk.addColorStop(0.17, "#703a1f");
+    sk.addColorStop(0.3, "#33190b");
     sk.addColorStop(0.48, "#150b06");
     sk.addColorStop(1, "#070403");
     g.fillStyle = sk;
@@ -471,9 +522,9 @@ export class CharacterScene {
       s.lineWidth = 0.006;
       s.beginPath();
       s.moveTo(-0.034, 0.79);
-      s.bezierCurveTo(-0.01, 0.792, 0.01, 0.797, 0.03, 0.8);
+      s.bezierCurveTo(-0.01, 0.792, 0.012, 0.796, 0.034, 0.792);
       s.stroke();
-    }); // mouth line
+    }); // mouth line (the corner turns up, just)
     this.soft(g, k, 0.012, "rgba(255,210,170,0.3)", (s) => {
       s.beginPath();
       s.ellipse(-0.04, 0.822, 0.012, 0.008, 0, 0, Math.PI * 2);
@@ -515,19 +566,34 @@ export class CharacterScene {
       s.fill();
     }); // under the jaw
 
-    // stubble
-    g.save();
-    const beard = new Path2D("M-0.05 0.73 L0.04 0.73 C0.07 0.78 0.12 0.8 0.2 0.8 C0.3 0.78 0.38 0.7 0.43 0.6 L0.46 0.62 C0.46 0.75 0.44 0.84 0.44 0.87 C0.3 0.93 0.15 0.97 -0.01 0.99 C-0.05 0.96 -0.055 0.9 -0.05 0.86 Z");
-    g.clip(beard);
-    g.fillStyle = "rgba(30,14,7,0.28)";
-    g.fill(beard);
-    for (let i = 0; i < 1800; i++) {
-      const x = -0.06 + hash(i * 3.1) * 0.53;
-      const y = 0.72 + hash(i * 7.7 + 1) * 0.28;
-      g.fillStyle = `rgba(22,10,5,${0.1 + hash(i + 9) * 0.18})`;
-      g.fillRect(x, y, 0.0026, 0.0026);
+    // a full, trimmed beard along the jaw and chin, and a moustache over the lip
+    // trimmed short: it follows the jaw closely, with a clean line across the cheek
+    const beard = new Path2D("M0.44 0.62 C0.46 0.74 0.45 0.86 0.39 0.94 C0.31 1.01 0.2 1.05 0.12 1.085 C0.085 1.035 0.03 1.008 -0.01 0.998 C-0.045 0.99 -0.062 0.95 -0.058 0.906 C-0.054 0.878 -0.04 0.864 -0.018 0.858 C0.0 0.856 0.02 0.84 0.034 0.81 C0.07 0.83 0.14 0.83 0.22 0.8 C0.32 0.76 0.39 0.69 0.44 0.62 Z");
+    const stache = new Path2D("M-0.048 0.754 C-0.03 0.742 0.0 0.738 0.028 0.75 C0.04 0.758 0.042 0.776 0.036 0.788 L0.028 0.792 C0.012 0.774 -0.02 0.762 -0.048 0.759 Z");
+    for (const [b, n, x0, x1, y0, y1] of [
+      [beard, 3400, -0.07, 0.47, 0.6, 1.1],
+      [stache, 520, -0.06, 0.05, 0.735, 0.8],
+    ] as [Path2D, number, number, number, number, number][]) {
+      g.save();
+      g.clip(head);
+      g.clip(b);
+      g.fillStyle = "rgba(16,9,5,0.9)";
+      g.fill(b);
+      g.lineCap = "round";
+      for (let i = 0; i < n; i++) {
+        const x = lerp(x0, x1, hash(i * 3.1 + n));
+        const y = lerp(y0, y1, hash(i * 7.7 + 1 + n));
+        // hair catches more light toward the front of the face
+        const front = clamp(1 - (x - x0) / (x1 - x0) * 1.4);
+        g.strokeStyle = `rgba(${Math.round(40 + front * 70)},${Math.round(24 + front * 40)},${Math.round(14 + front * 18)},${0.18 + hash(i + 9) * 0.3})`;
+        g.lineWidth = 0.0018 + hash(i + 5) * 0.0014;
+        g.beginPath();
+        g.moveTo(x, y);
+        g.lineTo(x - 0.002 - hash(i + 2) * 0.003, y + 0.006 + hash(i + 4) * 0.005);
+        g.stroke();
+      }
+      g.restore();
     }
-    g.restore();
 
     // eye: heavy lid, a sliver of white, lashes
     g.fillStyle = "rgba(205,180,160,0.55)";
@@ -575,6 +641,33 @@ export class CharacterScene {
       g.lineTo(x + 0.02, y - 0.006 + hash(i + 3) * 0.004);
       g.stroke();
     }
+    // glasses: dark rectangular frames seen from the side, the arm running back to the ear
+    g.save();
+    g.lineCap = "round";
+    g.strokeStyle = "rgba(10,10,11,0.96)";
+    g.lineWidth = 0.013;
+    g.beginPath();
+    g.moveTo(-0.012, 0.437);
+    g.bezierCurveTo(0.14, 0.424, 0.33, 0.428, 0.47, 0.444);
+    g.bezierCurveTo(0.5, 0.452, 0.515, 0.48, 0.52, 0.53);
+    g.stroke();
+    g.fillStyle = "#0a0a0b";
+    g.beginPath();
+    g.roundRect(-0.032, 0.424, 0.03, 0.085, 0.008);
+    g.fill();
+    g.strokeStyle = "rgba(255,226,190,0.45)";
+    g.lineWidth = 0.004;
+    g.beginPath();
+    g.moveTo(-0.03, 0.43);
+    g.lineTo(-0.03, 0.5);
+    g.stroke(); // the frame's front edge catching the light
+    g.restore();
+    this.soft(g, k, 0.01, "rgba(255,236,205,0.5)", (s) => {
+      s.beginPath();
+      s.ellipse(-0.024, 0.448, 0.004, 0.014, 0, 0, Math.PI * 2);
+      s.fill();
+    }); // a glint on the lens
+
     // ear
     g.save();
     g.fillStyle = "#3a1d0f";
@@ -604,8 +697,8 @@ export class CharacterScene {
       g.strokeStyle = `rgba(${Math.round(60 + warm * 110)},${Math.round(38 + warm * 62)},${Math.round(22 + warm * 30)},${0.06 + warm * 0.3})`;
       g.lineWidth = 0.003 + hash(i + 2) * 0.003;
       g.beginPath();
-      g.moveTo(x0, y0);
-      g.quadraticCurveTo(x0 + len * 0.5, y0 - 0.03, x0 + len, y0 + 0.02 + s * 0.08);
+      g.moveTo(x0 + len * 0.3, y0 + 0.03);
+      g.quadraticCurveTo(x0 + len * 0.2, y0 - 0.005, x0 + len * 0.05, y0 - 0.03 - (1 - s) * 0.02);
       g.stroke();
     }
     g.restore();
@@ -950,10 +1043,34 @@ export class CharacterScene {
     }
     ctx.restore();
 
-    // collar over the neck
+    // the white tee at the neck, then the bomber's ribbed collar over it
+    {
+      const dl = Math.hypot(light.x - 0.22, light.y - 1.36);
+      const tl = clamp(light.i * (1.25 - dl / Math.max(0.2, light.r * 1.2)));
+      const v = Math.round(34 + tl * 170);
+      ctx.fillStyle = `rgb(${v},${Math.round(v * 0.96)},${Math.round(v * 0.9)})`;
+      ctx.fill(this.paths.tee);
+    }
     this.drawShape(ctx, this.paths.collar, light, 0.85, [
-      { pts: [[0.93, 0.955], [0.75, 1.01], [0.55, 1.08]], c: "rgba(170,180,188,0.12)", w: 0.006 },
-    ], pres);
+      { pts: [[0.98, 1.07], [0.75, 1.14], [0.5, 1.22]], c: "rgba(170,180,188,0.12)", w: 0.006 },
+    ], pres, RIB);
+    {
+      // the ribbing
+      ctx.save();
+      ctx.clip(this.paths.collar);
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.lineWidth = 0.004;
+      for (let i = 0; i < 26; i++) {
+        const u = i / 25;
+        const x = lerp(0.06, 1.0, u);
+        const y = lerp(1.5, 1.1, u);
+        ctx.beginPath();
+        ctx.moveTo(x - 0.02, y - 0.08);
+        ctx.lineTo(x + 0.03, y + 0.06);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
 
     if (!onFloor) {
       // smoke rising off the ember, then the cigarette itself (in his mouth or his fingers)
@@ -1047,15 +1164,17 @@ export class CharacterScene {
     reach: number,
     rims: { pts: [number, number][]; c: string; w: number }[],
     pres: number,
+    fabric = JACKET,
   ) {
-    ctx.fillStyle = "#0a0a0a";
+    ctx.fillStyle = fabric.base;
     ctx.fill(path);
     if (light.i > 0.01) {
       ctx.save();
       ctx.clip(path);
+      const [lr, lg, lb] = fabric.lit;
       const g = ctx.createRadialGradient(light.x, light.y, 0, light.x, light.y, light.r * reach);
-      g.addColorStop(0, `rgba(116,84,36,${0.4 * Math.min(1, light.i)})`);
-      g.addColorStop(0.4, `rgba(56,40,16,${0.16 * Math.min(1, light.i)})`);
+      g.addColorStop(0, `rgba(${lr},${lg},${lb},${0.42 * Math.min(1, light.i)})`);
+      g.addColorStop(0.4, `rgba(${lr >> 1},${lg >> 1},${lb >> 1},${0.18 * Math.min(1, light.i)})`);
       g.addColorStop(1, "rgba(30,14,6,0)");
       ctx.fillStyle = g;
       ctx.fillRect(light.x - 3, light.y - 3, 6, 6);
@@ -1130,8 +1249,12 @@ export class CharacterScene {
     ctx.translate(x, y);
     ctx.rotate(a);
     const L = Math.min(1.2, If + this.flash + light.i * 0.3);
-    // sleeve and wrist, coming up from below the frame
-    ctx.fillStyle = "#090909";
+    // the bomber's sleeve, coming up from below the frame: yellow where the flame reaches it
+    const sleeve = ctx.createLinearGradient(0, 0.3, 0, 2.3);
+    sleeve.addColorStop(0, `rgb(${Math.round(16 + 190 * L * 0.55)},${Math.round(14 + 168 * L * 0.55)},${Math.round(3 + 24 * L * 0.55)})`);
+    sleeve.addColorStop(0.45, `rgb(${Math.round(14 + 90 * L * 0.4)},${Math.round(12 + 80 * L * 0.4)},${Math.round(3 + 10 * L * 0.4)})`);
+    sleeve.addColorStop(1, "rgb(10,9,3)");
+    ctx.fillStyle = sleeve;
     ctx.beginPath();
     ctx.moveTo(0.1, 0.3);
     ctx.bezierCurveTo(0.16, 0.6, 0.3, 1.2, 0.46, 2.3);
@@ -1145,8 +1268,8 @@ export class CharacterScene {
     ctx.moveTo(0.37, 0.36);
     ctx.bezierCurveTo(0.48, 0.66, 0.66, 1.2, 0.9, 2.2);
     ctx.stroke();
-    // shirt cuff
-    ctx.fillStyle = `rgb(${Math.round(40 + 150 * L * 0.5)},${Math.round(38 + 120 * L * 0.5)},${Math.round(36 + 90 * L * 0.5)})`;
+    // the ribbed cuff
+    ctx.fillStyle = `rgb(${Math.round(12 + 150 * L * 0.5)},${Math.round(11 + 132 * L * 0.5)},${Math.round(3 + 16 * L * 0.5)})`;
     ctx.beginPath();
     ctx.moveTo(0.1, 0.3);
     ctx.lineTo(0.36, 0.28);
@@ -1340,8 +1463,8 @@ export class CharacterScene {
     const d = Math.hypot(light.x - at.x, light.y - at.y);
     const L = clamp(light.i * (1.1 - d * 2)) * 0.6;
     const skin = (k: number) => `rgb(${Math.round(14 + 150 * k)},${Math.round(9 + 92 * k)},${Math.round(7 + 58 * k)})`;
-    // sleeve
-    ctx.fillStyle = "#090909";
+    // sleeve: the bomber again
+    ctx.fillStyle = `rgb(${Math.round(13 + 170 * L)},${Math.round(11 + 150 * L)},${Math.round(3 + 22 * L)})`;
     ctx.beginPath();
     ctx.moveTo(0.22, 0.26);
     ctx.bezierCurveTo(0.3, 0.7, 0.46, 1.3, 0.64, 2.4);
@@ -1503,10 +1626,12 @@ export class CharacterScene {
     // back leg, planted
     ctx.save();
     ctx.translate(0.2, fy);
-    ctx.fillStyle = "#070707";
+    ctx.fillStyle = "#0a101c";
     ctx.fill(trouserPath(2.6));
-    ctx.fillStyle = "#080808";
+    ctx.fillStyle = "#3a3306";
     ctx.fill(this.paths.boot);
+    ctx.fillStyle = "#3a3832";
+    ctx.fill(this.paths.sole);
     ctx.strokeStyle = `rgba(170,180,188,${0.08 * pres})`;
     ctx.lineWidth = 0.008;
     ctx.beginPath();
@@ -1537,17 +1662,19 @@ export class CharacterScene {
     ctx.restore();
     ctx.rotate(-twist);
     ctx.scale(1 - Math.abs(twist) * 0.6, 1);
-    ctx.fillStyle = "#0a0a0a";
+    ctx.fillStyle = "#0c1322";
     ctx.fill(trouserPath(2.6));
-    ctx.fillStyle = "#0b0b0b";
+    ctx.fillStyle = "#463d08";
     ctx.fill(this.paths.boot);
+    ctx.fillStyle = "#46433b";
+    ctx.fill(this.paths.sole);
     ctx.strokeStyle = `rgba(170,180,188,${0.14 * pres})`;
     ctx.lineWidth = 0.008;
     ctx.beginPath();
     ctx.moveTo(0.97, -2.9);
     ctx.bezierCurveTo(0.95, -1.8, 0.92, -1.0, 0.9, -0.48);
     ctx.stroke();
-    // leather picks up the ember and the backlight
+    // the sneaker picks up the ember and the backlight
     const Lb = clamp(light.i * (1.3 - Math.abs(light.x - bx) * 0.9));
     ctx.strokeStyle = `rgba(255,170,110,${0.55 * Lb})`;
     ctx.lineWidth = 0.012;

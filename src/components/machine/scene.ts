@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { contentTextures, imperfections, reelUI, tileSet } from "./textures";
 import { cinemaCamera, directorsChair, mats, microphone, playButton, softbox, tile, timeline } from "./props";
-import { PHONE, PROFILE, PROFILE_H, cellAt, footageTextures, phone, postedTag, profileBars, profileTexture } from "./feed";
+import { PHONE, PROFILE, PROFILE_H, cellAt, footageTextures, heroReel, phone, postedTag, profileBars, profileTexture } from "./feed";
 
 /**
  * THE CREATIVE MACHINE — a three.js world driven by one number, `w` (0 → 1), from scroll.
@@ -278,7 +278,8 @@ export class MachineScene {
     this.mon.bezel = plane(new THREE.MeshBasicMaterial({ color: 0x1c1c1c }), -0.01);
     this.mon.bezel.scale.set(1.04, 1.06, 1);
     this.mon.shot = plane(new THREE.MeshBasicMaterial({ map: this.shots[0], toneMapped: false, transparent: true }), 0);
-    this.mon.reel = plane(new THREE.MeshBasicMaterial({ map: T.reelHero, toneMapped: false, transparent: true, opacity: 0 }), 0.002);
+    const reelTex = heroReel();
+    this.mon.reel = plane(new THREE.MeshBasicMaterial({ map: reelTex, toneMapped: false, transparent: true, opacity: 0 }), 0.002);
     this.mon.ui = plane(new THREE.MeshBasicMaterial({ map: reelUI(), toneMapped: false, transparent: true, opacity: 0, depthWrite: false }), 0.004);
     this.mon.flash = plane(new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }), 0.006);
     s.add(this.monitor);
@@ -294,11 +295,11 @@ export class MachineScene {
     // 04 · the phone: the Reel plays in it, then it becomes the BuzzLab page
     const { sw, sh } = PHONE;
     this.phone.add(phone());
-    this.inPhone = tile(T.reelHero, 1, 1, reelUI());
+    this.inPhone = tile(reelTex, 1, 1, reelUI());
     this.inPhone.group.position.z = 0.004;
     (this.inPhone.back.material as THREE.MeshBasicMaterial).transparent = true;
     this.phone.add(this.inPhone.group);
-    this.pageTex = profileTexture(T);
+    this.pageTex = profileTexture(T, reelTex.image as HTMLCanvasElement);
     this.pageTex.repeat.set(1, PROFILE.view / PROFILE_H);
     this.page = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), new THREE.MeshBasicMaterial({ map: this.pageTex, toneMapped: false, transparent: true, opacity: 0 }));
     this.page.position.z = 0.003;
@@ -421,16 +422,6 @@ export class MachineScene {
       W.add(g);
       this.islands.push(g);
     }
-    // someone standing on a crest, looking at the light
-    const fig = new THREE.Group();
-    const bmat = new THREE.MeshBasicMaterial({ color: 0x000000 });
-    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.32, 1.2, 6, 12), bmat);
-    body.position.y = 1;
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 16), bmat);
-    head.position.y = 2.05;
-    fig.add(body, head);
-    fig.position.set(2.5, 7.4, -82);
-    W.add(fig);
   }
 
   resize(w: number, h: number) {

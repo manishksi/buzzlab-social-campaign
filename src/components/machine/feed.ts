@@ -76,6 +76,370 @@ function softbox(g: CanvasRenderingContext2D, x: number, y: number, w: number, h
   g.fillRect(x + w / 2 - 3, y + h, 6, h * 1.6);
 }
 
+
+// ---------------------------------------------------------------------------------------------
+// cinematic stills: agency / production / film work, painted (no stock): light, haze, a car,
+// a set, a lens — graded dark with BuzzLab yellow where the light is
+// ---------------------------------------------------------------------------------------------
+function vignette(g: CanvasRenderingContext2D, w: number, h: number, a = 0.75) {
+  const v = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.75);
+  v.addColorStop(0, "rgba(0,0,0,0)");
+  v.addColorStop(1, `rgba(0,0,0,${a})`);
+  g.fillStyle = v;
+  g.fillRect(0, 0, w, h);
+}
+/** an anamorphic streak: a thin horizontal flare through a light */
+function flare(g: CanvasRenderingContext2D, x: number, y: number, len: number, rgb: string, a = 0.8) {
+  const lg = g.createLinearGradient(x - len, y, x + len, y);
+  lg.addColorStop(0, `rgba(${rgb},0)`);
+  lg.addColorStop(0.5, `rgba(${rgb},${a})`);
+  lg.addColorStop(1, `rgba(${rgb},0)`);
+  g.fillStyle = lg;
+  g.fillRect(x - len, y - 1.5, len * 2, 3);
+  glow(g, x, y, len * 0.18, `rgba(${rgb},${a * 0.9})`);
+}
+/** a car in profile facing right, length `L`, wheels on y */
+function car(g: CanvasRenderingContext2D, x: number, y: number, L: number, body: string, rim = "rgba(238,235,227,.5)") {
+  const P = (u: number, v: number): [number, number] => [x + u * L, y + v * L];
+  g.fillStyle = body;
+  g.beginPath();
+  g.moveTo(...P(0, -0.05));
+  g.lineTo(...P(0.01, -0.13));
+  g.bezierCurveTo(...P(0.05, -0.19), ...P(0.13, -0.2), ...P(0.22, -0.21));
+  g.bezierCurveTo(...P(0.32, -0.33), ...P(0.44, -0.37), ...P(0.56, -0.37));
+  g.bezierCurveTo(...P(0.66, -0.36), ...P(0.73, -0.3), ...P(0.79, -0.23));
+  g.bezierCurveTo(...P(0.9, -0.215), ...P(0.98, -0.19), ...P(1.0, -0.12));
+  g.lineTo(...P(1.0, -0.05));
+  g.closePath();
+  g.fill();
+  // the roof line catching the light
+  g.strokeStyle = rim;
+  g.lineWidth = Math.max(1, L * 0.006);
+  g.beginPath();
+  g.moveTo(...P(0.22, -0.21));
+  g.bezierCurveTo(...P(0.32, -0.33), ...P(0.44, -0.37), ...P(0.56, -0.37));
+  g.bezierCurveTo(...P(0.66, -0.36), ...P(0.73, -0.3), ...P(0.79, -0.23));
+  g.stroke();
+  for (const u of [0.2, 0.82]) {
+    const [cx, cy] = P(u, -0.045);
+    g.fillStyle = "#050505";
+    g.beginPath();
+    g.arc(cx, cy, L * 0.085, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = "rgba(160,160,160,.35)";
+    g.lineWidth = Math.max(1, L * 0.008);
+    g.beginPath();
+    g.arc(cx, cy, L * 0.055, 0, Math.PI * 2);
+    g.stroke();
+  }
+}
+function wetFloor(g: CanvasRenderingContext2D, w: number, h: number, y: number) {
+  const lg = g.createLinearGradient(0, y, 0, h);
+  lg.addColorStop(0, "#151515");
+  lg.addColorStop(1, "#050505");
+  g.fillStyle = lg;
+  g.fillRect(0, y, w, h - y);
+}
+function label(g: CanvasRenderingContext2D, w: number, h: number, s: string) {
+  text(g, s, 18, h - 18, 14, "rgba(238,235,227,.72)", 500, MONO);
+}
+
+export const STILLS: Record<string, Painter> = {
+  // automotive: the car on wet asphalt at night, yellow light trails behind it
+  night: (g, w, h) => {
+    g.fillStyle = "#060606";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.7, h * 0.42, w * 0.7, "rgba(249,254,2,.16)");
+    for (let i = 0; i < 6; i++) {
+      const y = h * (0.48 + i * 0.012);
+      const lg = g.createLinearGradient(0, y, w, y);
+      lg.addColorStop(0, "rgba(249,254,2,0)");
+      lg.addColorStop(0.6, `rgba(249,254,2,${0.5 - i * 0.07})`);
+      lg.addColorStop(1, "rgba(255,245,190,.9)");
+      g.fillStyle = lg;
+      g.fillRect(0, y, w, 2);
+    }
+    wetFloor(g, w, h, h * 0.62);
+    car(g, w * 0.12, h * 0.62, w * 0.76, "#0b0b0b", "rgba(249,254,2,.6)");
+    flare(g, w * 0.86, h * 0.565, w * 0.45, "255,244,200", 0.9);
+    flare(g, w * 0.14, h * 0.57, w * 0.12, "229,50,45", 0.8);
+    // the reflection
+    g.save();
+    g.globalAlpha = 0.18;
+    g.translate(0, h * 1.24);
+    g.scale(1, -1);
+    car(g, w * 0.12, h * 0.62, w * 0.76, "#111", "rgba(249,254,2,.4)");
+    g.restore();
+    grain(g, w, h, 0.05);
+    vignette(g, w, h);
+  },
+  // brand film: a figure backlit in haze, an anamorphic flare across the frame
+  brand: (g, w, h) => {
+    g.fillStyle = "#0a0907";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.62, h * 0.36, w * 0.9, "rgba(255,226,150,.38)");
+    flare(g, w * 0.62, h * 0.36, w * 0.7, "180,210,255", 0.55);
+    person(g, w * 0.42, h * 0.92, h * 0.75, "#060504");
+    grain(g, w, h, 0.06);
+    vignette(g, w, h, 0.8);
+    label(g, w, h, "BRAND FILM");
+  },
+  // BTS: the camera on a dolly, the crew in silhouette against a softbox
+  bts: (g, w, h) => {
+    g.fillStyle = "#0b0b0b";
+    g.fillRect(0, 0, w, h);
+    softbox(g, w * 0.55, h * 0.12, w * 0.36, h * 0.2);
+    g.fillStyle = "#1a1a1a";
+    g.fillRect(0, h * 0.83, w, 4);
+    g.fillRect(0, h * 0.86, w, 4);
+    g.fillStyle = "#070707";
+    g.fillRect(w * 0.18, h * 0.6, w * 0.22, h * 0.1);
+    g.fillRect(w * 0.27, h * 0.7, w * 0.04, h * 0.13);
+    g.fillRect(w * 0.36, h * 0.62, w * 0.1, h * 0.05);
+    person(g, w * 0.66, h * 0.98, h * 0.5, "#070707");
+    person(g, w * 0.86, h * 1.02, h * 0.42, "#090909");
+    g.fillStyle = "#e5322d";
+    g.beginPath();
+    g.arc(w * 0.22, h * 0.63, 4, 0, Math.PI * 2);
+    g.fill();
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "BTS · DAY 03");
+  },
+  // a product commercial: one bottle on a plinth, rim-lit
+  product: (g, w, h) => {
+    const bg = g.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, "#141310");
+    bg.addColorStop(1, "#050505");
+    g.fillStyle = bg;
+    g.fillRect(0, 0, w, h);
+    glow(g, w / 2, h * 0.42, w * 0.55, "rgba(249,254,2,.2)");
+    g.fillStyle = "#0d0d0d";
+    g.fillRect(w * 0.28, h * 0.72, w * 0.44, h * 0.3);
+    g.fillStyle = "rgba(238,235,227,.08)";
+    g.fillRect(w * 0.28, h * 0.72, w * 0.44, 3);
+    g.fillStyle = "#050505";
+    g.beginPath();
+    g.roundRect(w * 0.4, h * 0.34, w * 0.2, h * 0.38, 18);
+    g.fill();
+    g.fillRect(w * 0.46, h * 0.26, w * 0.08, h * 0.1);
+    g.strokeStyle = "rgba(249,254,2,.85)";
+    g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(w * 0.602, h * 0.37);
+    g.lineTo(w * 0.602, h * 0.7);
+    g.stroke();
+    g.strokeStyle = "rgba(238,235,227,.5)";
+    g.beginPath();
+    g.moveTo(w * 0.398, h * 0.37);
+    g.lineTo(w * 0.398, h * 0.7);
+    g.stroke();
+    grain(g, w, h, 0.04);
+    vignette(g, w, h);
+    label(g, w, h, "COMMERCIAL");
+  },
+  // aerial: a road from above at night, light trails
+  aerial: (g, w, h) => {
+    g.fillStyle = "#070707";
+    g.fillRect(0, 0, w, h);
+    g.save();
+    g.translate(w / 2, h / 2);
+    g.rotate(-0.5);
+    g.fillStyle = "#121212";
+    g.fillRect(-w * 0.16, -h, w * 0.32, h * 2);
+    for (const [x, c] of [[-0.08, "249,254,2"], [-0.04, "255,240,200"], [0.05, "229,50,45"], [0.09, "229,50,45"]] as [number, string][]) {
+      const lg = g.createLinearGradient(0, -h, 0, h);
+      lg.addColorStop(0, `rgba(${c},0)`);
+      lg.addColorStop(0.5, `rgba(${c},.85)`);
+      lg.addColorStop(1, `rgba(${c},0)`);
+      g.fillStyle = lg;
+      g.fillRect(x * w, -h, 2.5, h * 2);
+    }
+    g.restore();
+    for (let i = 0; i < 40; i++) {
+      g.fillStyle = `rgba(255,${200 + (i % 3) * 20},120,${0.2 + (i % 5) * 0.08})`;
+      g.fillRect(((i * 97) % w), ((i * 61) % h), 2, 2);
+    }
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "AERIAL · NIGHT");
+  },
+  // a portrait, rim-lit from behind
+  portrait: (g, w, h) => {
+    g.fillStyle = "#080808";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.85, h * 0.3, w * 0.8, "rgba(249,254,2,.22)");
+    person(g, w * 0.5, h * 1.02, h * 0.8, "#0d0c0a");
+    g.strokeStyle = "rgba(249,254,2,.75)";
+    g.lineWidth = 3;
+    g.beginPath();
+    g.arc(w * 0.5, h * 1.02 - h * 0.8 * 0.62, h * 0.8 * 0.2, -1.2, 0.6);
+    g.stroke();
+    grain(g, w, h, 0.06);
+    vignette(g, w, h);
+    label(g, w, h, "MEET THE DOP");
+  },
+  // the grade: before / after, split down the middle
+  grade: (g, w, h) => {
+    STILLS.night(g, w, h);
+    g.save();
+    g.beginPath();
+    g.rect(0, 0, w * 0.5, h);
+    g.clip();
+    g.fillStyle = "rgba(120,120,120,.55)";
+    g.globalCompositeOperation = "saturation";
+    g.fillRect(0, 0, w, h);
+    g.globalCompositeOperation = "source-over";
+    g.fillStyle = "rgba(90,90,95,.35)";
+    g.fillRect(0, 0, w * 0.5, h);
+    g.restore();
+    g.fillStyle = Y;
+    g.fillRect(w * 0.5 - 1, 0, 2, h);
+    text(g, "LOG", 18, 34, 15, BONE, 500, MONO);
+    text(g, "GRADED", w - 18, 34, 15, Y, 500, MONO, "right");
+  },
+  // the director at the monitor, the image glowing back at them
+  director: (g, w, h) => {
+    g.fillStyle = "#090909";
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = "#151515";
+    g.fillRect(w * 0.12, h * 0.22, w * 0.5, h * 0.3);
+    const scr = g.createLinearGradient(w * 0.14, 0, w * 0.6, 0);
+    scr.addColorStop(0, "#1a1606");
+    scr.addColorStop(1, "#5a5410");
+    g.fillStyle = scr;
+    g.fillRect(w * 0.14, h * 0.24, w * 0.46, h * 0.26);
+    glow(g, w * 0.4, h * 0.38, w * 0.6, "rgba(249,254,2,.12)");
+    person(g, w * 0.74, h * 0.98, h * 0.55, "#050505");
+    g.fillStyle = "#050505";
+    g.fillRect(w * 0.34, h * 0.52, 6, h * 0.48);
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "DIRECTOR'S MONITOR");
+  },
+  // a slate in the dark, a beam of light
+  slate: (g, w, h) => {
+    g.fillStyle = "#070707";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.5, h * 0.2, w * 0.8, "rgba(238,235,227,.12)");
+    g.save();
+    g.translate(w * 0.5, h * 0.58);
+    g.rotate(-0.12);
+    g.fillStyle = "#121212";
+    g.fillRect(-w * 0.34, -h * 0.1, w * 0.68, h * 0.26);
+    g.fillStyle = "#e9e5dc";
+    for (let i = 0; i < 6; i++) {
+      g.save();
+      g.translate(-w * 0.34 + i * w * 0.12, -h * 0.16);
+      g.transform(1, 0, -0.5, 1, 0, 0);
+      g.fillRect(w * 0.06, 0, w * 0.06, h * 0.06);
+      g.restore();
+    }
+    text(g, "BUZZLAB", -w * 0.3, -h * 0.02, 20, BONE, 800);
+    text(g, "SC 12  TK 37", -w * 0.3, h * 0.08, 18, Y, 500, MONO);
+    g.restore();
+    grain(g, w, h);
+    vignette(g, w, h);
+  },
+  // yellow tubes in a black studio
+  neon: (g, w, h) => {
+    g.fillStyle = "#050505";
+    g.fillRect(0, 0, w, h);
+    for (const [x, y, len, a] of [[0.22, 0.18, 0.62, 0.15], [0.62, 0.3, 0.5, -0.2], [0.78, 0.1, 0.7, 0.05]] as number[][]) {
+      g.save();
+      g.translate(w * x, h * y);
+      g.rotate(a);
+      g.shadowColor = "rgba(249,254,2,.9)";
+      g.shadowBlur = 28;
+      g.fillStyle = "#fbff7a";
+      g.fillRect(-4, 0, 8, h * len);
+      g.restore();
+    }
+    person(g, w * 0.48, h * 0.98, h * 0.42, "#020202");
+    grain(g, w, h);
+    vignette(g, w, h, 0.6);
+    label(g, w, h, "SET DESIGN");
+  },
+  // the edit bay: a timeline glowing in the dark
+  edit: (g, w, h) => {
+    g.fillStyle = "#070707";
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = "#101010";
+    g.fillRect(w * 0.06, h * 0.2, w * 0.88, h * 0.5);
+    for (let t = 0; t < 4; t++) {
+      let x = w * 0.08;
+      let k = 0;
+      while (x < w * 0.9) {
+        const len = 20 + ((t * 13 + k * 29) % 60);
+        g.fillStyle = t === 1 && k % 3 === 1 ? Y : t < 2 ? "#cfcbc2" : "#3a3a3a";
+        g.fillRect(x, h * (0.44 + t * 0.055), len - 3, h * 0.04);
+        x += len;
+        k++;
+      }
+    }
+    g.fillStyle = Y;
+    g.fillRect(w * 0.52, h * 0.24, 2, h * 0.44);
+    glow(g, w / 2, h * 0.45, w * 0.7, "rgba(249,254,2,.08)");
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "THE EDIT · V07");
+  },
+  // a lens, the set reflected in its glass
+  lens: (g, w, h) => {
+    g.fillStyle = "#060606";
+    g.fillRect(0, 0, w, h);
+    const cx = w * 0.5;
+    const cy = h * 0.48;
+    const r = Math.min(w, h) * 0.36;
+    g.fillStyle = "#111";
+    g.beginPath();
+    g.arc(cx, cy, r, 0, Math.PI * 2);
+    g.fill();
+    const glass = g.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.05, cx, cy, r * 0.8);
+    glass.addColorStop(0, "rgba(120,150,255,.5)");
+    glass.addColorStop(0.4, "rgba(40,30,80,.6)");
+    glass.addColorStop(0.75, "rgba(249,254,2,.25)");
+    glass.addColorStop(1, "rgba(0,0,0,.9)");
+    g.fillStyle = glass;
+    g.beginPath();
+    g.arc(cx, cy, r * 0.8, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = "#2a2a2a";
+    g.lineWidth = 6;
+    g.beginPath();
+    g.arc(cx, cy, r * 0.9, 0, Math.PI * 2);
+    g.stroke();
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "35MM · T1.5");
+  },
+  // a podcast set: two chairs, two mics, a key light
+  pod: (g, w, h) => {
+    g.fillStyle = "#0a0908";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.5, h * 0.3, w * 0.7, "rgba(255,210,140,.16)");
+    for (const x of [0.28, 0.72]) {
+      g.fillStyle = "#050505";
+      g.beginPath();
+      g.roundRect(w * x - w * 0.12, h * 0.55, w * 0.24, h * 0.22, 12);
+      g.fill();
+      g.strokeStyle = "#2a2a2a";
+      g.lineWidth = 4;
+      g.beginPath();
+      g.moveTo(w * 0.5, h * 0.4);
+      g.lineTo(w * x, h * 0.48);
+      g.stroke();
+      g.fillStyle = Y;
+      g.beginPath();
+      g.roundRect(w * x - 6, h * 0.46, 12, 22, 6);
+      g.fill();
+    }
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "THE BUZZLAB PODCAST");
+  },
+};
+
 // ---------------------------------------------------------------------------------------------
 // raw footage (16:9) for the program monitor: no titles, just pictures and a timecode
 // ---------------------------------------------------------------------------------------------
@@ -85,52 +449,62 @@ export function footageTextures() {
     text(g, code, w - 22, h - 22, 18, "rgba(238,235,227,.75)", 500, MONO, "right");
   };
   const f = [
-    // the set, wide: a softbox, the talent, a camera on sticks
+    // the car on the cyc under a big softbox: the wide
     canvas(640, 360, (g, w, h) => {
-      g.fillStyle = "#0c0c0c";
+      g.fillStyle = "#0e0e0e";
       g.fillRect(0, 0, w, h);
-      softbox(g, 70, 60, 120, 90);
-      person(g, w * 0.55, h * 0.78, 230, "#050505");
-      g.fillStyle = "#151515";
-      g.fillRect(w * 0.78, h * 0.36, 70, 46);
-      g.fillRect(w * 0.83, h * 0.48, 6, h * 0.5);
+      softbox(g, w * 0.32, 22, w * 0.36, 60);
+      glow(g, w / 2, h * 0.6, w * 0.6, "rgba(238,235,227,.08)");
+      wetFloor(g, w, h, h * 0.72);
+      car(g, w * 0.16, h * 0.78, w * 0.68, "#0a0a0a", "rgba(238,235,227,.7)");
       grain(g, w, h);
       tc(g, w, h, "A001_C004", "01:04:12:08");
     }),
-    // the close-up, rim-lit in yellow
+    // the headlight, close, an anamorphic streak
     canvas(640, 360, (g, w, h) => {
-      g.fillStyle = "#070707";
+      g.fillStyle = "#050505";
       g.fillRect(0, 0, w, h);
-      glow(g, w * 0.7, h * 0.4, 260, "rgba(249,254,2,.35)");
-      person(g, w * 0.5, h * 1.08, 520, "#030303");
-      g.strokeStyle = "rgba(249,254,2,.7)";
-      g.lineWidth = 3;
+      g.fillStyle = "#101010";
       g.beginPath();
-      g.arc(w * 0.5, h * 1.08 - 520 * 0.62, 520 * 0.2, -1.1, 0.4);
-      g.stroke();
+      g.ellipse(w * 0.5, h * 0.5, w * 0.36, h * 0.18, -0.08, 0, Math.PI * 2);
+      g.fill();
+      flare(g, w * 0.46, h * 0.5, w * 0.6, "255,244,200", 0.95);
+      flare(g, w * 0.6, h * 0.48, w * 0.3, "249,254,2", 0.6);
       grain(g, w, h);
+      vignette(g, w, h);
       tc(g, w, h, "A002_C011", "01:09:47:21");
     }),
     // the crew between takes
     canvas(640, 360, (g, w, h) => {
-      g.fillStyle = "#101010";
-      g.fillRect(0, 0, w, h);
-      glow(g, w * 0.5, h * 0.2, 300, "rgba(238,235,227,.14)");
-      for (let i = 0; i < 5; i++) person(g, 90 + i * 115, h * 0.86 + (i % 2) * 14, 170, i === 2 ? "#d9d400" : "#1c1c1c");
-      grain(g, w, h);
+      STILLS.bts(g, w, h);
       tc(g, w, h, "B001_C002", "01:15:03:02");
     }),
-    // the hero frame: the light behind him, the shot the edit was looking for
+    // the hero frame: the car at night, the light trails behind it
     canvas(640, 360, (g, w, h) => {
-      g.fillStyle = "#0d0d0d";
-      g.fillRect(0, 0, w, h);
-      glow(g, w * 0.5, h * 0.42, 300, "rgba(249,254,2,.5)");
-      person(g, w * 0.5, h * 0.92, 300, "#050505");
-      grain(g, w, h);
+      STILLS.night(g, w, h);
       tc(g, w, h, "A003_C017", "01:22:30:16");
     }),
   ];
   return f.map(texOf);
+}
+
+/** the finished Reel (9:16): the night run, graded, with a quiet title */
+export function heroReel() {
+  return texOf(
+    canvas(540, 960, (g, w, h) => {
+      g.fillStyle = "#050505";
+      g.fillRect(0, 0, w, h);
+      STILLS.night(g, w, h);
+      const top = g.createLinearGradient(0, 0, 0, h * 0.3);
+      top.addColorStop(0, "rgba(0,0,0,.7)");
+      top.addColorStop(1, "rgba(0,0,0,0)");
+      g.fillStyle = top;
+      g.fillRect(0, 0, w, h * 0.3);
+      text(g, "NIGHT RUN", 34, 132, 76, BONE);
+      text(g, "A BUZZLAB FILM", 36, 170, 20, Y, 500, MONO);
+      grain(g, w, h, 0.04);
+    }),
+  );
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -289,7 +663,7 @@ const extraTiles: Record<string, Painter> = {
  * The page: header (name, bio, highlights) and a 3-column grid. `T` are the machine's content
  * textures; the hero cell is left dark — the selected post is a live mesh laid over it.
  */
-export function profileTexture(T: Record<string, THREE.CanvasTexture>) {
+export function profileTexture(T: Record<string, THREE.CanvasTexture>, hero?: HTMLCanvasElement) {
   const P = PROFILE;
   const c = canvas(P.cw, PROFILE_H, (g, w) => {
     g.fillStyle = "#000";
@@ -311,11 +685,11 @@ export function profileTexture(T: Record<string, THREE.CanvasTexture>) {
     g.arc(ax, ay, 30, 0, Math.PI * 2);
     g.fill();
     text(g, "BuzzLab", 240, 268, 44, "#fff", 800, SANS);
-    text(g, "Creative studio · Media", 240, 312, 26, "rgba(255,255,255,.55)", 500, SANS);
-    text(g, "Original formats, every week", 240, 350, 26, "rgba(255,255,255,.55)", 500, SANS);
+    text(g, "Creative agency · Production · Media", 240, 312, 26, "rgba(255,255,255,.55)", 500, SANS);
+    text(g, "Films, campaigns and the people who make them", 240, 350, 26, "rgba(255,255,255,.55)", 500, SANS);
     // bio
     text(g, "We make things worth noticing.", 40, 440, 30, "#fff", 600, SANS);
-    text(g, "Originals · BTS · People · Campaigns · Experiments", 40, 484, 26, "rgba(255,255,255,.8)", 500, SANS);
+    text(g, "Brand films · Automotive · Commercials · BTS · Originals", 40, 484, 26, "rgba(255,255,255,.8)", 500, SANS);
     text(g, "▶  New every Friday: Who's Behind the Camera?", 40, 528, 26, Y, 600, SANS);
     // buttons
     const btn = (x: number, bw: number, label: string, bg: string, fg: string) => {
@@ -329,7 +703,7 @@ export function profileTexture(T: Record<string, THREE.CanvasTexture>) {
     btn(446, 330, "Message", "#262626", "#fff");
     btn(792, 68, "▾", "#262626", "#fff");
     // highlights
-    ["BTS", "PEOPLE", "FORMATS", "SETS", "LAB"].forEach((l, i) => {
+    ["FILMS", "BTS", "PEOPLE", "SETS", "LAB"].forEach((l, i) => {
       const x = 92 + i * 180;
       g.strokeStyle = "rgba(255,255,255,.35)";
       g.lineWidth = 3;
@@ -364,14 +738,14 @@ export function profileTexture(T: Record<string, THREE.CanvasTexture>) {
     // the grid
     const img = (k: string) => (T[k].image as HTMLCanvasElement);
     const cells: (string | null)[] = [
-      "reelHero", "bts", "reelCrowd",
-      "postPortrait", "reelTimer", "campaign",
-      "thumb", "experiment", "people",
-      "format", null, "meme",
-      "clap", "story", "set",
-      "script", "storyboard", "ad",
+      "heroReel", "bts", "brand",
+      "night", "product", "campaign",
+      "aerial", "portrait", "grade",
+      "director", null, "neon",
+      "slate", "edit", "lens",
+      "pod", "set", "experiment",
     ];
-    const reels = new Set(["reelHero", "reelCrowd", "reelTimer", "story", "people"]);
+    const reels = new Set(["heroReel", "brand", "night", "aerial", "edit", "bts"]);
     cells.forEach((k, i) => {
       const r = Math.floor(i / 3);
       const col = i % 3;
@@ -383,7 +757,11 @@ export function profileTexture(T: Record<string, THREE.CanvasTexture>) {
       g.clip();
       g.fillStyle = "#0a0a0a";
       g.fillRect(x, y, P.tileW, P.tileH);
-      if (k && T[k]) cover(g, img(k), x, y, P.tileW, P.tileH);
+      if (k === "heroReel" && hero) cover(g, hero, x, y, P.tileW, P.tileH);
+      else if (k && STILLS[k]) {
+        g.translate(x, y);
+        STILLS[k](g, P.tileW, P.tileH);
+      } else if (k && T[k]) cover(g, img(k), x, y, P.tileW, P.tileH);
       else if (k && extraTiles[k]) {
         g.translate(x, y);
         extraTiles[k](g, P.tileW, P.tileH);
