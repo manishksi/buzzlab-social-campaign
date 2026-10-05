@@ -257,7 +257,8 @@ export const machine = {
     { at: 0.4, rung: 1, line: "Then the edit finds it." },
     { at: 0.548, rung: 1, line: "One finished Reel." },
     { at: 0.578, rung: 2, line: "Posted." },
-    { at: 0.668, rung: 2, line: "This is what BuzzLab could look like." },
+    // the page speaks for itself
+    { at: 0.668, rung: 2, line: "" },
     { at: 0.756, rung: 2, line: "The post people stop for." },
   ],
   shotsEnd: 0.8,

@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { contentTextures, imperfections, reelUI, tileSet } from "./textures";
 import { cinemaCamera, directorsChair, mats, microphone, playButton, softbox, tile, timeline } from "./props";
-import { PHONE, PROFILE, PROFILE_H, cellAt, footageTextures, heroReel, phone, postedTag, profileBars, profileTexture } from "./feed";
+import { PHONE, PROFILE, PROFILE_H, cellAt, footageTextures, footageTiles, heroReel, phone, postedTag, profileBars, profileTexture } from "./feed";
 
 /**
  * THE CREATIVE MACHINE — a three.js world driven by one number, `w` (0 → 1), from scroll.
@@ -256,11 +256,12 @@ export class MachineScene {
     this.kit.push(this.soft.group, boom, chair);
 
     // footage leaving the camera for the edit
+    const shot = footageTiles();
     for (let i = 0; i < (this.low ? 8 : 14); i++) {
-      const d = set[(i + 3) % set.length];
+      const d = shot[i % shot.length];
       const t = tile(d.tex, d.w * 0.3, d.h * 0.3);
       s.add(t.group);
-      this.footage.push({ t: { ...t, w: d.w, h: d.h, kind: d.kind }, seed: i });
+      this.footage.push({ t: { ...t, w: d.w, h: d.h, kind: "Footage" }, seed: i });
     }
 
     // 03 · the edit: the timeline, and a program monitor riding the playhead
@@ -299,7 +300,7 @@ export class MachineScene {
     this.inPhone.group.position.z = 0.004;
     (this.inPhone.back.material as THREE.MeshBasicMaterial).transparent = true;
     this.phone.add(this.inPhone.group);
-    this.pageTex = profileTexture();
+    this.pageTex = profileTexture(T);
     this.pageTex.repeat.set(1, PROFILE.view / PROFILE_H);
     this.page = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), new THREE.MeshBasicMaterial({ map: this.pageTex, toneMapped: false, transparent: true, opacity: 0 }));
     this.page.position.z = 0.003;
@@ -558,7 +559,7 @@ export class MachineScene {
       lastCut = c;
     }
     // each cut changes the picture; the last stretch is the shot the edit was looking for
-    const shotIdx = run > 0.86 ? 3 : passed % 3;
+    const shotIdx = run > 0.86 ? this.shots.length - 1 : passed % (this.shots.length - 1);
     const shotMat = this.mon.shot.material as THREE.MeshBasicMaterial;
     if (shotMat.map !== this.shots[shotIdx]) shotMat.map = this.shots[shotIdx];
     (this.mon.flash.material as THREE.MeshBasicMaterial).opacity = run > 0 && run < 1 ? Math.max(0, 1 - (headX - lastCut) / 0.5) * 0.28 : 0;
@@ -614,7 +615,7 @@ export class MachineScene {
     this.bars.forEach((b) => ((b.material as THREE.MeshBasicMaterial).opacity = barsOn));
     this.page.visible = pageOn > 0.001;
     const hc = cellAt(PROFILE.hero.row, PROFILE.hero.col);
-    const stopAt = Math.min(hc.y - PROFILE.view / 2, PROFILE_H - PROFILE.view);
+    const stopAt = hc.y - PROFILE.view / 2;
     const sc = inv(0.684, 0.748, w);
     const scroll = stopAt * (sc * sc * sc * (sc * (sc * 6 - 15) + 10));
     this.pageTex.offset.y = 1 - this.pageTex.repeat.y - scroll / PROFILE_H;

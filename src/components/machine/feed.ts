@@ -3,13 +3,14 @@ import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.j
 import { BONE, INK, Y } from "./textures";
 
 /**
- * ACT 07's second half, from real pictures (public/assets/act07): BuzzLab's own footage on the
- * edit's program monitor, the phone the finished Reel is posted to, and the BuzzLab Instagram page
- * it lands on — the work it could be known for, with the post the page stops on.
+ * ACT 07's second half: the reference footage on the edit's program monitor and the finished
+ * Reel (public/assets/act07), the phone it is posted to, and the BuzzLab Instagram page it lands
+ * on — painted, a curated feed (originals, BTS, people, production, campaigns, experiments).
  */
 
 const DISPLAY = '"Big Shoulders Display", "Arial Narrow", sans-serif';
 const MONO = '"IBM Plex Mono", ui-monospace, monospace';
+const SERIF = '"Bodoni Moda", Georgia, serif';
 const SANS = '"Archivo", "Helvetica Neue", Arial, sans-serif';
 
 type Painter = (g: CanvasRenderingContext2D, w: number, h: number) => void;
@@ -36,11 +37,413 @@ function text(g: CanvasRenderingContext2D, s: string, x: number, y: number, size
   g.fillText(s, x, y);
 }
 
+function person(g: CanvasRenderingContext2D, x: number, y: number, s: number, color: string) {
+  g.fillStyle = color;
+  g.beginPath();
+  g.arc(x, y - s * 0.62, s * 0.2, 0, Math.PI * 2);
+  g.fill();
+  g.beginPath();
+  g.moveTo(x - s * 0.36, y + s * 0.4);
+  g.quadraticCurveTo(x - s * 0.34, y - s * 0.32, x, y - s * 0.36);
+  g.quadraticCurveTo(x + s * 0.34, y - s * 0.32, x + s * 0.36, y + s * 0.4);
+  g.closePath();
+  g.fill();
+}
+
+function grain(g: CanvasRenderingContext2D, w: number, h: number, a = 0.05) {
+  for (let i = 0; i < (w * h) / 110; i++) {
+    g.fillStyle = Math.random() > 0.5 ? `rgba(255,255,255,${a})` : `rgba(0,0,0,${a * 1.6})`;
+    g.fillRect(Math.random() * w, Math.random() * h, 1.4, 1.4);
+  }
+}
+
+function glow(g: CanvasRenderingContext2D, x: number, y: number, r: number, color: string) {
+  const gr = g.createRadialGradient(x, y, 0, x, y, r);
+  gr.addColorStop(0, color);
+  gr.addColorStop(1, "rgba(0,0,0,0)");
+  g.fillStyle = gr;
+  g.fillRect(x - r, y - r, r * 2, r * 2);
+}
+
+function softbox(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+  glow(g, x + w / 2, y + h / 2, Math.max(w, h) * 1.4, "rgba(238,235,227,.22)");
+  const lg = g.createLinearGradient(x, y, x, y + h);
+  lg.addColorStop(0, "#f4f1ea");
+  lg.addColorStop(1, "#c9c5bb");
+  g.fillStyle = lg;
+  g.fillRect(x, y, w, h);
+  g.fillStyle = "#222";
+  g.fillRect(x + w / 2 - 3, y + h, 6, h * 1.6);
+}
+
+
 // ---------------------------------------------------------------------------------------------
-// the pictures: BuzzLab's own footage in the edit, the work on the page
+// cinematic stills: agency / production / film work, painted (no stock): light, haze, a car,
+// a set, a lens — graded dark with BuzzLab yellow where the light is
+// ---------------------------------------------------------------------------------------------
+function vignette(g: CanvasRenderingContext2D, w: number, h: number, a = 0.75) {
+  const v = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.25, w / 2, h / 2, Math.max(w, h) * 0.75);
+  v.addColorStop(0, "rgba(0,0,0,0)");
+  v.addColorStop(1, `rgba(0,0,0,${a})`);
+  g.fillStyle = v;
+  g.fillRect(0, 0, w, h);
+}
+/** an anamorphic streak: a thin horizontal flare through a light */
+function flare(g: CanvasRenderingContext2D, x: number, y: number, len: number, rgb: string, a = 0.8) {
+  const lg = g.createLinearGradient(x - len, y, x + len, y);
+  lg.addColorStop(0, `rgba(${rgb},0)`);
+  lg.addColorStop(0.5, `rgba(${rgb},${a})`);
+  lg.addColorStop(1, `rgba(${rgb},0)`);
+  g.fillStyle = lg;
+  g.fillRect(x - len, y - 1.5, len * 2, 3);
+  glow(g, x, y, len * 0.18, `rgba(${rgb},${a * 0.9})`);
+}
+/** a car in profile facing right, length `L`, wheels on y */
+function car(g: CanvasRenderingContext2D, x: number, y: number, L: number, body: string, rim = "rgba(238,235,227,.5)") {
+  const P = (u: number, v: number): [number, number] => [x + u * L, y + v * L];
+  g.fillStyle = body;
+  g.beginPath();
+  g.moveTo(...P(0, -0.05));
+  g.lineTo(...P(0.01, -0.13));
+  g.bezierCurveTo(...P(0.05, -0.19), ...P(0.13, -0.2), ...P(0.22, -0.21));
+  g.bezierCurveTo(...P(0.32, -0.33), ...P(0.44, -0.37), ...P(0.56, -0.37));
+  g.bezierCurveTo(...P(0.66, -0.36), ...P(0.73, -0.3), ...P(0.79, -0.23));
+  g.bezierCurveTo(...P(0.9, -0.215), ...P(0.98, -0.19), ...P(1.0, -0.12));
+  g.lineTo(...P(1.0, -0.05));
+  g.closePath();
+  g.fill();
+  // the roof line catching the light
+  g.strokeStyle = rim;
+  g.lineWidth = Math.max(1, L * 0.006);
+  g.beginPath();
+  g.moveTo(...P(0.22, -0.21));
+  g.bezierCurveTo(...P(0.32, -0.33), ...P(0.44, -0.37), ...P(0.56, -0.37));
+  g.bezierCurveTo(...P(0.66, -0.36), ...P(0.73, -0.3), ...P(0.79, -0.23));
+  g.stroke();
+  for (const u of [0.2, 0.82]) {
+    const [cx, cy] = P(u, -0.045);
+    g.fillStyle = "#050505";
+    g.beginPath();
+    g.arc(cx, cy, L * 0.085, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = "rgba(160,160,160,.35)";
+    g.lineWidth = Math.max(1, L * 0.008);
+    g.beginPath();
+    g.arc(cx, cy, L * 0.055, 0, Math.PI * 2);
+    g.stroke();
+  }
+}
+function wetFloor(g: CanvasRenderingContext2D, w: number, h: number, y: number) {
+  const lg = g.createLinearGradient(0, y, 0, h);
+  lg.addColorStop(0, "#151515");
+  lg.addColorStop(1, "#050505");
+  g.fillStyle = lg;
+  g.fillRect(0, y, w, h - y);
+}
+function label(g: CanvasRenderingContext2D, w: number, h: number, s: string) {
+  text(g, s, 18, h - 18, 14, "rgba(238,235,227,.72)", 500, MONO);
+}
+
+export const STILLS: Record<string, Painter> = {
+  // automotive: the car on wet asphalt at night, yellow light trails behind it
+  night: (g, w, h) => {
+    g.fillStyle = "#060606";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.7, h * 0.42, w * 0.7, "rgba(249,254,2,.16)");
+    for (let i = 0; i < 6; i++) {
+      const y = h * (0.48 + i * 0.012);
+      const lg = g.createLinearGradient(0, y, w, y);
+      lg.addColorStop(0, "rgba(249,254,2,0)");
+      lg.addColorStop(0.6, `rgba(249,254,2,${0.5 - i * 0.07})`);
+      lg.addColorStop(1, "rgba(255,245,190,.9)");
+      g.fillStyle = lg;
+      g.fillRect(0, y, w, 2);
+    }
+    wetFloor(g, w, h, h * 0.62);
+    car(g, w * 0.12, h * 0.62, w * 0.76, "#0b0b0b", "rgba(249,254,2,.6)");
+    flare(g, w * 0.86, h * 0.565, w * 0.45, "255,244,200", 0.9);
+    flare(g, w * 0.14, h * 0.57, w * 0.12, "229,50,45", 0.8);
+    // the reflection
+    g.save();
+    g.globalAlpha = 0.18;
+    g.translate(0, h * 1.24);
+    g.scale(1, -1);
+    car(g, w * 0.12, h * 0.62, w * 0.76, "#111", "rgba(249,254,2,.4)");
+    g.restore();
+    grain(g, w, h, 0.05);
+    vignette(g, w, h);
+  },
+  // brand film: a figure backlit in haze, an anamorphic flare across the frame
+  brand: (g, w, h) => {
+    g.fillStyle = "#0a0907";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.62, h * 0.36, w * 0.9, "rgba(255,226,150,.38)");
+    flare(g, w * 0.62, h * 0.36, w * 0.7, "180,210,255", 0.55);
+    person(g, w * 0.42, h * 0.92, h * 0.75, "#060504");
+    grain(g, w, h, 0.06);
+    vignette(g, w, h, 0.8);
+    label(g, w, h, "BRAND FILM");
+  },
+  // BTS: the camera on a dolly, the crew in silhouette against a softbox
+  bts: (g, w, h) => {
+    g.fillStyle = "#0b0b0b";
+    g.fillRect(0, 0, w, h);
+    softbox(g, w * 0.55, h * 0.12, w * 0.36, h * 0.2);
+    g.fillStyle = "#1a1a1a";
+    g.fillRect(0, h * 0.83, w, 4);
+    g.fillRect(0, h * 0.86, w, 4);
+    g.fillStyle = "#070707";
+    g.fillRect(w * 0.18, h * 0.6, w * 0.22, h * 0.1);
+    g.fillRect(w * 0.27, h * 0.7, w * 0.04, h * 0.13);
+    g.fillRect(w * 0.36, h * 0.62, w * 0.1, h * 0.05);
+    person(g, w * 0.66, h * 0.98, h * 0.5, "#070707");
+    person(g, w * 0.86, h * 1.02, h * 0.42, "#090909");
+    g.fillStyle = "#e5322d";
+    g.beginPath();
+    g.arc(w * 0.22, h * 0.63, 4, 0, Math.PI * 2);
+    g.fill();
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "BTS · DAY 03");
+  },
+  // a product commercial: one bottle on a plinth, rim-lit
+  product: (g, w, h) => {
+    const bg = g.createLinearGradient(0, 0, 0, h);
+    bg.addColorStop(0, "#141310");
+    bg.addColorStop(1, "#050505");
+    g.fillStyle = bg;
+    g.fillRect(0, 0, w, h);
+    glow(g, w / 2, h * 0.42, w * 0.55, "rgba(249,254,2,.2)");
+    g.fillStyle = "#0d0d0d";
+    g.fillRect(w * 0.28, h * 0.72, w * 0.44, h * 0.3);
+    g.fillStyle = "rgba(238,235,227,.08)";
+    g.fillRect(w * 0.28, h * 0.72, w * 0.44, 3);
+    g.fillStyle = "#050505";
+    g.beginPath();
+    g.roundRect(w * 0.4, h * 0.34, w * 0.2, h * 0.38, 18);
+    g.fill();
+    g.fillRect(w * 0.46, h * 0.26, w * 0.08, h * 0.1);
+    g.strokeStyle = "rgba(249,254,2,.85)";
+    g.lineWidth = 3;
+    g.beginPath();
+    g.moveTo(w * 0.602, h * 0.37);
+    g.lineTo(w * 0.602, h * 0.7);
+    g.stroke();
+    g.strokeStyle = "rgba(238,235,227,.5)";
+    g.beginPath();
+    g.moveTo(w * 0.398, h * 0.37);
+    g.lineTo(w * 0.398, h * 0.7);
+    g.stroke();
+    grain(g, w, h, 0.04);
+    vignette(g, w, h);
+    label(g, w, h, "COMMERCIAL");
+  },
+  // aerial: a road from above at night, light trails
+  aerial: (g, w, h) => {
+    g.fillStyle = "#070707";
+    g.fillRect(0, 0, w, h);
+    g.save();
+    g.translate(w / 2, h / 2);
+    g.rotate(-0.5);
+    g.fillStyle = "#121212";
+    g.fillRect(-w * 0.16, -h, w * 0.32, h * 2);
+    for (const [x, c] of [[-0.08, "249,254,2"], [-0.04, "255,240,200"], [0.05, "229,50,45"], [0.09, "229,50,45"]] as [number, string][]) {
+      const lg = g.createLinearGradient(0, -h, 0, h);
+      lg.addColorStop(0, `rgba(${c},0)`);
+      lg.addColorStop(0.5, `rgba(${c},.85)`);
+      lg.addColorStop(1, `rgba(${c},0)`);
+      g.fillStyle = lg;
+      g.fillRect(x * w, -h, 2.5, h * 2);
+    }
+    g.restore();
+    for (let i = 0; i < 40; i++) {
+      g.fillStyle = `rgba(255,${200 + (i % 3) * 20},120,${0.2 + (i % 5) * 0.08})`;
+      g.fillRect(((i * 97) % w), ((i * 61) % h), 2, 2);
+    }
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "AERIAL · NIGHT");
+  },
+  // a portrait, rim-lit from behind
+  portrait: (g, w, h) => {
+    g.fillStyle = "#080808";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.85, h * 0.3, w * 0.8, "rgba(249,254,2,.22)");
+    person(g, w * 0.5, h * 1.02, h * 0.8, "#0d0c0a");
+    g.strokeStyle = "rgba(249,254,2,.75)";
+    g.lineWidth = 3;
+    g.beginPath();
+    g.arc(w * 0.5, h * 1.02 - h * 0.8 * 0.62, h * 0.8 * 0.2, -1.2, 0.6);
+    g.stroke();
+    grain(g, w, h, 0.06);
+    vignette(g, w, h);
+    label(g, w, h, "MEET THE DOP");
+  },
+  // the grade: before / after, split down the middle
+  grade: (g, w, h) => {
+    STILLS.night(g, w, h);
+    g.save();
+    g.beginPath();
+    g.rect(0, 0, w * 0.5, h);
+    g.clip();
+    g.fillStyle = "rgba(120,120,120,.55)";
+    g.globalCompositeOperation = "saturation";
+    g.fillRect(0, 0, w, h);
+    g.globalCompositeOperation = "source-over";
+    g.fillStyle = "rgba(90,90,95,.35)";
+    g.fillRect(0, 0, w * 0.5, h);
+    g.restore();
+    g.fillStyle = Y;
+    g.fillRect(w * 0.5 - 1, 0, 2, h);
+    text(g, "LOG", 18, 34, 15, BONE, 500, MONO);
+    text(g, "GRADED", w - 18, 34, 15, Y, 500, MONO, "right");
+  },
+  // the director at the monitor, the image glowing back at them
+  director: (g, w, h) => {
+    g.fillStyle = "#090909";
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = "#151515";
+    g.fillRect(w * 0.12, h * 0.22, w * 0.5, h * 0.3);
+    const scr = g.createLinearGradient(w * 0.14, 0, w * 0.6, 0);
+    scr.addColorStop(0, "#1a1606");
+    scr.addColorStop(1, "#5a5410");
+    g.fillStyle = scr;
+    g.fillRect(w * 0.14, h * 0.24, w * 0.46, h * 0.26);
+    glow(g, w * 0.4, h * 0.38, w * 0.6, "rgba(249,254,2,.12)");
+    person(g, w * 0.74, h * 0.98, h * 0.55, "#050505");
+    g.fillStyle = "#050505";
+    g.fillRect(w * 0.34, h * 0.52, 6, h * 0.48);
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "DIRECTOR'S MONITOR");
+  },
+  // a slate in the dark, a beam of light
+  slate: (g, w, h) => {
+    g.fillStyle = "#070707";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.5, h * 0.2, w * 0.8, "rgba(238,235,227,.12)");
+    g.save();
+    g.translate(w * 0.5, h * 0.58);
+    g.rotate(-0.12);
+    g.fillStyle = "#121212";
+    g.fillRect(-w * 0.34, -h * 0.1, w * 0.68, h * 0.26);
+    g.fillStyle = "#e9e5dc";
+    for (let i = 0; i < 6; i++) {
+      g.save();
+      g.translate(-w * 0.34 + i * w * 0.12, -h * 0.16);
+      g.transform(1, 0, -0.5, 1, 0, 0);
+      g.fillRect(w * 0.06, 0, w * 0.06, h * 0.06);
+      g.restore();
+    }
+    text(g, "BUZZLAB", -w * 0.3, -h * 0.02, 20, BONE, 800);
+    text(g, "SC 12  TK 37", -w * 0.3, h * 0.08, 18, Y, 500, MONO);
+    g.restore();
+    grain(g, w, h);
+    vignette(g, w, h);
+  },
+  // yellow tubes in a black studio
+  neon: (g, w, h) => {
+    g.fillStyle = "#050505";
+    g.fillRect(0, 0, w, h);
+    for (const [x, y, len, a] of [[0.22, 0.18, 0.62, 0.15], [0.62, 0.3, 0.5, -0.2], [0.78, 0.1, 0.7, 0.05]] as number[][]) {
+      g.save();
+      g.translate(w * x, h * y);
+      g.rotate(a);
+      g.shadowColor = "rgba(249,254,2,.9)";
+      g.shadowBlur = 28;
+      g.fillStyle = "#fbff7a";
+      g.fillRect(-4, 0, 8, h * len);
+      g.restore();
+    }
+    person(g, w * 0.48, h * 0.98, h * 0.42, "#020202");
+    grain(g, w, h);
+    vignette(g, w, h, 0.6);
+    label(g, w, h, "SET DESIGN");
+  },
+  // the edit bay: a timeline glowing in the dark
+  edit: (g, w, h) => {
+    g.fillStyle = "#070707";
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = "#101010";
+    g.fillRect(w * 0.06, h * 0.2, w * 0.88, h * 0.5);
+    for (let t = 0; t < 4; t++) {
+      let x = w * 0.08;
+      let k = 0;
+      while (x < w * 0.9) {
+        const len = 20 + ((t * 13 + k * 29) % 60);
+        g.fillStyle = t === 1 && k % 3 === 1 ? Y : t < 2 ? "#cfcbc2" : "#3a3a3a";
+        g.fillRect(x, h * (0.44 + t * 0.055), len - 3, h * 0.04);
+        x += len;
+        k++;
+      }
+    }
+    g.fillStyle = Y;
+    g.fillRect(w * 0.52, h * 0.24, 2, h * 0.44);
+    glow(g, w / 2, h * 0.45, w * 0.7, "rgba(249,254,2,.08)");
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "THE EDIT · V07");
+  },
+  // a lens, the set reflected in its glass
+  lens: (g, w, h) => {
+    g.fillStyle = "#060606";
+    g.fillRect(0, 0, w, h);
+    const cx = w * 0.5;
+    const cy = h * 0.48;
+    const r = Math.min(w, h) * 0.36;
+    g.fillStyle = "#111";
+    g.beginPath();
+    g.arc(cx, cy, r, 0, Math.PI * 2);
+    g.fill();
+    const glass = g.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.05, cx, cy, r * 0.8);
+    glass.addColorStop(0, "rgba(120,150,255,.5)");
+    glass.addColorStop(0.4, "rgba(40,30,80,.6)");
+    glass.addColorStop(0.75, "rgba(249,254,2,.25)");
+    glass.addColorStop(1, "rgba(0,0,0,.9)");
+    g.fillStyle = glass;
+    g.beginPath();
+    g.arc(cx, cy, r * 0.8, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = "#2a2a2a";
+    g.lineWidth = 6;
+    g.beginPath();
+    g.arc(cx, cy, r * 0.9, 0, Math.PI * 2);
+    g.stroke();
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "35MM · T1.5");
+  },
+  // a podcast set: two chairs, two mics, a key light
+  pod: (g, w, h) => {
+    g.fillStyle = "#0a0908";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.5, h * 0.3, w * 0.7, "rgba(255,210,140,.16)");
+    for (const x of [0.28, 0.72]) {
+      g.fillStyle = "#050505";
+      g.beginPath();
+      g.roundRect(w * x - w * 0.12, h * 0.55, w * 0.24, h * 0.22, 12);
+      g.fill();
+      g.strokeStyle = "#2a2a2a";
+      g.lineWidth = 4;
+      g.beginPath();
+      g.moveTo(w * 0.5, h * 0.4);
+      g.lineTo(w * x, h * 0.48);
+      g.stroke();
+      g.fillStyle = Y;
+      g.beginPath();
+      g.roundRect(w * x - 6, h * 0.46, 12, 22, 6);
+      g.fill();
+    }
+    grain(g, w, h);
+    vignette(g, w, h);
+    label(g, w, h, "THE BUZZLAB PODCAST");
+  },
+};
+
+// ---------------------------------------------------------------------------------------------
+// the edit's footage: the reference pictures (public/assets/act07), loaded once
 // ---------------------------------------------------------------------------------------------
 const pics = new Map<string, Promise<HTMLImageElement>>();
-/** a picture from /public, fetched once however many textures paint it */
 function pic(src: string) {
   let p = pics.get(src);
   if (!p) {
@@ -56,52 +459,57 @@ function pic(src: string) {
   return p;
 }
 
-/** a canvas texture that is dark until its pictures arrive, then painted with them */
-function picTex(w: number, h: number, srcs: string[], paint: (g: CanvasRenderingContext2D, w: number, h: number, imgs: HTMLImageElement[]) => void) {
+/** a canvas texture that is dark until its picture arrives, then painted with it */
+function picTex(w: number, h: number, src: string, paint: (g: CanvasRenderingContext2D, w: number, h: number, img: HTMLImageElement) => void) {
   const c = canvas(w, h, (g) => {
     g.fillStyle = "#050505";
     g.fillRect(0, 0, w, h);
   });
   const t = texOf(c);
-  Promise.all(srcs.map(pic))
-    .then((imgs) => {
-      paint(c.getContext("2d")!, w, h, imgs);
+  pic(src)
+    .then((img) => {
+      paint(c.getContext("2d")!, w, h, img);
       t.needsUpdate = true;
     })
     .catch(() => {});
   return t;
 }
 
-/** the edit: three frames of "The creative mind" (Phase 01, video 02), then the frame its Reel opens on */
-const REEL = "/assets/act07/reel.jpg";
-const CUTS = ["/assets/act07/cut-1.jpg", "/assets/act07/cut-2.jpg", "/assets/act07/cut-3.jpg", REEL];
+/** the finished Reel, and the footage the edit cuts through on its way there (with each one's shape) */
+const REEL = "/assets/act07/post-02.jpg";
+const FOOTAGE: [string, number][] = [
+  ["/assets/act07/post-07.jpg", 735 / 919],
+  ["/assets/act07/post-04.jpg", 736 / 946],
+  ["/assets/act07/post-06.jpg", 736 / 1308],
+  ["/assets/act07/post-01.jpg", 1200 / 1500],
+  ["/assets/act07/post-05.jpg", 736 / 1308],
+  ["/assets/act07/post-03.jpg", 736 / 920],
+  ["/assets/act07/post-08.jpg", 736 / 1308],
+];
 
-// ---------------------------------------------------------------------------------------------
-// the program monitor (16:9): the vertical footage as the editor sees it, pillarboxed, timecoded
-// ---------------------------------------------------------------------------------------------
+/** the program monitor (16:9): the vertical footage as the editor sees it, pillarboxed, timecoded */
 export function footageTextures() {
-  const codes = [
-    ["A001_C004", "01:04:12:08"],
-    ["A002_C011", "01:09:47:21"],
-    ["B001_C002", "01:15:03:02"],
-    ["A003_C017", "01:22:30:16"],
-  ];
-  return CUTS.map((src, i) =>
-    picTex(640, 360, [src], (g, w, h, [img]) => {
+  return [...FOOTAGE.map(([src]) => src), REEL].map((src, i) =>
+    picTex(640, 360, src, (g, w, h, img) => {
       const fw = (h * img.width) / img.height;
       g.drawImage(img, (w - fw) / 2, 0, fw, h);
       g.strokeStyle = "rgba(238,235,227,.16)";
       g.lineWidth = 1;
       g.strokeRect((w - fw) / 2 + 0.5, 0.5, fw - 1, h - 1);
-      text(g, codes[i][0], 22, h - 22, 18, "rgba(238,235,227,.75)", 500, MONO);
-      text(g, codes[i][1], w - 22, h - 22, 18, "rgba(238,235,227,.75)", 500, MONO, "right");
+      text(g, `A00${(i % 3) + 1}_C0${String(4 + i * 3).padStart(2, "0")}`, 22, h - 22, 18, "rgba(238,235,227,.75)", 500, MONO);
+      text(g, `01:${String(4 + i * 3).padStart(2, "0")}:${String((i * 17) % 60).padStart(2, "0")}:${String((i * 7) % 24).padStart(2, "0")}`, w - 22, h - 22, 18, "rgba(238,235,227,.75)", 500, MONO, "right");
     }),
   );
 }
 
+/** the same footage as cards, for the clips that fly out of the camera onto the timeline */
+export function footageTiles() {
+  return FOOTAGE.map(([src, a]) => ({ tex: picTex(360, Math.round(360 / a), src, (g, w, h, img) => cover(g, img, 0, 0, w, h)), w: a >= 0.7 ? 1.2 : 0.9, h: a >= 0.7 ? 1.2 / a : 1.6 }));
+}
+
 /** the finished Reel (9:16) */
 export function heroReel() {
-  return picTex(540, 960, [REEL], (g, w, h, [img]) => cover(g, img, 0, 0, w, h));
+  return picTex(540, 960, REEL, (g, w, h, img) => cover(g, img, 0, 0, w, h));
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -128,7 +536,7 @@ export function phone() {
 // the future BuzzLab Instagram page
 // ---------------------------------------------------------------------------------------------
 /** canvas layout of the scrolling page (px; the page is 900 wide, the screen shows 1950 of it) */
-export const PROFILE = { cw: 900, view: 1950, header: 980, cell: 301, tileW: 298, tileH: 398, rows: 4, hero: { row: 2, col: 1 } };
+export const PROFILE = { cw: 900, view: 1950, header: 980, cell: 301, tileW: 298, tileH: 398, rows: 6, hero: { row: 3, col: 1 } };
 export const PROFILE_H = PROFILE.header + PROFILE.rows * (PROFILE.tileH + 3);
 
 /** where a grid cell sits in the page (px, centre) */
@@ -153,19 +561,114 @@ function reelMark(g: CanvasRenderingContext2D, x: number, y: number) {
   g.fill();
 }
 
-/**
- * The page: header (name, bio, highlights) and a 3-column grid of real work, newest first: the
- * Reel just posted, eight posts, and the Phase 01 videos at the bottom. The post the page stops
- * on (row 2, the middle: the yellow world) is a post of its own — a live mesh laid over its cell.
- */
-const GRID = [
-  REEL, "/assets/act07/post-01.jpg", "/assets/act07/post-02.jpg",
-  "/assets/act07/post-03.jpg", "/assets/act07/post-04.jpg", "/assets/act07/post-05.jpg",
-  "/assets/act07/post-06.jpg", null, "/assets/act07/post-07.jpg",
-  "/assets/act07/post-08.jpg", "/assets/video/phase01-03.jpg", "/assets/video/phase01-04.jpg",
-];
+const extraTiles: Record<string, Painter> = {
+  bts: (g, w, h) => {
+    g.fillStyle = "#0b0b0b";
+    g.fillRect(0, 0, w, h);
+    softbox(g, w * 0.08, h * 0.12, w * 0.34, h * 0.2);
+    person(g, w * 0.62, h * 0.86, w * 0.75, "#050505");
+    g.fillStyle = Y;
+    g.beginPath();
+    g.arc(26, h - 40, 7, 0, Math.PI * 2);
+    g.fill();
+    text(g, "BTS · 04:12 AM", 42, h - 33, 18, BONE, 500, MONO);
+    grain(g, w, h);
+  },
+  people: (g, w, h) => {
+    g.fillStyle = "#151515";
+    g.fillRect(0, 0, w, h);
+    glow(g, w * 0.5, h * 0.4, w * 0.8, "rgba(238,235,227,.12)");
+    person(g, w * 0.5, h * 0.9, w * 0.9, "#e9e100");
+    g.fillStyle = "#050505";
+    g.beginPath();
+    g.arc(w * 0.5, h * 0.9 - w * 0.9 * 0.62, w * 0.9 * 0.2, 0, Math.PI * 2);
+    g.fill();
+    g.strokeStyle = "#050505";
+    g.lineWidth = 10;
+    g.beginPath();
+    g.arc(w * 0.5, h * 0.9 - w * 0.9 * 0.62, w * 0.9 * 0.24, Math.PI * 1.05, Math.PI * 1.95);
+    g.stroke();
+    text(g, "Meet the editor.", 22, 52, 34, BONE, 700, SERIF);
+    grain(g, w, h);
+  },
+  format: (g, w, h) => {
+    g.fillStyle = INK;
+    g.fillRect(0, 0, w, h);
+    text(g, "BUZZLAB", 22, 120, 74, BONE);
+    text(g, "BREAKDOWN", 22, 190, 74, BONE);
+    g.fillStyle = Y;
+    g.fillRect(22, 224, 104, 40);
+    text(g, "EP. 04", 32, 254, 26, INK, 800);
+    text(g, "How the 9-second hook was built", 22, h - 36, 16, "rgba(238,235,227,.7)", 500, MONO);
+  },
+  experiment: (g, w, h) => {
+    g.fillStyle = BONE;
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = Y;
+    g.beginPath();
+    g.arc(w * 0.5, h * 0.45, w * 0.36, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = INK;
+    g.beginPath();
+    g.arc(w * 0.62, h * 0.4, w * 0.08, 0, Math.PI * 2);
+    g.fill();
+    text(g, "A REEL THAT LASTS", 22, h - 70, 30, INK);
+    text(g, "ONE SECOND.", 22, h - 32, 30, INK);
+  },
+  clap: (g, w, h) => {
+    g.fillStyle = "#121212";
+    g.fillRect(0, 0, w, h);
+    g.save();
+    g.translate(w * 0.5, h * 0.5);
+    g.rotate(-0.08);
+    g.fillStyle = "#e9e5dc";
+    g.fillRect(-110, -50, 220, 140);
+    g.fillStyle = INK;
+    for (let i = 0; i < 6; i++) {
+      g.save();
+      g.translate(-110 + i * 40, -80);
+      g.transform(1, 0, -0.5, 1, 0, 0);
+      g.fillRect(20, 0, 20, 26);
+      g.restore();
+    }
+    g.fillStyle = INK;
+    g.fillRect(-110, -80, 220, 3);
+    text(g, "SCENE 12", -96, -8, 30, INK);
+    text(g, "TAKE 37", -96, 34, 30, INK);
+    text(g, "BUZZLAB", -96, 74, 16, "#555", 500, MONO);
+    g.restore();
+    grain(g, w, h);
+  },
+  set: (g, w, h) => {
+    g.fillStyle = "#0e0e0e";
+    g.fillRect(0, 0, w, h);
+    g.strokeStyle = "rgba(249,254,2,.85)";
+    g.lineWidth = 4;
+    g.beginPath();
+    g.ellipse(w * 0.5, h * 0.72, w * 0.4, h * 0.08, 0, 0, Math.PI * 2);
+    g.stroke();
+    for (let i = 0; i < 4; i++) person(g, w * (0.24 + i * 0.17), h * 0.72, 90, i === 1 ? Y : "#2a2a2a");
+    softbox(g, w * 0.66, h * 0.16, 60, 44);
+    text(g, "DAY ONE ON SET", 22, 52, 34, BONE);
+    grain(g, w, h);
+  },
+  campaign: (g, w, h) => {
+    g.fillStyle = Y;
+    g.fillRect(0, 0, w, h);
+    text(g, "MADE TO BE", 22, 92, 56, INK);
+    text(g, "NOTICED.", 22, 148, 56, INK);
+    g.fillStyle = INK;
+    g.fillRect(22, h - 120, w - 44, 4);
+    text(g, "CAMPAIGN — FOR A CLIENT", 22, h - 84, 15, INK, 500, MONO);
+    text(g, "Shot in one day.", 22, h - 52, 26, INK, 600, SERIF);
+  },
+};
 
-export function profileTexture() {
+/**
+ * The page: header (name, bio, highlights) and a 3-column grid. `T` are the machine's content
+ * textures; the hero cell is left dark — the selected post is a live mesh laid over it.
+ */
+export function profileTexture(T: Record<string, THREE.CanvasTexture>) {
   const P = PROFILE;
   const c = canvas(P.cw, PROFILE_H, (g, w) => {
     g.fillStyle = "#000";
@@ -237,24 +740,51 @@ export function profileTexture() {
     ic(w / 6, true);
     ic(w / 2, false);
     ic((w * 5) / 6, false);
+    // the grid
+    const img = (k: string) => (T[k].image as HTMLCanvasElement);
+    const cells: (string | null)[] = [
+      "heroReel", "bts", "brand",
+      "night", "product", "campaign",
+      "aerial", "portrait", "grade",
+      "director", null, "neon",
+      "slate", "edit", "lens",
+      "pod", "set", "experiment",
+    ];
+    const reels = new Set(["heroReel", "brand", "night", "aerial", "edit", "bts"]);
+    cells.forEach((k, i) => {
+      const r = Math.floor(i / 3);
+      const col = i % 3;
+      const x = col * P.cell;
+      const y = P.header + r * (P.tileH + 3);
+      g.save();
+      g.beginPath();
+      g.rect(x, y, P.tileW, P.tileH);
+      g.clip();
+      g.fillStyle = "#0a0a0a";
+      g.fillRect(x, y, P.tileW, P.tileH);
+      if (k && STILLS[k]) {
+        g.translate(x, y);
+        STILLS[k](g, P.tileW, P.tileH);
+      } else if (k && T[k]) cover(g, img(k), x, y, P.tileW, P.tileH);
+      else if (k && extraTiles[k]) {
+        g.translate(x, y);
+        extraTiles[k](g, P.tileW, P.tileH);
+      }
+      g.restore();
+      if (k && reels.has(k)) reelMark(g, x + P.tileW - 26, y + 28);
+    });
   });
   const t = texOf(c);
-  const g = c.getContext("2d")!;
-  GRID.forEach((src, i) => {
-    const x = (i % 3) * P.cell;
-    const y = P.header + Math.floor(i / 3) * (P.tileH + 3);
-    g.fillStyle = "#0a0a0a";
-    g.fillRect(x, y, P.tileW, P.tileH);
-    if (!src) return;
-    pic(src)
-      .then((img) => {
-        cover(g, img, x, y, P.tileW, P.tileH);
-        reelMark(g, x + P.tileW - 26, y + 28);
-        t.needsUpdate = true;
-      })
-      .catch(() => {});
-  });
   t.wrapT = THREE.ClampToEdgeWrapping;
+  // the Reel just posted, top left, once its picture is in
+  pic(REEL)
+    .then((img) => {
+      const g = c.getContext("2d")!;
+      cover(g, img, 0, PROFILE.header, PROFILE.tileW, PROFILE.tileH);
+      reelMark(g, PROFILE.tileW - 26, PROFILE.header + 28);
+      t.needsUpdate = true;
+    })
+    .catch(() => {});
   return t;
 }
 

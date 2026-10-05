@@ -71,7 +71,7 @@ export function Machine() {
         <div className="max-w-[34rem]">
           <p className="t-slate mb-4">{M.eyebrow}</p>
           <AnimatePresence mode="wait">
-            {s && (
+            {s?.line && (
               <motion.div key={s.line} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.4 }}>
                 <p className="t-label text-buzz">{M.ladder[s.rung]}</p>
                 <h3 className="t-big mt-2">{s.line}</h3>
