@@ -25,7 +25,7 @@ export type PersonOpts = {
   sex: Sex;
   /** an outfit baked for that sex: m — tee, whitetee, jacket, shirt, suit · f — tee, blouse, sport */
   outfit: string;
-  /** m — short02, short04, short01, short03 · f — bob02, bob01, ponytail01, long01 */
+  /** m — short02, short04, short01 · f — bob02, bob01, ponytail01, long01 */
   hair: string;
   shoes?: "sneakers" | "boots" | "navy";
   /** a colour the shoes are dyed (multiplied over their texture) */
@@ -146,7 +146,7 @@ function loadTex(key: string, color = true) {
   });
 }
 
-const COLOR_TEX = ["skin_m", "skin_m_deep", "skin_f", "skin_f_light", "eye", "brow_m", "brow_f", "lash_m", "lash_f", "teeth", "hair_short02", "hair_short04", "hair_short01", "hair_short03", "hair_bob02", "hair_bob01", "hair_ponytail01", "hair_long01", "m_tee", "m_whitetee", "m_jacket", "m_shirt", "m_suit", "f_tee", "f_blouse", "f_sport", "shoes_sneakers", "shoes_boots", "shoes_navy"];
+const COLOR_TEX = ["skin_m", "skin_m_deep", "skin_f", "skin_f_light", "eye", "brow_m", "brow_f", "lash_m", "lash_f", "teeth", "hair_short02", "hair_short04", "hair_short01", "hair_bob02", "hair_bob01", "hair_ponytail01", "hair_long01", "m_tee", "m_whitetee", "m_jacket", "m_shirt", "m_suit", "f_tee", "f_blouse", "f_sport", "shoes_sneakers", "shoes_boots", "shoes_navy"];
 const DATA_TEX = ["hair_short02_n", "m_tee_n", "m_tee_ao", "m_whitetee_n", "m_whitetee_ao", "m_jacket_n", "m_jacket_ao", "m_shirt_n", "m_shirt_ao", "f_tee_n", "f_tee_ao", "f_blouse_n", "f_blouse_ao", "f_sport_n", "f_sport_ao"];
 
 /** Fetch both bodies and every texture once. Safe to call repeatedly. */
