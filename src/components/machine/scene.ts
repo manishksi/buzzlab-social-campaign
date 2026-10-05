@@ -299,7 +299,7 @@ export class MachineScene {
     this.inPhone.group.position.z = 0.004;
     (this.inPhone.back.material as THREE.MeshBasicMaterial).transparent = true;
     this.phone.add(this.inPhone.group);
-    this.pageTex = profileTexture(T, reelTex.image as HTMLCanvasElement);
+    this.pageTex = profileTexture();
     this.pageTex.repeat.set(1, PROFILE.view / PROFILE_H);
     this.page = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), new THREE.MeshBasicMaterial({ map: this.pageTex, toneMapped: false, transparent: true, opacity: 0 }));
     this.page.position.z = 0.003;
@@ -313,7 +313,7 @@ export class MachineScene {
     nav.position.set(0, -sh / 2 + navH / 2, 0.007);
     this.bars.push(top, nav);
     this.phone.add(top, nav);
-    // the post it stops on: a live picture of the world it opens into
+    // the post it stops on: its own post, a live picture of the yellow world it opens into
     this.heroLine = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: 0xf9fe02, toneMapped: false, transparent: true, opacity: 0, clippingPlanes: this.clip }));
     this.heroLine.position.z = -0.001;
     this.heroFace = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: this.rt.texture, toneMapped: false, clippingPlanes: this.clip }));
@@ -614,7 +614,7 @@ export class MachineScene {
     this.bars.forEach((b) => ((b.material as THREE.MeshBasicMaterial).opacity = barsOn));
     this.page.visible = pageOn > 0.001;
     const hc = cellAt(PROFILE.hero.row, PROFILE.hero.col);
-    const stopAt = hc.y - PROFILE.view / 2;
+    const stopAt = Math.min(hc.y - PROFILE.view / 2, PROFILE_H - PROFILE.view);
     const sc = inv(0.684, 0.748, w);
     const scroll = stopAt * (sc * sc * sc * (sc * (sc * 6 - 15) + 10));
     this.pageTex.offset.y = 1 - this.pageTex.repeat.y - scroll / PROFILE_H;

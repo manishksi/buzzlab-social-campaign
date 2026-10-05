@@ -3,8 +3,8 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { RectAreaLightUniformsLib } from "three/addons/lights/RectAreaLightUniformsLib.js";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import { anchorWorld, applyPose, blink, breathe, makePerson, orientHand, POSES, reach, type Person } from "./people";
-import { cinemaCamera, directorsChair, mats, microphone, softbox } from "./props";
-import { sonyA7S3 } from "./gear";
+import { directorsChair, mats, microphone, softbox } from "./props";
+import { gearMats, smallRig, sonyA7S3 } from "./gear";
 import { contentTextures } from "./textures";
 import type { Label } from "./worlds";
 
@@ -812,23 +812,28 @@ export class StudioScene {
       },
     });
     this.mark("talent", "Talent", talent.root, 1.55, 0.8, 0.92);
-    // camera on sticks + DOP
-    const setCam = cinemaCamera(T);
-    setCam.group.position.set(0.1, 1.45, -7.2);
-    setCam.group.rotation.y = -Math.PI / 2;
+    // a small camera on sticks — the A7S III, a pan bar, a 5" monitor — and the DOP behind it
+    const setCam = smallRig(gearMats(), T.monitor);
+    // (on his left, so the move down onto the set sees it past his shoulder)
+    setCam.group.position.set(-0.05, 0, -6.92);
+    setCam.group.rotation.y = Math.atan2(-0.05, 9.12 - 6.92);
     s.add(setCam.group);
     this.dimWith(setCam.group, C);
+    setCam.group.updateMatrixWorld(true);
+    const panGrip = setCam.group.localToWorld(setCam.grip.clone());
+    const camHold = setCam.group.localToWorld(new THREE.Vector3(0.05, 1.41, 0));
+    this.mark("rig", "Sony A7S III", setCam.cam, 0.1, 0.745, 0.84, true);
     const dop = makePerson({ sex: "m", outfit: "jacket", hair: "short04", hairColor: 0x1d1612, shoes: "sneakers" });
-    dop.root.position.set(0.34, 0, -6.45);
-    dop.root.rotation.y = Math.PI;
+    dop.root.position.set(0.3, 0, -6.5);
+    dop.root.rotation.y = Math.PI + 0.28;
     s.add(dop.root);
     this.crew.push({
       p: dop,
       seed: 4,
       pose: () => {
         applyPose(dop, POSES.stand, { spine: [0.14, 0.12, 0], neck: [0.1, 0, 0], head: [0.08, 0.2, 0], gripR: 0.6, gripL: 0.5 });
-        reach(dop, "R", new THREE.Vector3(0.36, 1.38, -6.92), new THREE.Vector3(1, -1, 1));
-        reach(dop, "L", new THREE.Vector3(0.08, 1.7, -7.08), new THREE.Vector3(-1, -0.6, 1));
+        reach(dop, "R", panGrip, new THREE.Vector3(1, -1, 1));
+        reach(dop, "L", camHold, new THREE.Vector3(-1, -0.6, 1));
       },
     });
     this.mark("dop", "DOP", dop.root, 1.95, 0.8, 0.92);

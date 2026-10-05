@@ -342,3 +342,53 @@ export function sonyA7S3() {
   add(new THREE.CircleGeometry(0.0035, 20), new THREE.MeshStandardMaterial({ color: 0xd2452a, roughness: 0.4 }), mx + 0.0371, my, z0 + 0.04, 0, H, 0);
   return shadow(g);
 }
+
+/**
+ * The A7S III set up to shoot: on a small video tripod with a fluid head and a pan bar, a 5"
+ * monitor on the shoe facing the operator. Lens along -z; origin on the floor under the head.
+ * `grip` is the end of the pan bar (local), for the operator's hand.
+ */
+export function smallRig(m: M, screen?: THREE.Texture, H = 1.34) {
+  const g = new THREE.Group();
+  const top = H + 0.012;
+  const cam = sonyA7S3();
+  cam.rotation.y = Math.PI;
+  cam.position.set(0, top, 0);
+  const plate = new THREE.Mesh(new RoundedBoxGeometry(0.07, 0.012, 0.1, 2, 0.003), m.anod);
+  plate.position.y = H + 0.006;
+  const head = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.042, 0.07, 20), m.black);
+  head.position.y = H - 0.035;
+  const knob = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.016, 14), m.yellow);
+  knob.rotation.z = Math.PI / 2;
+  knob.position.set(-0.046, H - 0.035, 0);
+  const bowl = new THREE.Mesh(new THREE.SphereGeometry(0.046, 16, 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), m.anod);
+  bowl.position.y = H - 0.07;
+  // the pan bar: back and to the operator's right, down to the hand
+  const a = new THREE.Vector3(0.03, H - 0.035, 0.03);
+  const grip = new THREE.Vector3(0.34, H - 0.14, 0.28);
+  const dir = grip.clone().sub(a).normalize();
+  const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, a.distanceTo(grip), 10), m.steel);
+  bar.position.copy(a).lerp(grip, 0.5);
+  bar.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+  const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.09, 12), m.rubber);
+  handle.position.copy(grip).addScaledVector(dir, -0.03);
+  handle.quaternion.copy(bar.quaternion);
+  // the monitor on the shoe, tilted down to the operator's eye
+  const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.04, 10), m.steel);
+  arm.position.set(-0.007, top + 0.11, 0.004);
+  const mon = new THREE.Group();
+  const frame = new THREE.Mesh(new RoundedBoxGeometry(0.13, 0.085, 0.018, 2, 0.005), m.black);
+  const scr = new THREE.Mesh(new THREE.PlaneGeometry(0.118, 0.07), screen ? new THREE.MeshBasicMaterial({ map: screen, toneMapped: false }) : new THREE.MeshBasicMaterial({ color: 0x2b3238 }));
+  scr.position.z = 0.0095;
+  const sun = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.002, 0.05), m.black);
+  sun.position.set(0, 0.043, 0.025);
+  mon.add(frame, scr, sun);
+  mon.position.set(-0.007, top + 0.17, 0.01);
+  mon.rotation.x = -0.22;
+  // a tally on the front of the hump
+  const tally = new THREE.Mesh(new THREE.SphereGeometry(0.004, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff3020 }));
+  tally.position.set(0.03, top + 0.072, -0.024);
+  g.add(cam, plate, head, knob, bowl, bar, handle, arm, mon, tally, legs(m, H - 0.09, 0.36));
+  shadow(g);
+  return { group: g, cam, grip, tally, monitor: scr };
+}
